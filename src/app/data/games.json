@@ -1,0 +1,100 @@
+{
+  "games": [
+    {
+      "gameTitle": "Pokemon Violet + The Hidden Treasure of Area Zero DLC",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E - Everyone",
+      "gameBarcode": "4902370551846",
+      "gameDescription": "Pokémon Violet bundled with The Hidden Treasure of Area Zero features all the exciting adventures in one package. Catch, battle, and train Pokémon in the Paldea Region, a vast land filled with lakes, towering peaks, wastelands, small towns, and sprawling cities. Explore a wide-open world at your own pace and traverse land, water, and air by riding on Miraidon.",
+      "gameImageURL": "/pokemon-violet-dlc.jpg",
+      "gameAvailableStocks": 10,
+      "gamePrice": 3500,
+      "gameCategory": "RPG",
+      "gameReleaseDate": "2022-11-18"
+    },
+    {
+      "gameTitle": "Super Mario Odyssey",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E10+ - Everyone 10 and older",
+      "gameBarcode": "045496590741",
+      "gameDescription": "Join Mario on a massive, globe-trotting 3D adventure and use his incredible new abilities to collect Moons so you can power up your airship, the Odyssey, and rescue Princess Peach from Bowser's wedding plans!",
+      "gameImageURL": "/mario-odyssey.jpg",
+      "gameAvailableStocks": 12,
+      "gamePrice": 2899,
+      "gameCategory": "Platformer",
+      "gameReleaseDate": "2017-10-27"
+    },
+    {
+      "gameTitle": "The Legend of Zelda: Breath of the Wild",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E10+ - Everyone 10 and older",
+      "gameBarcode": "045496590420",
+      "gameDescription": "Step into a world of discovery, exploration, and adventure in The Legend of Zelda: Breath of the Wild, a boundary-breaking new game in the acclaimed series.",
+      "gameImageURL": "/zelda-botw.jpg",
+      "gameAvailableStocks": 8,
+      "gamePrice": 3200,
+      "gameCategory": "Action-Adventure",
+      "gameReleaseDate": "2017-03-03"
+    },
+    {
+      "gameTitle": "Mario Kart 8 Deluxe",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E - Everyone",
+      "gameBarcode": "045496590475",
+      "gameDescription": "Hit the road with the definitive version of Mario Kart 8 and play anytime, anywhere! Race your friends or battle them in a revised battle mode on new and returning battle courses.",
+      "gameImageURL": "/mario-kart-8.jpg",
+      "gameAvailableStocks": 15,
+      "gamePrice": 2750,
+      "gameCategory": "Racing",
+      "gameReleaseDate": "2017-04-28"
+    },
+    {
+      "gameTitle": "Animal Crossing: New Horizons",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E - Everyone",
+      "gameBarcode": "045496596439",
+      "gameDescription": "Escape to a deserted island and create your own paradise as you explore, create, and customize in the Animal Crossing: New Horizons game.",
+      "gameImageURL": "/animal-crossing.jpg",
+      "gameAvailableStocks": 20,
+      "gamePrice": 2950,
+      "gameCategory": "Simulation",
+      "gameReleaseDate": "2020-03-20"
+    },
+    {
+      "gameTitle": "Super Smash Bros. Ultimate",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E10+ - Everyone 10 and older",
+      "gameBarcode": "045496596438",
+      "gameDescription": "Gaming icons clash in the ultimate showdown you can play anytime, anywhere! Smash rivals off the stage as new fighters Simon Belmont and King K. Rool join Inkling, Ridley, and every fighter in Super Smash Bros. history.",
+      "gameImageURL": "/smash-bros-ultimate.jpg",
+      "gameAvailableStocks": 10,
+      "gamePrice": 3100,
+      "gameCategory": "Fighting",
+      "gameReleaseDate": "2018-12-07"
+    },
+    {
+      "gameTitle": "Pokémon Sword",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E - Everyone",
+      "gameBarcode": "045496596385",
+      "gameDescription": "Embark on an adventure in the Galar region, where you'll face the trials of becoming a champion and uncover the mystery behind the Legendary Pokémon!",
+      "gameImageURL": "/pokemon-sword.jpg",
+      "gameAvailableStocks": 7,
+      "gamePrice": 2800,
+      "gameCategory": "RPG",
+      "gameReleaseDate": "2019-11-15"
+    },
+    {
+      "gameTitle": "Splatoon 3",
+      "gamePlatform": "Nintendo Switch",
+      "gameRatings": "E10+ - Everyone 10 and older",
+      "gameBarcode": "045496596668",
+      "gameDescription": "Enter the Splatlands, a sun-scorched desert inhabited by battle-hardened Inklings and Octolings. Splatsville, the city of chaos, is the adrenaline-fueled heart of this dusty wasteland.",
+      "gameImageURL": "/splatoon-3.jpg",
+      "gameAvailableStocks": 14,
+      "gamePrice": 2900,
+      "gameCategory": "Shooter",
+      "gameReleaseDate": "2022-09-09"
+    }
+  ]
+}
