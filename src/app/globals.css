@@ -20,13 +20,6 @@
   }
 }
 
-@theme {
-  --color-lameRed: #ff4554;
-  --color-funBlue: #00c3e3;
-  --color-makeMeClean: #ffffff;
-
-}
-
 .animate-float {
   animation: float 5s ease-in-out infinite;
 }
@@ -49,4 +42,13 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

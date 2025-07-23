@@ -5,6 +5,8 @@ import Image from "next/image";
 import RadialBackground from "@/app/components/ui/RadialBackground";
 import Navigation from "@/app/components/ui/globalUI/Navigation";
 import HeroSection from "@/app/components/ui/home/HeroSection";
+import CompareGamesSection from "./components/ui/home/CompareGamesSection";
+import AboutUsSection from "./components/ui/home/AboutUsSection";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -26,6 +28,8 @@ export default function Home() {
         <div className="relative flex min-h-screen flex-col items-center justify-center   bg-white">
           <Navigation />
           <HeroSection />
+          <CompareGamesSection />
+          <AboutUsSection />
         </div>
       ) : (
         <div className="relative flex min-h-screen flex-col items-center justify-center p-6 pt-20 overflow-hidden bg-white">

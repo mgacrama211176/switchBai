@@ -9,8 +9,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        blue: "#00c3e3",
-        red: "#ff4554",
+        lameRed: "#ff4554",
+        funBlue: "#00c3e3",
+        makeMeClean: "#ffffff",
+        success: "#059669",
+        neutral: "#374151",
       },
     },
   },

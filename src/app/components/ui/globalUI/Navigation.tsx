@@ -9,6 +9,7 @@ import {
   HiInformationCircle,
   HiMail,
   HiSearch,
+  HiSwitchHorizontal,
 } from "react-icons/hi";
 import { PiGameControllerThin } from "react-icons/pi";
 
@@ -36,19 +37,25 @@ const Navigation: React.FC = () => {
     {
       name: "Games",
       href: "/games",
-      icon: <PiGameControllerThin className="w-8 h-8" />,
+      icon: <PiGameControllerThin className="w-6 h-6" />,
+      description: "Browse our game collection",
+    },
+    {
+      name: "Compare",
+      href: "/copare",
+      icon: <HiSwitchHorizontal className="w-6 h-6" />,
       description: "Browse our game collection",
     },
     {
       name: "About SwitchBai",
       href: "/about",
-      icon: <HiInformationCircle className="w-8 h-8" />,
+      icon: <HiInformationCircle className="w-6 h-6" />,
       description: "Learn more about us",
     },
     {
       name: "Contact Us",
       href: "/contact",
-      icon: <HiMail className="w-8 h-8" />,
+      icon: <HiMail className="w-6 h-6" />,
       description: "Get in touch with our team",
     },
   ];
@@ -78,7 +85,7 @@ const Navigation: React.FC = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 w-full ${
           scrolled
             ? "bg-white/60 backdrop-blur-xl shadow-xl border-b border-gray-100"
             : "bg-white/70 backdrop-blur-md shadow-lg border-b border-gray-200"
@@ -111,10 +118,10 @@ const Navigation: React.FC = () => {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-blue font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-blue/5 group"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-red font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-red/5 group"
                   aria-label={`Navigate to ${item.name}`}
                 >
-                  <span className="text-blue/70 group-hover:text-blue transition-colors duration-300">
+                  <span className="text-lameRed/70 group-hover:text-lameRed transition-colors duration-300">
                     {item.icon}
                   </span>
                   <span>{item.name}</span>
