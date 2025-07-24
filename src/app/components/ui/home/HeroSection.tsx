@@ -13,7 +13,7 @@ const HeroSection = () => {
   const latestGames = [...gamesData.games]
     .sort(
       (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     )
     .slice(0, 10);
 
@@ -24,7 +24,7 @@ const HeroSection = () => {
   // Calculate savings based on 10% discount (deterministic to prevent hydration errors)
   const calculateSavings = (
     price: number,
-    gameBarcode: string
+    gameBarcode: string,
   ): { original: number; savings: number; percentage: number } => {
     const savingsPercentage = 10; // Fixed 10% savings
     const originalPrice = Math.round(price / (1 - savingsPercentage / 100));
@@ -315,7 +315,7 @@ const HeroSection = () => {
               const stockInfo = getStockUrgency(game.gameAvailableStocks);
               const savings = calculateSavings(
                 game.gamePrice,
-                game.gameBarcode
+                game.gameBarcode,
               );
               const soldCount = getNumberOfSold(game);
 
@@ -396,7 +396,7 @@ const HeroSection = () => {
                             {
                               month: "short",
                               day: "numeric",
-                            }
+                            },
                           )}
                         </div>
                       </div>
@@ -504,7 +504,7 @@ const HeroSection = () => {
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 ></button>
-              )
+              ),
             )}
           </div>
         </div>
@@ -614,7 +614,7 @@ const HeroSection = () => {
                   onClick={() => {
                     console.log(
                       "Navigate to compare with items:",
-                      compareItems
+                      compareItems,
                     );
                   }}
                 >

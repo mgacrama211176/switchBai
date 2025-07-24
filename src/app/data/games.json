@@ -13,6 +13,7 @@
       "gameReleaseDate": "2022-11-18",
       "class": "custom",
       "numberOfSold": 145,
+      "tradable": true,
       "createdAt": "2023-12-15T10:30:00.000Z",
       "updatedAt": "2024-01-20T14:45:00.000Z"
     },
@@ -29,6 +30,7 @@
       "gameReleaseDate": "2017-10-27",
       "class": "custom",
       "numberOfSold": 287,
+      "tradable": true,
       "createdAt": "2023-08-10T09:15:00.000Z",
       "updatedAt": "2024-02-05T11:20:00.000Z"
     },
@@ -45,6 +47,7 @@
       "gameReleaseDate": "2017-03-03",
       "class": "custom",
       "numberOfSold": 312,
+      "tradable": true,
       "createdAt": "2023-07-22T16:45:00.000Z",
       "updatedAt": "2024-01-15T13:30:00.000Z"
     },
@@ -61,6 +64,7 @@
       "gameReleaseDate": "2017-04-28",
       "class": "custom",
       "numberOfSold": 398,
+      "tradable": true,
       "createdAt": "2023-06-18T12:00:00.000Z",
       "updatedAt": "2024-03-10T10:15:00.000Z"
     },
@@ -77,6 +81,7 @@
       "gameReleaseDate": "2020-03-20",
       "class": "custom",
       "numberOfSold": 456,
+      "tradable": true,
       "createdAt": "2023-09-05T14:20:00.000Z",
       "updatedAt": "2024-02-28T16:40:00.000Z"
     },
@@ -93,6 +98,7 @@
       "gameReleaseDate": "2018-12-07",
       "class": "custom",
       "numberOfSold": 234,
+      "tradable": true,
       "createdAt": "2023-11-12T11:30:00.000Z",
       "updatedAt": "2024-01-08T15:25:00.000Z"
     },
@@ -109,6 +115,7 @@
       "gameReleaseDate": "2019-11-15",
       "class": "custom",
       "numberOfSold": 189,
+      "tradable": true,
       "createdAt": "2023-10-03T13:45:00.000Z",
       "updatedAt": "2024-02-14T09:50:00.000Z"
     },
@@ -125,6 +132,7 @@
       "gameReleaseDate": "2022-09-09",
       "class": "custom",
       "numberOfSold": 167,
+      "tradable": true,
       "createdAt": "2023-05-25T08:10:00.000Z",
       "updatedAt": "2024-03-02T12:35:00.000Z"
     },
@@ -141,6 +149,7 @@
       "gameReleaseDate": "2023-05-12",
       "class": "custom",
       "numberOfSold": 523,
+      "tradable": true,
       "createdAt": "2023-05-15T10:00:00.000Z",
       "updatedAt": "2024-03-15T14:20:00.000Z"
     },
@@ -157,6 +166,7 @@
       "gameReleaseDate": "2021-10-08",
       "class": "custom",
       "numberOfSold": 78,
+      "tradable": true,
       "createdAt": "2023-04-12T11:30:00.000Z",
       "updatedAt": "2024-02-20T16:45:00.000Z"
     },
@@ -173,6 +183,7 @@
       "gameReleaseDate": "2022-03-25",
       "class": "custom",
       "numberOfSold": 134,
+      "tradable": true,
       "createdAt": "2023-03-28T09:15:00.000Z",
       "updatedAt": "2024-01-30T12:10:00.000Z"
     },
@@ -189,6 +200,7 @@
       "gameReleaseDate": "2023-01-20",
       "class": "custom",
       "numberOfSold": 89,
+      "tradable": true,
       "createdAt": "2023-01-25T14:45:00.000Z",
       "updatedAt": "2024-02-10T11:20:00.000Z"
     },
@@ -205,6 +217,7 @@
       "gameReleaseDate": "2022-07-29",
       "class": "custom",
       "numberOfSold": 67,
+      "tradable": true,
       "createdAt": "2023-08-02T13:20:00.000Z",
       "updatedAt": "2024-01-25T15:35:00.000Z"
     },
@@ -221,6 +234,7 @@
       "gameReleaseDate": "2022-10-28",
       "class": "custom",
       "numberOfSold": 43,
+      "tradable": true,
       "createdAt": "2023-11-01T10:30:00.000Z",
       "updatedAt": "2024-03-05T09:45:00.000Z"
     },
@@ -237,6 +251,7 @@
       "gameReleaseDate": "2022-04-29",
       "class": "custom",
       "numberOfSold": 201,
+      "tradable": true,
       "createdAt": "2023-05-02T16:10:00.000Z",
       "updatedAt": "2024-02-18T14:25:00.000Z"
     },
@@ -253,6 +268,7 @@
       "gameReleaseDate": "2022-10-20",
       "class": "custom",
       "numberOfSold": 56,
+      "tradable": true,
       "createdAt": "2023-10-25T12:40:00.000Z",
       "updatedAt": "2024-01-12T10:55:00.000Z"
     },
@@ -269,6 +285,7 @@
       "gameReleaseDate": "2018-05-04",
       "class": "custom",
       "numberOfSold": 123,
+      "tradable": true,
       "createdAt": "2023-06-08T11:15:00.000Z",
       "updatedAt": "2024-02-28T13:40:00.000Z"
     },
@@ -285,6 +302,7 @@
       "gameReleaseDate": "2023-07-21",
       "class": "custom",
       "numberOfSold": 98,
+      "tradable": true,
       "createdAt": "2023-07-24T15:20:00.000Z",
       "updatedAt": "2024-03-08T11:30:00.000Z"
     },
@@ -301,6 +319,7 @@
       "gameReleaseDate": "2020-07-17",
       "class": "custom",
       "numberOfSold": 87,
+      "tradable": true,
       "createdAt": "2023-07-20T14:35:00.000Z",
       "updatedAt": "2024-01-18T16:20:00.000Z"
     },
@@ -317,6 +336,7 @@
       "gameReleaseDate": "2020-09-17",
       "class": "custom",
       "numberOfSold": 267,
+      "tradable": true,
       "createdAt": "2023-09-20T10:25:00.000Z",
       "updatedAt": "2024-02-15T12:45:00.000Z"
     },
@@ -333,6 +353,7 @@
       "gameReleaseDate": "2021-03-26",
       "class": "custom",
       "numberOfSold": 178,
+      "tradable": true,
       "createdAt": "2023-03-29T13:50:00.000Z",
       "updatedAt": "2024-03-12T15:10:00.000Z"
     },
@@ -349,6 +370,7 @@
       "gameReleaseDate": "2019-10-31",
       "class": "custom",
       "numberOfSold": 156,
+      "tradable": true,
       "createdAt": "2023-10-31T18:00:00.000Z",
       "updatedAt": "2024-01-05T14:30:00.000Z"
     },
@@ -365,6 +387,7 @@
       "gameReleaseDate": "2017-06-12",
       "class": "low",
       "numberOfSold": 345,
+      "tradable": true,
       "createdAt": "2023-06-15T09:40:00.000Z",
       "updatedAt": "2024-02-22T11:15:00.000Z"
     },
@@ -381,6 +404,7 @@
       "gameReleaseDate": "2017-10-05",
       "class": "custom",
       "numberOfSold": 512,
+      "tradable": true,
       "createdAt": "2023-10-08T16:25:00.000Z",
       "updatedAt": "2024-03-01T13:50:00.000Z"
     },
@@ -413,6 +437,7 @@
       "gameReleaseDate": "2018-08-07",
       "class": "custom",
       "numberOfSold": 189,
+      "tradable": true,
       "createdAt": "2023-08-10T11:30:00.000Z",
       "updatedAt": "2024-01-28T10:20:00.000Z"
     },
@@ -429,6 +454,7 @@
       "gameReleaseDate": "2020-09-17",
       "class": "custom",
       "numberOfSold": 143,
+      "tradable": true,
       "createdAt": "2023-09-20T15:45:00.000Z",
       "updatedAt": "2024-03-18T12:30:00.000Z"
     },
@@ -445,6 +471,7 @@
       "gameReleaseDate": "2017-10-05",
       "class": "low",
       "numberOfSold": 234,
+      "tradable": true,
       "createdAt": "2023-10-08T08:30:00.000Z",
       "updatedAt": "2024-02-12T10:15:00.000Z"
     },
@@ -461,6 +488,7 @@
       "gameReleaseDate": "2017-09-29",
       "class": "low",
       "numberOfSold": 412,
+      "tradable": true,
       "createdAt": "2023-09-30T14:20:00.000Z",
       "updatedAt": "2024-03-01T16:45:00.000Z"
     },
@@ -477,6 +505,7 @@
       "gameReleaseDate": "2017-03-03",
       "class": "low",
       "numberOfSold": 187,
+      "tradable": true,
       "createdAt": "2023-03-06T11:45:00.000Z",
       "updatedAt": "2024-01-20T13:30:00.000Z"
     },
@@ -493,6 +522,7 @@
       "gameReleaseDate": "2023-01-26",
       "class": "low",
       "numberOfSold": 156,
+      "tradable": true,
       "createdAt": "2023-01-29T09:15:00.000Z",
       "updatedAt": "2024-02-25T12:40:00.000Z"
     },
@@ -509,6 +539,7 @@
       "gameReleaseDate": "2019-04-18",
       "class": "low",
       "numberOfSold": 123,
+      "tradable": true,
       "createdAt": "2023-04-21T15:30:00.000Z",
       "updatedAt": "2024-03-15T11:20:00.000Z"
     },
@@ -525,6 +556,7 @@
       "gameReleaseDate": "2017-09-15",
       "class": "mid",
       "numberOfSold": 389,
+      "tradable": true,
       "createdAt": "2023-09-18T10:45:00.000Z",
       "updatedAt": "2024-02-10T14:25:00.000Z"
     },
@@ -541,6 +573,7 @@
       "gameReleaseDate": "2019-06-27",
       "class": "mid",
       "numberOfSold": 567,
+      "tradable": true,
       "createdAt": "2023-06-30T12:20:00.000Z",
       "updatedAt": "2024-03-20T16:35:00.000Z"
     },
@@ -557,6 +590,7 @@
       "gameReleaseDate": "2018-09-06",
       "class": "mid",
       "numberOfSold": 89,
+      "tradable": true,
       "createdAt": "2023-09-09T14:50:00.000Z",
       "updatedAt": "2024-01-15T10:30:00.000Z"
     },
@@ -573,6 +607,7 @@
       "gameReleaseDate": "2017-12-18",
       "class": "mid",
       "numberOfSold": 234,
+      "tradable": true,
       "createdAt": "2023-12-21T11:15:00.000Z",
       "updatedAt": "2024-02-28T15:40:00.000Z"
     },
@@ -589,6 +624,7 @@
       "gameReleaseDate": "2017-10-05",
       "class": "mid",
       "numberOfSold": 112,
+      "tradable": true,
       "createdAt": "2023-10-08T13:25:00.000Z",
       "updatedAt": "2024-03-05T12:50:00.000Z"
     },
@@ -621,6 +657,7 @@
       "gameReleaseDate": "2021-08-26",
       "class": "high",
       "numberOfSold": 134,
+      "tradable": true,
       "createdAt": "2023-08-29T10:30:00.000Z",
       "updatedAt": "2024-01-22T13:45:00.000Z"
     },
@@ -637,6 +674,7 @@
       "gameReleaseDate": "2019-06-25",
       "class": "high",
       "numberOfSold": 98,
+      "tradable": true,
       "createdAt": "2023-06-28T12:15:00.000Z",
       "updatedAt": "2024-03-10T16:20:00.000Z"
     },
@@ -653,6 +691,7 @@
       "gameReleaseDate": "2018-08-30",
       "class": "high",
       "numberOfSold": 87,
+      "tradable": true,
       "createdAt": "2023-09-02T14:35:00.000Z",
       "updatedAt": "2024-02-14T11:50:00.000Z"
     },
@@ -669,6 +708,7 @@
       "gameReleaseDate": "2019-09-27",
       "class": "high",
       "numberOfSold": 165,
+      "tradable": true,
       "createdAt": "2023-09-30T09:25:00.000Z",
       "updatedAt": "2024-01-08T15:10:00.000Z"
     },
@@ -685,6 +725,7 @@
       "gameReleaseDate": "2025-03-15",
       "class": "custom",
       "numberOfSold": 12,
+      "tradable": true,
       "createdAt": "2024-03-20T10:00:00.000Z",
       "updatedAt": "2024-03-20T10:00:00.000Z"
     },
@@ -701,6 +742,7 @@
       "gameReleaseDate": "2025-06-20",
       "class": "custom",
       "numberOfSold": 8,
+      "tradable": true,
       "createdAt": "2024-03-20T10:00:00.000Z",
       "updatedAt": "2024-03-20T10:00:00.000Z"
     },
@@ -717,6 +759,7 @@
       "gameReleaseDate": "2025-08-10",
       "class": "custom",
       "numberOfSold": 5,
+      "tradable": true,
       "createdAt": "2024-03-20T10:00:00.000Z",
       "updatedAt": "2024-03-20T10:00:00.000Z"
     },
@@ -733,6 +776,7 @@
       "gameReleaseDate": "2025-11-15",
       "class": "custom",
       "numberOfSold": 18,
+      "tradable": true,
       "createdAt": "2024-03-20T10:00:00.000Z",
       "updatedAt": "2024-03-20T10:00:00.000Z"
     },
@@ -749,6 +793,7 @@
       "gameReleaseDate": "2025-09-25",
       "class": "custom",
       "numberOfSold": 3,
+      "tradable": true,
       "createdAt": "2024-03-20T10:00:00.000Z",
       "updatedAt": "2024-03-20T10:00:00.000Z"
     }

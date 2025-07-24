@@ -30,16 +30,19 @@ const AboutUsSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-white relative overflow-hidden">
+    <section className="py-20 bg-white relative overflow-hidden w-full">
       {/* Diagonal Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-bl from-blue-50 to-transparent transform skew-x-12 origin-top-right"></div>
-        <div className="absolute bottom-0 left-0 w-1/3 h-2/3 bg-gradient-to-tr from-red-50 to-transparent transform -skew-x-6 origin-bottom-left"></div>
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-b from-transparent to-blue-50   transform skew-x-12 origin-top-right" />
+        <div className="absolute bottom-0 left-0 w-1/3 h-2/3 bg-gradient-to-t from-transparent via-red-50  to-transparent transform -skew-x-6 origin-bottom-left"></div>
       </div>
+
+      {/* Smooth transition gradient to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-slate-50"></div>
 
       <div className="w-full max-w-full px-8 lg:px-12 xl:px-16 relative z-10">
         {/* Main Content - Staggered Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20 max-w-8xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20 max-w-7xl mx-auto">
           {/* Left Content - Offset */}
           <div className="lg:pl-8">
             <div className="inline-block bg-funBlue text-white px-4 py-2 rounded-full text-sm font-bold mb-6 transform -rotate-2">

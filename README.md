@@ -1,4 +1,4 @@
 Planned Features:
 
 -Trade
--Sell
+-Buy

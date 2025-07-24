@@ -43,17 +43,11 @@ const CompareGamesSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-gray-50 relative overflow-hidden">
-      {/* Diagonal Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-1/3 h-2/3 bg-gradient-to-br from-blue-100 to-transparent transform -skew-x-12 origin-top-left"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-tl from-red-100 to-transparent transform skew-x-6 origin-bottom-right"></div>
-      </div>
-
+    <section className="py-20 bg-gray-50 relative overflow-hidden w-full">
       {/* Smooth transition gradient to next section */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-white"></div>
 
-      <div className="w-full max-w-full px-8 lg:px-12 xl:px-16 relative z-10">
+      <div className="w-full  px-8 lg:px-12 xl:px-16 relative z-10 max-w-6xl mx-auto">
         {/* Enhanced Header */}
         <div className="text-center mb-16 relative max-w-4xl mx-auto">
           <div className="inline-block bg-funBlue text-white px-4 py-2 rounded-full text-sm font-bold mb-4 transform rotate-2">

@@ -7,6 +7,8 @@ import Navigation from "@/app/components/ui/globalUI/Navigation";
 import HeroSection from "@/app/components/ui/home/HeroSection";
 import CompareGamesSection from "./components/ui/home/CompareGamesSection";
 import AboutUsSection from "./components/ui/home/AboutUsSection";
+import ContactSection from "./components/ui/home/ContactSection";
+import Footer from "./components/ui/globalUI/Footer";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -30,6 +32,8 @@ export default function Home() {
           <HeroSection />
           <CompareGamesSection />
           <AboutUsSection />
+          <ContactSection />
+          <Footer />
         </div>
       ) : (
         <div className="relative flex min-h-screen flex-col items-center justify-center p-6 pt-20 overflow-hidden bg-white">
