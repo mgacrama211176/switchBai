@@ -1,6 +1,6 @@
-export type Game = {
+export interface Game {
   gameTitle: string;
-  gamePlatform: string | string[]; // Updated to support both string and array formats
+  gamePlatform: string | string[];
   gameRatings: string;
   gameBarcode: string;
   gameDescription: string;
@@ -11,5 +11,7 @@ export type Game = {
   gameReleaseDate: string;
   createdAt: string;
   updatedAt: string;
-  numberOfSold?: number; // Now available in JSON
-};
+  numberOfSold?: number;
+  rentalAvailable?: boolean;
+  rentalWeeklyRate?: number;
+}

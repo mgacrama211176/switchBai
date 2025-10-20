@@ -210,7 +210,7 @@ const HeroSection = () => {
 
           <h1 className="text-6xl font-black text-gray-900 mb-6 tracking-tight relative">
             Latest Game
-            <span className="block md:inline text-funBlue transform hover:rotate-1 transition-transform duration-300 inline-block">
+            <span className=" md:inline text-funBlue transform hover:rotate-1 transition-transform duration-300 inline-block">
               {" "}
               Stocks
             </span>
@@ -598,7 +598,7 @@ const HeroSection = () => {
 
         {/* Enhanced Compare Floating Bar */}
         {compareItems.length > 0 && (
-          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-lameRed to-pink-500 text-white px-8 py-4 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom duration-500 hover:scale-105 transition-transform duration-300">
+          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-lameRed to-pink-500 text-white px-8 py-4 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom hover:scale-105 transition-transform duration-300">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
