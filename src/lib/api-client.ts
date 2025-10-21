@@ -7,7 +7,9 @@ const apiClient = axios.create({
     process.env.NEXT_PUBLIC_API_URL ||
     (typeof window !== "undefined"
       ? window.location.origin
-      : "http://localhost:3000"),
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000"),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -34,6 +36,15 @@ export interface GamesApiResponse {
  * Generic API request wrapper with error handling
  */
 async function apiRequest<T>(url: string): Promise<ApiResponse<T>> {
+  // Prevent API calls during build time
+  if (typeof window === "undefined" && process.env.NODE_ENV === "production") {
+    console.warn("API call blocked during build time:", url);
+    return {
+      error: "API calls not available during build time",
+      success: false,
+    };
+  }
+
   try {
     // Ensure URL is properly formatted
     const fullUrl = url.startsWith("http")
@@ -63,7 +74,7 @@ async function apiRequest<T>(url: string): Promise<ApiResponse<T>> {
  * Fetch latest games with pagination
  */
 export async function fetchLatestGames(
-  limit: number = 10,
+  limit: number = 10
 ): Promise<ApiResponse<Game[]>> {
   const url = `/api/games?limit=${limit}&page=1`;
   const response = await apiRequest<GamesApiResponse>(url);
@@ -107,7 +118,7 @@ export async function fetchGames(params: {
  * Fetch single game by barcode
  */
 export async function fetchGameByBarcode(
-  barcode: string,
+  barcode: string
 ): Promise<ApiResponse<Game>> {
   const url = `/api/games/${barcode}`;
   const response = await apiRequest<{ game: Game }>(url);
@@ -139,7 +150,7 @@ export const swrFetcher = async (url: string): Promise<any> => {
     return response.data;
   } catch (error) {
     throw new Error(
-      axios.isAxiosError(error) ? error.message : "Failed to fetch data",
+      axios.isAxiosError(error) ? error.message : "Failed to fetch data"
     );
   }
 };

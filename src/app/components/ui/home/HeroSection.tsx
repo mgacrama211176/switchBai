@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Game } from "@/app/types/games";
 import GameCardSkeleton from "./GameCardSkeleton";
 import ComparisonModal from "./ComparisonModal";
+import { fetchLatestGames } from "@/lib/api-client";
 import {
   formatPrice,
   calculateSavings,
@@ -21,12 +22,36 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const [compareItems, setCompareItems] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
+  const [latestGames, setLatestGames] = useState<Game[]>(initialGames);
+  const [isLoading, setIsLoading] = useState(initialGames.length === 0);
+  const [error, setError] = useState<string | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Use initial data from server component (no SWR for now to prevent loops)
-  const latestGames = initialGames;
-  const error = null;
-  const isLoading = false;
+  // Fetch games on client side if no initial games provided
+  useEffect(() => {
+    if (initialGames.length === 0) {
+      const loadGames = async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+          const response = await fetchLatestGames(10);
+          if (response.success && response.data) {
+            setLatestGames(response.data);
+          } else {
+            setError(response.error || "Failed to load games");
+          }
+        } catch (err) {
+          console.error("Error loading games:", err);
+          setError("Failed to load games");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadGames();
+    }
+  }, [initialGames.length]);
 
   const handleAddToCart = (game: Game) => {
     if (game.gameAvailableStocks === 0) return;
@@ -273,7 +298,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                 const stockInfo = getStockUrgency(game.gameAvailableStocks);
                 const savings = calculateSavings(
                   game.gamePrice,
-                  game.gameBarcode,
+                  game.gameBarcode
                 );
 
                 return (
@@ -432,7 +457,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   ></button>
-                ),
+                )
               )}
             </div>
           )}
@@ -561,7 +586,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
         {/* Comparison Modal */}
         <ComparisonModal
           games={latestGames.filter((game) =>
-            compareItems.includes(game.gameBarcode),
+            compareItems.includes(game.gameBarcode)
           )}
           isOpen={isComparisonModalOpen}
           onClose={() => setIsComparisonModalOpen(false)}

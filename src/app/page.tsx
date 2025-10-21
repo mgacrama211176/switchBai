@@ -17,7 +17,7 @@ export default function Home() {
       {process.env.NEXT_PUBLIC_ENVIRONMENT === "dev" ? (
         <div className="relative flex min-h-screen flex-col items-center justify-center   bg-white">
           <Navigation />
-          <HeroSectionWrapper />
+          <HeroSectionWrapper fallbackGames={[]} />
           <CompareGamesSection />
           <AboutUsSection />
           <ContactSection />
