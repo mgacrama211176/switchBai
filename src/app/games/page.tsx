@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -40,7 +40,7 @@ const PRICE_RANGES = [
   { label: "Over ₱4,000", min: 4001, max: 99999, value: "4001-99999" },
 ];
 
-const GamesPage = () => {
+const GamesPageContent = () => {
   // URL params handling
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -52,10 +52,10 @@ const GamesPage = () => {
 
   // Pagination state (from URL or defaults)
   const [currentPage, setCurrentPage] = useState(
-    () => Number(searchParams.get("page")) || 1,
+    () => Number(searchParams.get("page")) || 1
   );
   const [itemsPerPage, setItemsPerPage] = useState(
-    () => Number(searchParams.get("limit")) || 24,
+    () => Number(searchParams.get("limit")) || 24
   );
   const [totalPages, setTotalPages] = useState(1);
   const [totalGames, setTotalGames] = useState(0);
@@ -167,7 +167,7 @@ const GamesPage = () => {
     if (filters.priceRange) {
       const [min, max] = filters.priceRange.split("-").map(Number);
       filtered = filtered.filter(
-        (g) => g.gamePrice >= min && g.gamePrice <= max,
+        (g) => g.gamePrice >= min && g.gamePrice <= max
       );
     }
 
@@ -199,7 +199,7 @@ const GamesPage = () => {
       default:
         filtered.sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         break;
     }
@@ -239,7 +239,7 @@ const GamesPage = () => {
   };
 
   const handleAvailabilityChange = (
-    availability: "all" | "inStock" | "outOfStock",
+    availability: "all" | "inStock" | "outOfStock"
   ) => {
     setFilters((prev) => ({ ...prev, availability }));
     setCurrentPage(1);
@@ -919,7 +919,7 @@ const GamesPage = () => {
                         <button
                           onClick={() =>
                             setCurrentPage(
-                              Math.min(totalPages, currentPage + 1),
+                              Math.min(totalPages, currentPage + 1)
                             )
                           }
                           disabled={currentPage === totalPages}
@@ -992,6 +992,36 @@ const GamesPage = () => {
 
       <Footer />
     </main>
+  );
+};
+
+const GamesPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-white">
+          <Navigation />
+          <div className="pt-32 pb-16 px-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {[...Array(12)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="aspect-[3/4] bg-gray-200 rounded-2xl"
+                    ></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <Footer />
+        </main>
+      }
+    >
+      <GamesPageContent />
+    </Suspense>
   );
 };
 

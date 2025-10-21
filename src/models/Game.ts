@@ -143,7 +143,7 @@ const GameSchema = new Schema<IGame>(
       type: Number,
       min: [0, "Rental weekly rate cannot be negative"],
       validate: {
-        validator: function (v: number) {
+        validator: function (this: any, v: number) {
           return !this.rentalAvailable || (v && v > 0);
         },
         message: "Rental weekly rate is required when rental is available",
@@ -166,7 +166,7 @@ const GameSchema = new Schema<IGame>(
         return ret;
       },
     },
-  },
+  }
 );
 
 // Indexes for better query performance
