@@ -166,7 +166,7 @@ const GameSchema = new Schema<IGame>(
         return ret;
       },
     },
-  }
+  },
 );
 
 // Indexes for better query performance

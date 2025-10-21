@@ -74,7 +74,7 @@ async function apiRequest<T>(url: string): Promise<ApiResponse<T>> {
  * Fetch latest games with pagination
  */
 export async function fetchLatestGames(
-  limit: number = 10
+  limit: number = 10,
 ): Promise<ApiResponse<Game[]>> {
   const url = `/api/games?limit=${limit}&page=1`;
   const response = await apiRequest<GamesApiResponse>(url);
@@ -118,7 +118,7 @@ export async function fetchGames(params: {
  * Fetch single game by barcode
  */
 export async function fetchGameByBarcode(
-  barcode: string
+  barcode: string,
 ): Promise<ApiResponse<Game>> {
   const url = `/api/games/${barcode}`;
   const response = await apiRequest<{ game: Game }>(url);
@@ -150,7 +150,7 @@ export const swrFetcher = async (url: string): Promise<any> => {
     return response.data;
   } catch (error) {
     throw new Error(
-      axios.isAxiosError(error) ? error.message : "Failed to fetch data"
+      axios.isAxiosError(error) ? error.message : "Failed to fetch data",
     );
   }
 };

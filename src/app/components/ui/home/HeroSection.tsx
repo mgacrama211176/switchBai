@@ -126,7 +126,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
     compareItems.includes(barcode);
 
   return (
-    <section className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+    <section className="min-h-screen w-full  bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
       {/* Diagonal Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 right-0 w-2/3 h-3/4 bg-gradient-to-bl from-blue-100/60 to-transparent transform skew-x-6 origin-top-right"></div>
@@ -203,7 +203,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
         </header>
 
         {/* Enhanced Games Carousel Container */}
-        <div className="relative mb-16">
+        <div className="relative mb-16 max-w-7xl mx-auto">
           {/* Navigation Arrows */}
           <button
             onClick={() => scrollCarousel("left")}
