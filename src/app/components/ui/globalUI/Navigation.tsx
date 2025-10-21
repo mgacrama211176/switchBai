@@ -35,15 +35,47 @@ const Navigation: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [prevScrollPos, setPrevScrollPos] = useState(0);
+  const [visible, setVisible] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Scroll direction detection with throttling
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      clearTimeout(timeoutId);
+
+      timeoutId = setTimeout(() => {
+        const currentScrollPos = window.scrollY;
+
+        // Show nav if at top of page
+        if (currentScrollPos < 10) {
+          setVisible(true);
+          setScrolled(false);
+        } else {
+          // Show nav if scrolling up, hide if scrolling down
+          setVisible(prevScrollPos > currentScrollPos);
+          setScrolled(true);
+        }
+
+        setPrevScrollPos(currentScrollPos);
+      }, 10); // Throttle to 10ms
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [prevScrollPos]);
+
+  // Close mobile menu when nav hides
+  useEffect(() => {
+    if (!visible && isMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
+  }, [visible, isMobileMenuOpen]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -124,7 +156,9 @@ const Navigation: React.FC = () => {
   return (
     <>
       <nav
-        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 w-full ${
+        className={`fixed top-0 left-0 right-0 z-[70] w-full transition-all duration-300 ${
+          visible ? "translate-y-0" : "-translate-y-full"
+        } ${
           scrolled
             ? "bg-white/60 backdrop-blur-xl shadow-xl border-b border-gray-100"
             : "bg-white/70 backdrop-blur-md shadow-lg border-b border-gray-200"
@@ -163,7 +197,7 @@ const Navigation: React.FC = () => {
                     <button
                       onClick={() =>
                         setOpenDropdown(
-                          openDropdown === item.name ? null : item.name
+                          openDropdown === item.name ? null : item.name,
                         )
                       }
                       className="flex items-center space-x-2 text-gray-700 hover:text-red font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-red/5 group"
@@ -185,7 +219,7 @@ const Navigation: React.FC = () => {
 
                     {/* Dropdown Menu */}
                     {openDropdown === item.name && (
-                      <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-[90] animate-in fade-in slide-in-from-top-2 duration-200">
                         {item.subItems.map((subItem) => (
                           <Link
                             key={subItem.name}
@@ -224,7 +258,7 @@ const Navigation: React.FC = () => {
                     {/* Subtle hover underline */}
                     <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue to-red scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"></span>
                   </Link>
-                )
+                ),
               )}
 
               {/* Search Bar */}
@@ -332,7 +366,7 @@ const Navigation: React.FC = () => {
                       </div>
                     </div>
                   </Link>
-                )
+                ),
               )}
             </div>
           </div>
@@ -342,7 +376,7 @@ const Navigation: React.FC = () => {
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[80] md:hidden transition-opacity duration-300"
           onClick={handleMobileMenuClose}
         />
       )}

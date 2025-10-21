@@ -1,4 +1,5 @@
 export interface Game {
+  _id?: string; // MongoDB document ID
   gameTitle: string;
   gamePlatform: string | string[];
   gameRatings: string;
@@ -14,4 +15,6 @@ export interface Game {
   numberOfSold?: number;
   rentalAvailable?: boolean;
   rentalWeeklyRate?: number;
+  class?: string;
+  tradable?: boolean;
 }

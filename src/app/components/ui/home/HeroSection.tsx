@@ -1,114 +1,32 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import gamesData from "@/app/data/games.json";
 import { Game } from "@/app/types/games";
+import GameCardSkeleton from "./GameCardSkeleton";
+import ComparisonModal from "./ComparisonModal";
+import {
+  formatPrice,
+  calculateSavings,
+  getPlatformInfo,
+  getStockUrgency,
+} from "./game-utils";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  initialGames: Game[];
+}
+
+const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const [cartItems, setCartItems] = useState<string[]>([]);
   const [compareItems, setCompareItems] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Sort games by updatedAt to get the latest stocks (most recent first) - limit to 10
-  const latestGames = [...gamesData.games]
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    )
-    .slice(0, 10);
-
-  const formatPrice = (price: number): string => {
-    return `₱${price.toLocaleString()}`;
-  };
-
-  // Calculate savings based on 10% discount (deterministic to prevent hydration errors)
-  const calculateSavings = (
-    price: number,
-    gameBarcode: string,
-  ): { original: number; savings: number; percentage: number } => {
-    const savingsPercentage = 10; // Fixed 10% savings
-    const originalPrice = Math.round(price / (1 - savingsPercentage / 100));
-    const savings = originalPrice - price;
-    return { original: originalPrice, savings, percentage: savingsPercentage };
-  };
-
-  // Helper function to handle platform display
-  const getPlatformInfo = (platform: string | string[]) => {
-    const platforms = Array.isArray(platform) ? platform : [platform];
-
-    if (platforms.length === 1) {
-      if (platforms[0] === "Nintendo Switch") {
-        return {
-          display: "Nintendo Switch",
-          color: "bg-gradient-to-r from-red-500 to-blue-500 text-white",
-          icon: "🎮",
-        };
-      } else if (platforms[0] === "Nintendo Switch 2") {
-        return {
-          display: "Switch 2",
-          color: "bg-gradient-to-r from-purple-500 to-pink-500 text-white",
-          icon: "✨",
-        };
-      }
-    }
-
-    if (
-      platforms.includes("Nintendo Switch") &&
-      platforms.includes("Nintendo Switch 2")
-    ) {
-      return {
-        display: "Switch & Switch 2",
-        color: "bg-gradient-to-r from-indigo-500 to-purple-500 text-white",
-        icon: "🎮✨",
-      };
-    }
-
-    return {
-      display: platforms.join(", "),
-      color: "bg-gray-100 text-gray-700",
-      icon: "🎮",
-    };
-  };
-
-  // Enhanced stock urgency indicator
-  const getStockUrgency = (stock: number) => {
-    if (stock === 0) {
-      return {
-        text: "Out of Stock",
-        color: "text-red-600",
-        bgColor: "bg-red-50 border-red-200",
-      };
-    } else if (stock <= 3) {
-      return {
-        text: `Only ${stock} left!`,
-        color: "text-red-600",
-        bgColor: "bg-red-50 border-red-200",
-      };
-    } else if (stock <= 8) {
-      return {
-        text: `${stock} in stock`,
-        color: "text-orange-600",
-        bgColor: "bg-orange-50 border-orange-200",
-      };
-    } else {
-      return {
-        text: `${stock} available`,
-        color: "text-green-600",
-        bgColor: "bg-green-50 border-green-200",
-      };
-    }
-  };
-
-  // Use actual numberOfSold from JSON or fallback to generated number
-  const getNumberOfSold = (game: Game): number => {
-    if (game.numberOfSold) {
-      return game.numberOfSold;
-    }
-    const seed = game.gameBarcode
-      .split("")
-      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return Math.floor((seed % 50) + 10);
-  };
+  // Use initial data from server component (no SWR for now to prevent loops)
+  const latestGames = initialGames;
+  const error = null;
+  const isLoading = false;
 
   const handleAddToCart = (game: Game) => {
     if (game.gameAvailableStocks === 0) return;
@@ -129,8 +47,8 @@ const HeroSection = () => {
         return prev.filter((barcode) => barcode !== game.gameBarcode);
       }
 
-      if (prev.length >= 4) {
-        console.log("Maximum 4 items can be compared");
+      if (prev.length >= 2) {
+        console.log("Maximum 2 items can be compared");
         return prev;
       }
 
@@ -142,7 +60,7 @@ const HeroSection = () => {
 
   const scrollCarousel = (direction: "left" | "right") => {
     if (carouselRef.current) {
-      const scrollAmount = 320;
+      const scrollAmount = 240;
       const currentScroll = carouselRef.current.scrollLeft;
       const targetScroll =
         direction === "left"
@@ -161,7 +79,7 @@ const HeroSection = () => {
     const handleScroll = () => {
       if (carouselRef.current) {
         const scrollLeft = carouselRef.current.scrollLeft;
-        const cardWidth = 320;
+        const cardWidth = 240;
         const newSlide = Math.round(scrollLeft / cardWidth);
         setCurrentSlide(newSlide);
       }
@@ -307,206 +225,217 @@ const HeroSection = () => {
           {/* Enhanced Carousel Scrollable Container */}
           <div
             ref={carouselRef}
-            className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 px-8 snap-x snap-mandatory"
+            className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide pb-4 px-4 md:px-6 snap-x snap-mandatory"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {latestGames.map((game, index) => {
-              const platformInfo = getPlatformInfo(game.gamePlatform);
-              const stockInfo = getStockUrgency(game.gameAvailableStocks);
-              const savings = calculateSavings(
-                game.gamePrice,
-                game.gameBarcode,
-              );
-              const soldCount = getNumberOfSold(game);
-
-              return (
-                <article
-                  key={`${game.gameBarcode}-${index}`}
-                  className="game-card shadow-lg hover:shadow-2xl group relative flex-shrink-0 w-80 bg-white rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 snap-start"
+            {/* Error State */}
+            {error && (
+              <div className="flex-shrink-0 w-48 md:w-52 bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+                <div className="text-red-600 text-4xl mb-4">⚠️</div>
+                <h3 className="text-lg font-bold text-red-800 mb-2">
+                  Failed to Load Games
+                </h3>
+                <p className="text-red-600 text-sm mb-4">
+                  Unable to fetch the latest games. Please try refreshing the
+                  page.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  {/* Savings Badge */}
-                  {savings.percentage > 0 && (
-                    <div className="absolute top-4 left-4 z-20 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                      Save {savings.percentage}%
-                    </div>
-                  )}
+                  Refresh Page
+                </button>
+              </div>
+            )}
 
-                  {/* Stock Urgency Badge */}
-                  <div
-                    className={`absolute top-4 right-4 z-20 px-3 py-1 rounded-full text-xs font-bold border ${stockInfo.bgColor} ${stockInfo.color}`}
+            {/* Loading State */}
+            {isLoading && !error && <GameCardSkeleton count={3} />}
+
+            {/* Empty State */}
+            {!isLoading && !error && latestGames.length === 0 && (
+              <div className="flex-shrink-0 w-48 md:w-52 bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
+                <div className="text-gray-400 text-4xl mb-4">🎮</div>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">
+                  No Games Available
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  We're currently updating our game collection. Check back soon!
+                </p>
+              </div>
+            )}
+
+            {/* Games List */}
+            {!isLoading &&
+              !error &&
+              latestGames.length > 0 &&
+              latestGames.map((game: Game, index: number) => {
+                const platformInfo = getPlatformInfo(game.gamePlatform);
+                const stockInfo = getStockUrgency(game.gameAvailableStocks);
+                const savings = calculateSavings(
+                  game.gamePrice,
+                  game.gameBarcode,
+                );
+
+                return (
+                  <article
+                    key={game.gameBarcode}
+                    className="game-card shadow-lg hover:shadow-2xl group relative flex-shrink-0 w-48 md:w-52 bg-white rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 snap-start"
                   >
-                    {stockInfo.text}
-                  </div>
+                    {/* Savings Badge */}
+                    {savings.percentage > 0 && (
+                      <div className="absolute top-4 left-4 z-20 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                        Save {savings.percentage}%
+                      </div>
+                    )}
 
-                  {/* Game Image Container */}
-                  <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                    <Image
-                      src={game.gameImageURL}
-                      alt={`${game.gameTitle} game cover`}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                      sizes="320px"
-                    />
-                    {/* Overlay for better text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  </div>
-
-                  {/* Enhanced Card Content */}
-                  <div className="p-5 space-y-4">
-                    {/* Game Title with better hierarchy */}
-                    <div className="h-12 flex items-start">
-                      <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-funBlue transition-colors duration-300 leading-tight">
-                        {game.gameTitle}
-                      </h3>
+                    {/* Stock Urgency Badge */}
+                    <div
+                      className={`absolute top-4 right-4 z-20 px-3 py-1 rounded-full text-xs font-bold border ${stockInfo.bgColor} ${stockInfo.color}`}
+                    >
+                      {stockInfo.text}
                     </div>
 
-                    {/* Enhanced Platform Display */}
-                    <div className="flex justify-center">
-                      <span
-                        className={`text-sm font-bold px-3 py-1 rounded-full flex items-center gap-2 ${platformInfo.color}`}
-                      >
-                        <span>{platformInfo.icon}</span>
-                        <span>{platformInfo.display}</span>
-                      </span>
+                    {/* Game Image Container */}
+                    <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                      <Image
+                        src={game.gameImageURL}
+                        alt={`${game.gameTitle} game cover`}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        sizes="(max-width: 768px) 192px, 208px"
+                      />
+                      {/* Overlay for better text readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     </div>
 
-                    {/* Category & Rating with better styling */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold px-3 py-1 rounded-full bg-gray-100 text-gray-700 border">
-                        {game.gameCategory}
-                      </span>
-                      <span className="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">
-                        Rated {game.gameRatings}
-                      </span>
-                    </div>
+                    {/* Enhanced Card Content */}
+                    <div className="p-3 space-y-2">
+                      {/* Game Title with better hierarchy */}
+                      <div className="min-h-8 flex items-start">
+                        <h3 className="text-sm md:text-base font-bold text-gray-900 line-clamp-2 group-hover:text-funBlue transition-colors duration-300 leading-tight">
+                          {game.gameTitle}
+                        </h3>
+                      </div>
 
-                    {/* Social Proof - Sales Stats */}
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-600">📈</span>
-                          <span className="font-semibold text-gray-700">
-                            {soldCount} sold
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Updated{" "}
-                          {new Date(game.updatedAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                            },
+                      {/* Enhanced Platform Display */}
+                      <div className="flex justify-center">
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${platformInfo.color}`}
+                        >
+                          <span>{platformInfo.icon}</span>
+                          <span>{platformInfo.display}</span>
+                        </span>
+                      </div>
+
+                      {/* Enhanced Pricing Section */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-100">
+                        <div className="space-y-1">
+                          <div className="text-lg md:text-xl font-black text-funBlue">
+                            {formatPrice(game.gamePrice)}
+                          </div>
+                          {savings.percentage > 0 && (
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="text-gray-500 line-through">
+                                {formatPrice(savings.original)}
+                              </div>
+                              <div className="font-bold text-green-600">
+                                Save ₱{savings.savings.toLocaleString()}
+                              </div>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Enhanced Pricing Section */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-3xl font-black text-funBlue">
-                          {formatPrice(game.gamePrice)}
+                        <div className="text-[10px] text-gray-600 font-medium mt-2">
+                          💡 {savings.percentage}% below market price
                         </div>
-                        {savings.percentage > 0 && (
-                          <div className="text-right">
-                            <div className="text-sm text-gray-500 line-through">
-                              {formatPrice(savings.original)}
-                            </div>
-                            <div className="text-sm font-bold text-green-600">
-                              Save ₱{savings.savings.toLocaleString()}
-                            </div>
-                          </div>
-                        )}
                       </div>
-                      <div className="text-xs text-gray-600 font-medium">
-                        💡 {savings.percentage}% below market price
-                      </div>
-                    </div>
 
-                    {/* Enhanced Action Buttons */}
-                    <div className="flex gap-3 pt-2">
-                      {/* Enhanced Add to Cart Button */}
-                      <button
-                        onClick={() => handleAddToCart(game)}
-                        disabled={game.gameAvailableStocks === 0}
-                        className={`flex-1 font-bold py-3 px-4 rounded-xl transition-all duration-300 text-sm shadow-lg hover:shadow-xl ${
-                          game.gameAvailableStocks === 0
-                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      {/* Enhanced Action Buttons */}
+                      <div className="flex gap-2 pt-1">
+                        {/* Enhanced Add to Cart Button */}
+                        <button
+                          onClick={() => handleAddToCart(game)}
+                          disabled={game.gameAvailableStocks === 0}
+                          className={`flex-1 font-bold py-2 px-3 rounded-xl transition-all duration-300 text-xs shadow-lg hover:shadow-xl ${
+                            game.gameAvailableStocks === 0
+                              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                              : isInCart(game.gameBarcode)
+                                ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:-translate-y-1"
+                                : "bg-gradient-to-r from-funBlue to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 hover:-translate-y-1"
+                          }`}
+                          aria-label={`${
+                            isInCart(game.gameBarcode)
+                              ? "Remove from"
+                              : "Add to"
+                          } cart: ${game.gameTitle}`}
+                        >
+                          {game.gameAvailableStocks === 0
+                            ? "🚫 Out of Stock"
                             : isInCart(game.gameBarcode)
-                              ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:-translate-y-1"
-                              : "bg-gradient-to-r from-funBlue to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 hover:-translate-y-1"
-                        }`}
-                        aria-label={`${
-                          isInCart(game.gameBarcode) ? "Remove from" : "Add to"
-                        } cart: ${game.gameTitle}`}
-                      >
-                        {game.gameAvailableStocks === 0
-                          ? "🚫 Out of Stock"
-                          : isInCart(game.gameBarcode)
-                            ? "✓ Added to Cart"
-                            : "🛒 Add to Cart"}
-                      </button>
+                              ? "✓ Added to Cart"
+                              : "🛒 Add to Cart"}
+                        </button>
 
-                      {/* Enhanced Compare Button */}
-                      <button
-                        onClick={() => handleAddToCompare(game)}
-                        disabled={
-                          compareItems.length >= 4 &&
-                          !isInCompare(game.gameBarcode)
-                        }
-                        className={`flex-shrink-0 w-12 h-12 font-bold rounded-xl transition-all duration-300 border-2 text-sm shadow-lg hover:shadow-xl ${
-                          compareItems.length >= 4 &&
-                          !isInCompare(game.gameBarcode)
-                            ? "border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100"
-                            : isInCompare(game.gameBarcode)
-                              ? "bg-gradient-to-r from-lameRed to-pink-500 text-white border-lameRed hover:-translate-y-1"
-                              : "border-lameRed text-lameRed hover:bg-lameRed hover:text-white hover:-translate-y-1"
-                        }`}
-                        aria-label={`${
-                          isInCompare(game.gameBarcode)
-                            ? "Remove from"
-                            : "Add to"
-                        } comparison: ${game.gameTitle}`}
-                        title={
-                          isInCompare(game.gameBarcode)
-                            ? "Remove from Compare"
-                            : "Add to Compare"
-                        }
-                      >
-                        {isInCompare(game.gameBarcode) ? "✓" : "⚖"}
-                      </button>
+                        {/* Enhanced Compare Button */}
+                        <button
+                          onClick={() => handleAddToCompare(game)}
+                          disabled={
+                            compareItems.length >= 2 &&
+                            !isInCompare(game.gameBarcode)
+                          }
+                          className={`flex-shrink-0 w-10 h-10 font-bold rounded-xl transition-all duration-300 border-2 text-sm shadow-lg hover:shadow-xl ${
+                            compareItems.length >= 2 &&
+                            !isInCompare(game.gameBarcode)
+                              ? "border-gray-300 text-gray-400 cursor-not-allowed bg-gray-100"
+                              : isInCompare(game.gameBarcode)
+                                ? "bg-gradient-to-r from-lameRed to-pink-500 text-white border-lameRed hover:-translate-y-1"
+                                : "border-lameRed text-lameRed hover:bg-lameRed hover:text-white hover:-translate-y-1"
+                          }`}
+                          aria-label={`${
+                            isInCompare(game.gameBarcode)
+                              ? "Remove from"
+                              : "Add to"
+                          } comparison: ${game.gameTitle}`}
+                          title={
+                            isInCompare(game.gameBarcode)
+                              ? "Remove from Compare"
+                              : "Add to Compare"
+                          }
+                        >
+                          {isInCompare(game.gameBarcode) ? "✓" : "⚖"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
+                  </article>
+                );
+              })}
           </div>
 
           {/* Enhanced Scroll Indicators */}
-          <div className="flex justify-center mt-8 gap-3">
-            {Array.from({ length: Math.ceil(latestGames.length / 3) }).map(
-              (_, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    if (carouselRef.current) {
-                      carouselRef.current.scrollTo({
-                        left: index * 960,
-                        behavior: "smooth",
-                      });
-                    }
-                  }}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    Math.floor(currentSlide / 3) === index
-                      ? "bg-funBlue scale-125"
-                      : "bg-gray-300 hover:bg-gray-400"
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                ></button>
-              ),
-            )}
-          </div>
+          {!isLoading && !error && latestGames.length > 0 && (
+            <div className="flex justify-center mt-8 gap-3">
+              {Array.from({ length: Math.ceil(latestGames.length / 3) }).map(
+                (_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (carouselRef.current) {
+                        carouselRef.current.scrollTo({
+                          left: index * 720,
+                          behavior: "smooth",
+                        });
+                      }
+                    }}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      Math.floor(currentSlide / 3) === index
+                        ? "bg-funBlue scale-125"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  ></button>
+                ),
+              )}
+            </div>
+          )}
         </div>
 
         {/* Enhanced View More Games Section */}
@@ -598,7 +527,7 @@ const HeroSection = () => {
 
         {/* Enhanced Compare Floating Bar */}
         {compareItems.length > 0 && (
-          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-lameRed to-pink-500 text-white px-8 py-4 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom hover:scale-105 transition-transform duration-300">
+          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-lameRed to-pink-500 text-white px-8 py-4 rounded-2xl shadow-2xl z-[100] animate-in slide-in-from-bottom hover:scale-105 transition-transform duration-300">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
@@ -612,10 +541,7 @@ const HeroSection = () => {
                 <button
                   className="bg-white font-bold px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 text-lameRed transform hover:rotate-2"
                   onClick={() => {
-                    console.log(
-                      "Navigate to compare with items:",
-                      compareItems,
-                    );
+                    setIsComparisonModalOpen(true);
                   }}
                 >
                   Compare Now ({compareItems.length})
@@ -631,6 +557,17 @@ const HeroSection = () => {
             </div>
           </div>
         )}
+
+        {/* Comparison Modal */}
+        <ComparisonModal
+          games={latestGames.filter((game) =>
+            compareItems.includes(game.gameBarcode),
+          )}
+          isOpen={isComparisonModalOpen}
+          onClose={() => setIsComparisonModalOpen(false)}
+          onAddToCart={handleAddToCart}
+          cartItems={cartItems}
+        />
       </div>
     </section>
   );

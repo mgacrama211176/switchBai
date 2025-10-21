@@ -8,7 +8,7 @@ import { siteConfig } from "@/config/site";
 export function PricingCalculator() {
   const { pricingCalculator } = rentalContent;
   const [gamePrice, setGamePrice] = useState(
-    siteConfig.rental.rates.tier1.gamePrice
+    siteConfig.rental.rates.tier1.gamePrice,
   );
   const [weeks, setWeeks] = useState(2);
 

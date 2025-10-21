@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 const AboutUsSection = () => {
@@ -121,7 +123,7 @@ const AboutUsSection = () => {
             <div className="grid grid-cols-2 gap-6">
               {stats.map((stat, index) => (
                 <div
-                  key={index}
+                  key={stat.label}
                   className={`bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 ${
                     index === 0
                       ? "transform -rotate-3 hover:rotate-0"

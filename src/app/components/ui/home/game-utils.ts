@@ -1,14 +1,16 @@
+// Helper functions that are used in both HeroSection and ComparisonModal
 export function formatPrice(price: number): string {
   return `₱${price.toLocaleString()}`;
 }
 
-export interface PlatformInfo {
-  display: string;
-  color: string;
-  icon: string;
+export function calculateSavings(price: number, gameBarcode: string) {
+  const savingsPercentage = 10;
+  const originalPrice = Math.round(price / (1 - savingsPercentage / 100));
+  const savings = originalPrice - price;
+  return { original: originalPrice, savings, percentage: savingsPercentage };
 }
 
-export function getPlatformInfo(platform: string | string[]): PlatformInfo {
+export function getPlatformInfo(platform: string | string[]) {
   const platforms = Array.isArray(platform) ? platform : [platform];
 
   if (platforms.length === 1) {
@@ -45,13 +47,7 @@ export function getPlatformInfo(platform: string | string[]): PlatformInfo {
   };
 }
 
-export interface StockUrgency {
-  text: string;
-  color: string;
-  bgColor: string;
-}
-
-export function getStockUrgency(stock: number): StockUrgency {
+export function getStockUrgency(stock: number) {
   if (stock === 0) {
     return {
       text: "Out of Stock",
@@ -77,63 +73,4 @@ export function getStockUrgency(stock: number): StockUrgency {
       bgColor: "bg-green-50 border-green-200",
     };
   }
-}
-
-export interface RentalPricing {
-  weeklyRate: number;
-  twoWeeks: number;
-  oneMonth: number;
-  deposit: number;
-}
-
-export function calculateRentalPrice(gamePrice: number): RentalPricing {
-  // Weekly rates based on game price
-  let weeklyRate: number;
-
-  if (gamePrice === 1200) {
-    weeklyRate = 300;
-  } else if (gamePrice === 1500) {
-    weeklyRate = 350;
-  } else if (gamePrice === 1900) {
-    weeklyRate = 400;
-  } else {
-    // Default fallback for any other price
-    weeklyRate = Math.round(gamePrice * 0.25);
-  }
-
-  const twoWeeks = weeklyRate * 2;
-  const oneMonth = weeklyRate * 4;
-  const deposit = gamePrice - weeklyRate;
-
-  return {
-    weeklyRate,
-    twoWeeks,
-    oneMonth,
-    deposit,
-  };
-}
-
-export interface DepositBreakdown {
-  rentalCost: number;
-  deposit: number;
-  upfrontTotal: number;
-  refundAmount: number;
-}
-
-export function calculateDepositBreakdown(
-  gamePrice: number,
-  weeks: number,
-): DepositBreakdown {
-  const pricing = calculateRentalPrice(gamePrice);
-  const rentalCost = pricing.weeklyRate * weeks;
-  const deposit = gamePrice - pricing.weeklyRate;
-  const upfrontTotal = rentalCost + deposit;
-  const refundAmount = deposit;
-
-  return {
-    rentalCost,
-    deposit,
-    upfrontTotal,
-    refundAmount,
-  };
 }

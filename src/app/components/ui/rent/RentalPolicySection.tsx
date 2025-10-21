@@ -7,7 +7,7 @@ import { rentalContent } from "@/config/rental-content";
 export function RentalPolicySection() {
   const { policies } = rentalContent;
   const [openPolicy, setOpenPolicy] = useState<string | null>(
-    policies.items[0].id
+    policies.items[0].id,
   );
 
   const togglePolicy = (id: string) => {
