@@ -93,6 +93,8 @@ export async function optimizeUploadedImage(
     // Ensure output directory exists
     await fs.mkdir(outputDir, { recursive: true });
 
+    // Process the image with Sharp
+
     // Process and save the image
     const image = sharp(buffer);
     const metadata = await image.metadata();
@@ -125,6 +127,9 @@ export async function optimizeUploadedImage(
     };
   } catch (error) {
     console.error("Error optimizing uploaded image:", error);
+
+    // Standard error handling for image optimization
+
     throw new Error("Failed to optimize uploaded image");
   }
 }

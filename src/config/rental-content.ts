@@ -6,12 +6,12 @@ export const rentalContent = {
       "Experience premium Nintendo Switch games without the premium price tag. Rent, play, swap, and repeat!",
     description:
       "Get access to the latest Nintendo Switch titles for a fraction of the cost. Perfect for gamers who love variety and smart spending.",
-    cta: "See Pricing",
+    cta: "Calculate Your Cost",
     trustBadges: [
       {
         icon: "💰",
-        text: "Affordable Weekly Rates",
-        description: "Starting at ₱300/week",
+        text: "Flexible Daily Pricing",
+        description: "Starting at ₱60/day",
       },
       {
         icon: "🔄",
@@ -42,7 +42,7 @@ export const rentalContent = {
         number: "02",
         title: "Pay Rent + Deposit",
         description:
-          "Pay your weekly rental fee plus a refundable deposit (equal to game value minus one week's rent). Total upfront equals the game price.",
+          "Pay the game value upfront (rental fee + deposit = game price). The best rate is automatically applied based on your rental duration.",
         icon: "💳",
       },
       {
@@ -67,48 +67,53 @@ export const rentalContent = {
     subtitle:
       "See exactly how much you'll pay upfront and get back as a deposit",
     gamePriceLabel: "Select Game Value",
-    durationLabel: "Rental Duration",
+    durationLabel: "Rental Duration (Days)",
     durations: [
-      { weeks: 1, label: "1 Week" },
-      { weeks: 2, label: "2 Weeks", popular: true },
-      { weeks: 4, label: "1 Month" },
+      { days: 1, label: "1 Day" },
+      { days: 3, label: "3 Days" },
+      { days: 7, label: "1 Week", popular: true },
+      { days: 14, label: "2 Weeks", popular: true },
+      { days: 30, label: "1 Month" },
     ],
     breakdownLabels: {
-      weeklyRate: "Weekly Rate",
-      totalRent: "Total Rental Cost",
+      rentalFee: "Rental Fee",
       deposit: "Refundable Deposit",
-      upfront: "You Pay Upfront",
-      refund: "You Get Back",
+      totalDue: "Total Due",
+      appliedPlan: "Applied Plan",
+      promoMessage: "Promo Message",
     },
-    note: "Deposit = Game Price - Weekly Rent. Your upfront payment always equals the game price!",
+    note: "Best rate automatically applied — no need to choose a plan!",
   },
 
   pricingTable: {
     title: "Rental Rates",
     subtitle: "Transparent pricing for all game tiers",
-    note: "All prices in Philippine Pesos (₱). Deposit refunded upon return.",
-    headers: ["Game Value", "Weekly Rate", "2 Weeks", "1 Month"],
+    note: "All prices in Philippine Pesos (₱). Pro-rated pricing automatically calculated for all durations. Maximum rental period is 30 days.",
+    headers: ["Game Value", "Daily", "Weekly", "Bi-Weekly", "Monthly"],
     rows: [
       {
         tier: "Tier 1 Games",
         gameValue: 1200,
+        dailyRate: 60,
         weeklyRate: 300,
-        twoWeeks: 600,
-        oneMonth: 1000,
+        biWeeklyRate: 550,
+        monthlyRate: 950,
       },
       {
         tier: "Tier 2 Games",
         gameValue: 1500,
+        dailyRate: 70,
         weeklyRate: 350,
-        twoWeeks: 700,
-        oneMonth: 1400,
+        biWeeklyRate: 650,
+        monthlyRate: 1100,
       },
       {
         tier: "Tier 3 Games",
         gameValue: 1900,
+        dailyRate: 80,
         weeklyRate: 400,
-        twoWeeks: 800,
-        oneMonth: 1600,
+        biWeeklyRate: 750,
+        monthlyRate: 1300,
       },
     ],
     popularLabel: "Most Popular",
@@ -123,12 +128,11 @@ export const rentalContent = {
         title: "Deposit Policy",
         icon: "💰",
         content: [
-          "Your deposit equals the game's price minus one week's rental fee.",
-          "For example, a ₱1,200 game with ₱300 weekly rent = ₱900 deposit.",
-          "Another example: a ₱1,900 game with ₱400 weekly rent = ₱1,500 deposit.",
-          "You pay upfront: Rental fee + Deposit = Game price.",
+          "Deposit amount varies by game value: Deposit = Game Price - Rental Fee.",
+          "You pay upfront: Rental fee + Deposit = Game price (total upfront equals game value).",
           "Your full deposit is refunded when you return the game in good condition.",
           "Deposits are held securely and returned via your preferred payment method within 24 hours of verified return.",
+          "The deposit ensures games are returned in good condition and covers any potential damage or loss.",
         ],
       },
       {
@@ -148,10 +152,10 @@ export const rentalContent = {
         title: "Extension Policy",
         icon: "⏱️",
         content: [
-          "Extend your rental anytime at the same weekly rate.",
+          "Extend your rental anytime at the same daily rate for your game tier.",
           "You must notify us before your due date to avoid late fees.",
-          "Extensions are charged at the standard weekly rate for your game tier.",
-          "Contact us via phone, email, or Facebook to request an extension.",
+          "Extensions are charged at the standard daily rate for your game tier.",
+          "Maximum rental period is 30 days. Contact us via phone, email, or Facebook to request an extension.",
           "Payment for extensions must be made before the new extended due date.",
         ],
       },
@@ -209,7 +213,7 @@ export const rentalContent = {
         number: "2",
         title: "Contact Us",
         description:
-          "Reach out via phone, email, or Facebook Messenger with your game selection and desired rental duration.",
+          "Reach out via phone, email, or Facebook Messenger with your game selection and desired rental duration in days.",
       },
       {
         number: "3",
@@ -233,20 +237,20 @@ export const rentalContent = {
       subtitle: "Here's exactly what you'll pay",
       scenario: {
         game: "₱1,500 game",
-        duration: "2 weeks",
-        weeklyRate: 350,
-        weeks: 2,
-        totalRent: 700,
-        deposit: 1150,
+        duration: "8 days",
+        dailyRate: 70,
+        days: 8,
+        totalRent: 400,
+        deposit: 1100,
         upfrontTotal: 1500,
-        refund: 1150,
+        refund: 1100,
       },
       steps: [
-        "Total Rental Cost: ₱350 × 2 weeks = ₱700",
-        "Refundable Deposit: ₱1,500 - ₱350 = ₱1,150",
-        "You Pay Upfront: ₱700 + ₱1,150 = ₱1,500",
-        "After Return: Get back ₱1,150 deposit",
-        "Your Net Cost: ₱700 (just the rental fee!)",
+        "Rental Fee: (₱350 ÷ 7) × 8 days = ₱400",
+        "Deposit: ₱1,500 - ₱400 = ₱1,100",
+        "You Pay Upfront: ₱400 + ₱1,100 = ₱1,500 (game value)",
+        "After Return: Get back ₱1,100 deposit",
+        "Your Net Cost: ₱400 (just the rental fee!)",
       ],
     },
   },
@@ -258,7 +262,7 @@ export const rentalContent = {
       {
         question: "How does the deposit system work?",
         answer:
-          "The deposit ensures games are returned in good condition. You pay the rental fee plus a deposit upfront (totaling the game's price). When you return the game undamaged, you get the full deposit back within 24 hours. For example: ₱1,200 game at ₱300/week = pay ₱1,200 upfront, get ₱900 back after return. Or ₱1,500 game at ₱350/week = pay ₱1,500 upfront, get ₱1,150 back.",
+          "The deposit ensures games are returned in good condition. You pay the game value upfront (rental fee + deposit = game price). When you return the game undamaged, you get the full deposit back within 24 hours. For example: 8 days for a ₱1,500 game = pay ₱1,500 upfront (₱400 rental + ₱1,100 deposit), get ₱1,100 back after return.",
       },
       {
         question: "Can I swap games during my rental period?",
@@ -283,7 +287,7 @@ export const rentalContent = {
       {
         question: "Can I extend my rental period?",
         answer:
-          "Absolutely! You can extend at the same weekly rate anytime. Just notify us before your due date to avoid late fees. Extensions are charged at the standard weekly rate for your game's tier.",
+          "Absolutely! You can extend at the same daily rate anytime. Just notify us before your due date to avoid late fees. Extensions are charged at the standard daily rate for your game's tier.",
       },
       {
         question: "What happens if I lose or damage the game?",
@@ -293,7 +297,7 @@ export const rentalContent = {
       {
         question: "Is there a minimum rental period?",
         answer:
-          "Yes, the minimum rental period is 1 week. You can rent for 1 week, 2 weeks, 1 month, or longer. The 2-week option is our most popular choice, offering the best value and flexibility.",
+          "Yes, the minimum rental period is 1 day. You can rent for 1 day, 1 week, 2 weeks, or up to 1 month (30 days maximum). The system automatically applies the best rate for any duration you choose.",
       },
       {
         question: "Can I rent multiple games at once?",

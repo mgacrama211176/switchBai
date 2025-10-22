@@ -22,7 +22,7 @@ export function RentalFAQSection() {
             ❓ FAQ
           </div>
           <h2 className="text-4xl font-black text-neutral mb-4">{faq.title}</h2>
-          <p className="text-lg text-gray-600">{faq.subtitle}</p>
+          <p className="text-lg text-gray-700">{faq.subtitle}</p>
         </div>
 
         {/* FAQ Accordion */}
@@ -56,7 +56,7 @@ export function RentalFAQSection() {
                   </h3>
                 </div>
                 <svg
-                  className={`w-6 h-6 text-gray-600 transition-transform duration-300 flex-shrink-0 ml-4 ${
+                  className={`w-6 h-6 text-gray-700 transition-transform duration-300 flex-shrink-0 ml-4 ${
                     openFAQ === index ? "rotate-180" : ""
                   }`}
                   fill="none"
@@ -81,7 +81,7 @@ export function RentalFAQSection() {
                 }`}
               >
                 <div className="px-6 pb-6 pl-20 bg-gradient-to-b from-gray-50 to-white">
-                  <p className="text-gray-700 leading-relaxed">{item.answer}</p>
+                  <p className="text-gray-800 leading-relaxed">{item.answer}</p>
                 </div>
               </div>
             </div>
@@ -94,7 +94,7 @@ export function RentalFAQSection() {
             <h3 className="text-3xl font-black text-neutral mb-4">
               {cta.title}
             </h3>
-            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto">
               {cta.subtitle}
             </p>
 

@@ -162,10 +162,20 @@ export default function GameForm({
     // We'll use a placeholder that indicates a file is selected
     setFormData((prev) => ({ ...prev, gameImageURL: "file://selected" }));
 
-    setToast({
-      message: "Image selected. It will be uploaded when you submit the form.",
-      type: "success",
-    });
+    // Show different message for HEIC files
+    if (file.type === "image/heic" || file.type === "image/heif") {
+      setToast({
+        message:
+          "HEIC image selected. It will be converted to WebP when you submit the form.",
+        type: "success",
+      });
+    } else {
+      setToast({
+        message:
+          "Image selected. It will be uploaded when you submit the form.",
+        type: "success",
+      });
+    }
   }
 
   async function uploadImageFile(file: File): Promise<string> {
@@ -236,7 +246,17 @@ export default function GameForm({
 
       // Upload image if a new one was selected
       if (selectedImageFile) {
-        setToast({ message: "Uploading image...", type: "success" });
+        if (
+          selectedImageFile.type === "image/heic" ||
+          selectedImageFile.type === "image/heif"
+        ) {
+          setToast({
+            message: "Converting HEIC image to WebP...",
+            type: "success",
+          });
+        } else {
+          setToast({ message: "Uploading image...", type: "success" });
+        }
         const imageUrl = await uploadImageFile(selectedImageFile);
         finalFormData.gameImageURL = imageUrl;
 
@@ -353,8 +373,15 @@ export default function GameForm({
                 />
               </label>
               <p className="text-xs text-gray-500 mt-2">
-                JPG, PNG, or WebP. Max 5MB. Images will be automatically
-                optimized to WebP format when you submit the form.
+                <strong>Accepted formats:</strong> JPG, PNG, WebP only. Max 5MB.
+                <br />
+                <span className="text-orange-600 font-medium">
+                  Note: HEIC files from iPhone/iPad are not supported. Please
+                  convert to JPEG or PNG before uploading.
+                </span>
+                <br />
+                Images will be automatically optimized to WebP format when you
+                submit the form.
               </p>
             </div>
           </div>

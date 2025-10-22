@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 const CompareGamesSection = () => {
   const handleCompareClick = () => {
@@ -192,7 +193,8 @@ const CompareGamesSection = () => {
 
           <div className="relative z-10">
             <div className="relative inline-block">
-              <button
+              <Link
+                href="/compare"
                 onClick={handleCompareClick}
                 className="group bg-funBlue hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-2 inline-flex items-center gap-3 transform hover:rotate-1"
               >
@@ -212,7 +214,7 @@ const CompareGamesSection = () => {
                     />
                   </svg>
                 </div>
-              </button>
+              </Link>
 
               {/* Button decorations */}
               <div className="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 rounded-full transform rotate-12"></div>

@@ -3,6 +3,8 @@
  * Optimizes images before uploading to reduce bandwidth and improve performance
  */
 
+// HEIC support with client-side conversion using heic2any
+
 interface OptimizeOptions {
   maxWidth?: number;
   maxHeight?: number;
@@ -10,10 +12,18 @@ interface OptimizeOptions {
   format?: "webp" | "jpeg" | "png";
 }
 
+// HEIC conversion is now handled by skipping client-side optimization
+// and uploading the original HEIC file directly for server-side processing
+
 export async function optimizeImageClient(
   file: File,
   options: OptimizeOptions = {},
 ): Promise<File> {
+  // Only run on client side
+  if (typeof window === "undefined") {
+    throw new Error("Image optimization only available on client side");
+  }
+
   const {
     maxWidth = 1920,
     maxHeight = 1080,
@@ -21,6 +31,7 @@ export async function optimizeImageClient(
     format = "webp",
   } = options;
 
+  // Process the file normally (HEIC files should be caught by validation)
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 

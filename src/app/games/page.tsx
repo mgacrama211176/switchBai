@@ -337,7 +337,7 @@ const GamesPageContent = () => {
         <div className="p-3 space-y-2">
           {/* Title - Clickable to detail page */}
           <Link href={`/games/${game.gameBarcode}`}>
-            <h3 className="text-sm md:text-base font-bold text-gray-900 line-clamp-2 min-h-8 hover:text-funBlue transition-colors">
+            <h3 className="text-sm md:text-base font-bold text-gray-900 line-clamp-3 min-h-8 hover:text-funBlue transition-colors">
               {game.gameTitle}
             </h3>
           </Link>
@@ -427,7 +427,7 @@ const GamesPageContent = () => {
               placeholder="Search games by title..."
               value={filters.search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full px-6 py-4 pl-14 rounded-2xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 transition-all"
+              className="w-full px-6 py-4 pl-14 rounded-2xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 transition-all text-black"
             />
             <svg
               className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -863,7 +863,7 @@ const GamesPageContent = () => {
 
                   {/* Pagination */}
                   {filteredAndSortedGames.length > 0 && totalPages > 1 && (
-                    <div className="mt-12 flex flex-col items-center gap-4">
+                    <div className="mt-12 flex flex-col items-center gap-4 text-black">
                       <div className="flex items-center gap-2 flex-wrap justify-center">
                         <button
                           onClick={() =>

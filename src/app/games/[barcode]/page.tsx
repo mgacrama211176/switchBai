@@ -130,7 +130,7 @@ const GameDetailPage: React.FC = () => {
                 alt={`${game.gameTitle} game cover`}
                 fill
                 className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                sizes="(max-width: 1024px) 90vw, 40vw"
                 priority
               />
 
@@ -201,7 +201,7 @@ const GameDetailPage: React.FC = () => {
               </div>
 
               {game.gameAvailableStocks > 0 && (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 text-black">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Quantity
@@ -246,7 +246,7 @@ const GameDetailPage: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 text-black">
                 <button
                   onClick={() =>
                     alert(`Added ${quantity}x ${game.gameTitle} to cart`)

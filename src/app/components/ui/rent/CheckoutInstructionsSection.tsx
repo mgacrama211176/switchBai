@@ -16,7 +16,7 @@ export function CheckoutInstructionsSection() {
           <h2 className="text-4xl font-black text-neutral mb-4">
             {checkout.title}
           </h2>
-          <p className="text-lg text-gray-600">{checkout.subtitle}</p>
+          <p className="text-lg text-gray-700">{checkout.subtitle}</p>
         </div>
 
         {/* Steps */}
@@ -34,7 +34,7 @@ export function CheckoutInstructionsSection() {
               <h3 className="font-bold text-neutral mb-2 text-center">
                 {step.title}
               </h3>
-              <p className="text-sm text-gray-600 text-center leading-relaxed">
+              <p className="text-sm text-gray-700 text-center leading-relaxed">
                 {step.description}
               </p>
             </div>
@@ -46,7 +46,7 @@ export function CheckoutInstructionsSection() {
           <h3 className="text-2xl font-bold text-neutral text-center mb-8">
             {checkout.paymentMethods.title}
           </h3>
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-gray-700 text-center mb-6">
             {checkout.paymentMethods.subtitle}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
@@ -70,7 +70,7 @@ export function CheckoutInstructionsSection() {
             <h3 className="text-2xl font-black text-neutral mb-2">
               {checkout.example.title}
             </h3>
-            <p className="text-gray-600">{checkout.example.subtitle}</p>
+            <p className="text-gray-700">{checkout.example.subtitle}</p>
           </div>
 
           <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-8 mb-6">
@@ -93,20 +93,20 @@ export function CheckoutInstructionsSection() {
                   <div className="w-8 h-8 bg-funBlue text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
                     {index + 1}
                   </div>
-                  <span className="text-gray-700 font-medium">{step}</span>
+                  <span className="text-gray-800 font-medium">{step}</span>
                 </div>
               ))}
             </div>
 
             <div className="bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl p-6 border-2 border-success">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-700 mb-2">
                   Your True Cost (What You Actually Spend)
                 </p>
                 <p className="text-4xl font-black text-success">
                   {formatPrice(checkout.example.scenario.totalRent)} only!
                 </p>
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-gray-700 mt-2">
                   Everything else is refunded! 🎉
                 </p>
               </div>

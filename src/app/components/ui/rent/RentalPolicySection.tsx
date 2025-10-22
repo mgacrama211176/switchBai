@@ -25,7 +25,7 @@ export function RentalPolicySection() {
           <h2 className="text-4xl font-black text-neutral mb-4">
             {policies.title}
           </h2>
-          <p className="text-lg text-gray-600">{policies.subtitle}</p>
+          <p className="text-lg text-gray-700">{policies.subtitle}</p>
         </div>
 
         {/* Accordion */}
@@ -59,7 +59,7 @@ export function RentalPolicySection() {
                   </h3>
                 </div>
                 <svg
-                  className={`w-6 h-6 text-gray-600 transition-transform duration-300 ${
+                  className={`w-6 h-6 text-gray-700 transition-transform duration-300 ${
                     openPolicy === policy.id ? "rotate-180" : ""
                   }`}
                   fill="none"
@@ -88,7 +88,7 @@ export function RentalPolicySection() {
                     {policy.content.map((item, idx) => (
                       <li
                         key={idx}
-                        className="flex items-start gap-3 text-gray-700"
+                        className="flex items-start gap-3 text-gray-800"
                       >
                         <span className="text-funBlue font-bold mt-1">•</span>
                         <span className="flex-1 leading-relaxed">{item}</span>
@@ -109,7 +109,7 @@ export function RentalPolicySection() {
               <h4 className="font-bold text-neutral mb-2">
                 Important Reminder
               </h4>
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-gray-800 leading-relaxed">
                 Please read all policies carefully before renting. By renting a
                 game, you agree to these terms. If you have any questions,
                 contact us before proceeding with your rental.

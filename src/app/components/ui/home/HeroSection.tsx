@@ -12,12 +12,15 @@ import {
   getPlatformInfo,
   getStockUrgency,
 } from "./game-utils";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface HeroSectionProps {
   initialGames: Game[];
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
+  const router = useRouter();
   const [cartItems, setCartItems] = useState<string[]>([]);
   const [compareItems, setCompareItems] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -298,7 +301,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                 const stockInfo = getStockUrgency(game.gameAvailableStocks);
                 const savings = calculateSavings(
                   game.gamePrice,
-                  game.gameBarcode
+                  game.gameBarcode,
                 );
 
                 return (
@@ -321,17 +324,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                     </div>
 
                     {/* Game Image Container */}
-                    <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                      <Image
-                        src={game.gameImageURL}
-                        alt={`${game.gameTitle} game cover`}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-700"
-                        sizes="(max-width: 768px) 192px, 208px"
-                      />
-                      {/* Overlay for better text readability */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    </div>
+                    <Link href={`/games/${game.gameBarcode}`}>
+                      <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                        <Image
+                          src={game.gameImageURL}
+                          alt={`${game.gameTitle} game cover`}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-700 cursor-pointer"
+                          sizes="(max-width: 768px) 192px, 208px"
+                        />
+
+                        {/* Overlay for better text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      </div>
+                    </Link>
 
                     {/* Enhanced Card Content */}
                     <div className="p-3 space-y-2">
@@ -457,7 +463,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   ></button>
-                )
+                ),
               )}
             </div>
           )}
@@ -497,7 +503,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                 <div className="absolute inset-0 bg-gradient-to-r from-funBlue via-purple-500 to-lameRed opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute inset-0.5 bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl group-hover:from-gray-800 group-hover:to-gray-700"></div>
 
-                <span className="relative flex items-center gap-4">
+                <Link
+                  href="/games"
+                  className="relative flex items-center gap-4"
+                >
                   <span>View All Latest Games</span>
                   <div className="flex items-center gap-3">
                     <span className="text-3xl group-hover:translate-x-2 transition-transform duration-500">
@@ -507,7 +516,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                       {latestGames.length}+
                     </div>
                   </div>
-                </span>
+                </Link>
               </button>
 
               {/* Button decorations */}
@@ -586,7 +595,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
         {/* Comparison Modal */}
         <ComparisonModal
           games={latestGames.filter((game) =>
-            compareItems.includes(game.gameBarcode)
+            compareItems.includes(game.gameBarcode),
           )}
           isOpen={isComparisonModalOpen}
           onClose={() => setIsComparisonModalOpen(false)}

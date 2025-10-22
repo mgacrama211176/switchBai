@@ -262,7 +262,10 @@ const Navigation: React.FC = () => {
               )}
 
               {/* Search Bar */}
-              <form onSubmit={handleSearchSubmit} className="relative">
+              <form
+                onSubmit={handleSearchSubmit}
+                className="relative text-black"
+              >
                 <div className="relative">
                   <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input

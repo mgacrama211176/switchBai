@@ -1,13 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React from "react";
 
 const AboutUsSection = () => {
-  const handleLearnMore = () => {
-    // TODO: Navigate to /about
-    console.log("Navigate to /about");
-  };
-
+  const router = useRouter();
   const stats = [
     {
       number: "500+",
@@ -185,7 +182,7 @@ const AboutUsSection = () => {
             {/* Unique CTA Button Design */}
             <div className="relative inline-block">
               <button
-                onClick={handleLearnMore}
+                onClick={() => router.push("/about")}
                 className="group relative bg-neutral hover:bg-gray-700 text-white font-bold py-4 px-10 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-2 transform hover:rotate-1"
               >
                 <span className="relative z-10 flex items-center gap-3">
