@@ -197,10 +197,10 @@ const Navigation: React.FC = () => {
                     <button
                       onClick={() =>
                         setOpenDropdown(
-                          openDropdown === item.name ? null : item.name
+                          openDropdown === item.name ? null : item.name,
                         )
                       }
-                      className="flex items-center space-x-2 text-gray-700 hover:text-red font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-red/5 group"
+                      className="flex items-center space-x-2 text-gray-700 hover:text-lameRed font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-lameRed/5 group"
                       aria-label={`Open ${item.name} menu`}
                       aria-expanded={openDropdown === item.name}
                     >
@@ -214,7 +214,7 @@ const Navigation: React.FC = () => {
                         }`}
                       />
                       {/* Subtle hover underline */}
-                      <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue to-red scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"></span>
+                      <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-funBlue to-lameRed scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"></span>
                     </button>
 
                     {/* Dropdown Menu */}
@@ -258,7 +258,7 @@ const Navigation: React.FC = () => {
                     {/* Subtle hover underline */}
                     <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue to-red scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"></span>
                   </Link>
-                )
+                ),
               )}
 
               {/* Search Bar */}
@@ -369,7 +369,7 @@ const Navigation: React.FC = () => {
                       </div>
                     </div>
                   </Link>
-                )
+                ),
               )}
             </div>
           </div>
