@@ -3,6 +3,7 @@ import RadialBackground from "@/app/components/ui/RadialBackground";
 import Navigation from "@/app/components/ui/globalUI/Navigation";
 import HeroSectionWrapper from "@/app/components/ui/home/HeroSectionWrapper";
 import CompareGamesSection from "./components/ui/home/CompareGamesSection";
+import RentalsSection from "./components/ui/home/RentalsSection";
 import AboutUsSection from "./components/ui/home/AboutUsSection";
 import ContactSection from "./components/ui/home/ContactSection";
 import Footer from "./components/ui/globalUI/Footer";
@@ -15,10 +16,11 @@ export default function Home() {
 
       {/* Animated gradient background */}
       {process.env.NEXT_PUBLIC_ENVIRONMENT === "dev" ? (
-        <div className="relative flex min-h-screen flex-col items-center justify-center   bg-white">
+        <div className="relative flex min-h-screen flex-col items-center justify-center bg-white">
           <Navigation />
           <HeroSectionWrapper fallbackGames={[]} />
           <CompareGamesSection />
+          <RentalsSection />
           <AboutUsSection />
           <ContactSection />
           <Footer />
