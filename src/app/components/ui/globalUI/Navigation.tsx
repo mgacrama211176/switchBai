@@ -156,7 +156,7 @@ const Navigation: React.FC = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-[70] w-full transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
           visible ? "translate-y-0" : "-translate-y-full"
         } ${
           scrolled
@@ -165,7 +165,7 @@ const Navigation: React.FC = () => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center h-auto">
+          <div className="flex justify-between items-center h-auto">
             {/* Logo Only */}
             <Link
               href="/"
@@ -184,8 +184,8 @@ const Navigation: React.FC = () => {
               </div>
             </Link>
 
-            {/* Desktop Navigation with Search */}
-            <div className="hidden md:flex items-center space-x-4">
+            {/* Desktop Navigation with Search - Centered */}
+            <div className="hidden md:flex items-center space-x-4 absolute left-1/2 transform -translate-x-1/2">
               {/* Navigation Items */}
               {navigationItems.map((item) =>
                 item.subItems ? (
@@ -197,7 +197,7 @@ const Navigation: React.FC = () => {
                     <button
                       onClick={() =>
                         setOpenDropdown(
-                          openDropdown === item.name ? null : item.name,
+                          openDropdown === item.name ? null : item.name
                         )
                       }
                       className="flex items-center space-x-2 text-gray-700 hover:text-red font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-red/5 group"
@@ -219,7 +219,7 @@ const Navigation: React.FC = () => {
 
                     {/* Dropdown Menu */}
                     {openDropdown === item.name && (
-                      <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-[90] animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
                         {item.subItems.map((subItem) => (
                           <Link
                             key={subItem.name}
@@ -258,7 +258,7 @@ const Navigation: React.FC = () => {
                     {/* Subtle hover underline */}
                     <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue to-red scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"></span>
                   </Link>
-                ),
+                )
               )}
 
               {/* Search Bar */}
@@ -284,7 +284,7 @@ const Navigation: React.FC = () => {
               <button
                 onClick={handleMobileMenuToggle}
                 onKeyDown={handleKeyDown}
-                className="p-2 rounded-lg text-gray-700 hover:text-blue hover:bg-blue/5 focus:outline-none focus:ring-2 focus:ring-blue/20 transition-all duration-300"
+                className="p-2 rounded-lg text-gray-700 hover:text-funBlue hover:bg-funBlue/5 focus:outline-none focus:ring-2 focus:ring-funBlue/20 transition-all duration-300"
                 aria-expanded={isMobileMenuOpen}
                 aria-label="Toggle mobile menu"
                 tabIndex={0}
@@ -302,11 +302,11 @@ const Navigation: React.FC = () => {
         {/* Mobile Navigation Menu */}
         <div
           className={`md:hidden transition-all duration-300 overflow-hidden ${
-            isMobileMenuOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+            isMobileMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
           }`}
         >
           <div className="border-t border-gray-200 bg-white/95 backdrop-blur-xl">
-            <div className="px-4 pt-4 pb-6 space-y-2">
+            <div className="px-4 pt-4 pb-6 space-y-2 overflow-y-auto max-h-[calc(100vh-80px)]">
               {/* Mobile Search */}
               <form onSubmit={handleSearchSubmit} className="mb-4">
                 <div className="relative">
@@ -326,7 +326,7 @@ const Navigation: React.FC = () => {
                 item.subItems ? (
                   <div key={item.name} className="space-y-1">
                     {/* Parent Item */}
-                    <div className="flex items-center space-x-3 px-4 py-3 text-base font-bold text-gray-900">
+                    <div className="flex items-center space-x-3 px-4 py-3 text-base font-bold text-gray-900 min-h-12">
                       <span className="text-lameRed">{item.icon}</span>
                       <span>{item.name}</span>
                     </div>
@@ -335,11 +335,11 @@ const Navigation: React.FC = () => {
                       <Link
                         key={subItem.name}
                         href={subItem.href}
-                        className="flex items-center space-x-3 px-4 py-3 pl-12 text-sm font-medium text-gray-700 hover:text-blue hover:bg-blue/5 rounded-lg transition-all duration-300 group"
+                        className="flex items-center space-x-3 px-4 py-3 pl-12 text-sm font-medium text-gray-700 hover:text-funBlue hover:bg-funBlue/5 rounded-lg transition-all duration-300 group min-h-12"
                         onClick={handleMobileMenuClose}
                         aria-label={`Navigate to ${subItem.name}`}
                       >
-                        <span className="text-blue/70 group-hover:text-blue transition-colors duration-300">
+                        <span className="text-funBlue/70 group-hover:text-funBlue transition-colors duration-300">
                           {subItem.icon}
                         </span>
                         <div>
@@ -355,11 +355,11 @@ const Navigation: React.FC = () => {
                   <Link
                     key={item.name}
                     href={item.href!}
-                    className="flex items-center space-x-3 px-4 py-3 text-base font-medium text-gray-700 hover:text-blue hover:bg-blue/5 rounded-lg transition-all duration-300 group"
+                    className="flex items-center space-x-3 px-4 py-3 text-base font-medium text-gray-700 hover:text-funBlue hover:bg-funBlue/5 rounded-lg transition-all duration-300 group min-h-12"
                     onClick={handleMobileMenuClose}
                     aria-label={`Navigate to ${item.name}`}
                   >
-                    <span className="text-blue/70 group-hover:text-blue transition-colors duration-300">
+                    <span className="text-funBlue/70 group-hover:text-funBlue transition-colors duration-300">
                       {item.icon}
                     </span>
                     <div>
@@ -369,7 +369,7 @@ const Navigation: React.FC = () => {
                       </div>
                     </div>
                   </Link>
-                ),
+                )
               )}
             </div>
           </div>
@@ -379,7 +379,7 @@ const Navigation: React.FC = () => {
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[80] md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
           onClick={handleMobileMenuClose}
         />
       )}

@@ -9,6 +9,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const { searchParams } = new URL(request.url);
+    const folder = searchParams.get("folder") || "games";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
     const baseName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filename = `${baseName}-${timestamp}.webp`;
 
-    const firebaseUrl = await uploadImageToFirebase(buffer, filename, "games");
+    const firebaseUrl = await uploadImageToFirebase(buffer, filename, folder);
 
     return NextResponse.json({
       success: true,

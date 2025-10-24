@@ -25,7 +25,7 @@ export function PricingCalculator() {
     return nextWeek.toISOString().split("T")[0];
   });
   const [calculation, setCalculation] = useState<RentalCalculation | null>(
-    null
+    null,
   );
 
   const gameTiers = getAvailableGameTiers();
