@@ -46,7 +46,7 @@ export default function AdminPage() {
         <DashboardStats refreshTrigger={refreshTrigger} />
 
         {/* Tabs Navigation */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden text-black">
           <div className="border-b border-gray-200">
             <div className="flex">
               <button

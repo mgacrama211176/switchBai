@@ -57,17 +57,17 @@ export default function DashboardStats({
   const switchGames = games.filter((g) =>
     Array.isArray(g.gamePlatform)
       ? g.gamePlatform.includes("Nintendo Switch")
-      : g.gamePlatform === "Nintendo Switch",
+      : g.gamePlatform === "Nintendo Switch"
   ).length;
   const switch2Games = games.filter((g) =>
     Array.isArray(g.gamePlatform)
       ? g.gamePlatform.includes("Nintendo Switch 2")
-      : g.gamePlatform === "Nintendo Switch 2",
+      : g.gamePlatform === "Nintendo Switch 2"
   ).length;
   const lowStockGames = games.filter((g) => g.gameAvailableStocks < 5).length;
   const totalValue = games.reduce(
     (sum, game) => sum + game.gamePrice * game.gameAvailableStocks,
-    0,
+    0
   );
   const rentalGames = games.filter((g) => g.rentalAvailable).length;
   const topSeller = games

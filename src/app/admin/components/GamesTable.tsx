@@ -70,7 +70,7 @@ export default function GamesTable({
       filtered = filtered.filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.includes(searchLower),
+          game.gameBarcode.includes(searchLower)
       );
     }
 
@@ -87,7 +87,7 @@ export default function GamesTable({
     // Category filter
     if (categoryFilter) {
       filtered = filtered.filter(
-        (game) => game.gameCategory === categoryFilter,
+        (game) => game.gameCategory === categoryFilter
       );
     }
 
@@ -128,7 +128,7 @@ export default function GamesTable({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-black">
       {toast && (
         <Toast
           message={toast.message}
@@ -156,8 +156,8 @@ export default function GamesTable({
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Search */}
-        <div className="relative">
-          <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="relative text-black">
+          <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 " />
           <input
             type="text"
             value={searchTerm}
