@@ -19,18 +19,20 @@ export const authOptions: NextAuthOptions = {
           // Verify credentials against MongoDB
           const isValid = await verifyAdminCredentials(
             credentials.email,
-            credentials.password,
+            credentials.password
           );
 
           if (!isValid) {
             return null;
           }
 
-          return {
+          const user = {
             id: "admin",
             email: credentials.email,
             name: "Admin",
           };
+
+          return user;
         } catch (error) {
           console.error("Auth error:", error);
           return null;

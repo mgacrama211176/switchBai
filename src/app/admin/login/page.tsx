@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-funBlue/10 via-white to-lameRed/10 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-funBlue/10 via-white to-lameRed/10 flex items-center justify-center px-4 text-black">
       <div className="max-w-md w-full">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
@@ -138,14 +138,6 @@ export default function AdminLoginPage() {
               ← Back to Home
             </Link>
           </div>
-        </div>
-
-        {/* Dev Info */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <p className="text-xs text-gray-600 text-center">
-            <strong>Development Mode:</strong> Email: admin@switchbai.com |
-            Password: admin123
-          </p>
         </div>
       </div>
     </div>

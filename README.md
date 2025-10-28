@@ -143,6 +143,7 @@ src/
    # NextAuth.js
    NEXTAUTH_URL=http://localhost:3000
    NEXTAUTH_SECRET=your-secret-key
+   ADMIN_CREATION_TOKEN=your-secure-token-here
 
    # Firebase
    FIREBASE_PROJECT_ID=your-project-id
