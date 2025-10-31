@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
           // Verify credentials against MongoDB
           const isValid = await verifyAdminCredentials(
             credentials.email,
-            credentials.password
+            credentials.password,
           );
 
           if (!isValid) {

@@ -70,7 +70,7 @@ export default function GamesTable({
       filtered = filtered.filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.includes(searchLower)
+          game.gameBarcode.includes(searchLower),
       );
     }
 
@@ -87,7 +87,7 @@ export default function GamesTable({
     // Category filter
     if (categoryFilter) {
       filtered = filtered.filter(
-        (game) => game.gameCategory === categoryFilter
+        (game) => game.gameCategory === categoryFilter,
       );
     }
 

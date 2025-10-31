@@ -28,7 +28,7 @@ export async function hashPassword(password: string): Promise<string> {
  */
 export async function verifyPassword(
   password: string,
-  hash: string
+  hash: string,
 ): Promise<boolean> {
   return await bcrypt.compare(password, hash);
 }
@@ -52,7 +52,7 @@ export async function adminExists(email: string): Promise<boolean> {
           email: String,
           name: String,
           role: String,
-        })
+        }),
       );
 
     const admin = await User.findOne({ email, role: "admin" });
@@ -73,7 +73,7 @@ export async function adminExists(email: string): Promise<boolean> {
 export async function createAdminUser(
   email: string,
   password: string,
-  name: string = "Admin"
+  name: string = "Admin",
 ): Promise<AdminUser> {
   try {
     await connectDB();
@@ -136,7 +136,7 @@ export async function createAdminUser(
 export async function seedAdminUser(
   email: string,
   password: string,
-  name: string = "Admin"
+  name: string = "Admin",
 ): Promise<void> {
   try {
     const exists = await adminExists(email);
@@ -161,7 +161,7 @@ export async function seedAdminUser(
  */
 export async function verifyAdminCredentials(
   email: string,
-  password: string
+  password: string,
 ): Promise<boolean> {
   try {
     await connectDB();
@@ -175,7 +175,7 @@ export async function verifyAdminCredentials(
           email: String,
           password: String,
           role: String,
-        })
+        }),
       );
 
     const admin = await User.findOne({ email, role: "admin" });
