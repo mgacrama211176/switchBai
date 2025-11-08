@@ -6,24 +6,26 @@ export interface IPurchase extends Document {
 
   // Customer details
   customerName: string;
-  customerPhone: string;
-  customerEmail: string;
+  customerPhone?: string;
+  customerEmail?: string;
   customerFacebookUrl?: string;
 
-  // Game details
-  gameBarcode: string;
-  gameTitle: string;
-  gamePrice: number;
-  quantity: number;
+  // Game details (array to support multiple games per order)
+  games: Array<{
+    gameBarcode: string;
+    gameTitle: string;
+    gamePrice: number;
+    quantity: number;
+  }>;
 
   // Delivery details
-  deliveryAddress: string;
-  deliveryCity: string;
-  deliveryLandmark: string;
+  deliveryAddress?: string;
+  deliveryCity?: string;
+  deliveryLandmark?: string;
   deliveryNotes?: string;
 
   // Payment details
-  paymentMethod: "cod" | "bank_transfer" | "gcash";
+  paymentMethod: "cod" | "bank_transfer" | "gcash" | "cash";
   subtotal: number;
   deliveryFee: number;
   totalAmount: number;
@@ -70,11 +72,12 @@ const PurchaseSchema = new Schema<IPurchase>(
     },
     customerPhone: {
       type: String,
-      required: [true, "Customer phone is required"],
+      required: false,
       trim: true,
       maxlength: [20, "Phone number cannot exceed 20 characters"],
       validate: {
         validator: function (v: string) {
+          if (!v) return true; // Optional field
           const phoneRegex = /^(\+639|09)\d{9}$/;
           return phoneRegex.test(v.replace(/[-\s]/g, ""));
         },
@@ -83,12 +86,13 @@ const PurchaseSchema = new Schema<IPurchase>(
     },
     customerEmail: {
       type: String,
-      required: [true, "Customer email is required"],
+      required: false,
       trim: true,
       lowercase: true,
       maxlength: [100, "Email cannot exceed 100 characters"],
       validate: {
         validator: function (v: string) {
+          if (!v) return true; // Optional field
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           return emailRegex.test(v);
         },
@@ -109,50 +113,81 @@ const PurchaseSchema = new Schema<IPurchase>(
       },
     },
 
-    // Game details
-    gameBarcode: {
-      type: String,
-      required: [true, "Game barcode is required"],
-      trim: true,
-    },
-    gameTitle: {
-      type: String,
-      required: [true, "Game title is required"],
-      trim: true,
-    },
-    gamePrice: {
-      type: Number,
-      required: [true, "Game price is required"],
-      min: [0, "Game price cannot be negative"],
-    },
-    quantity: {
-      type: Number,
-      required: [true, "Quantity is required"],
-      min: [1, "Quantity must be at least 1"],
-      max: [5, "Maximum quantity is 5"],
+    // Game details (array to support multiple games per order)
+    games: {
+      type: [
+        {
+          gameBarcode: {
+            type: String,
+            required: [true, "Game barcode is required"],
+            trim: true,
+          },
+          gameTitle: {
+            type: String,
+            required: [true, "Game title is required"],
+            trim: true,
+          },
+          gamePrice: {
+            type: Number,
+            required: [true, "Game price is required"],
+            min: [0, "Game price cannot be negative"],
+          },
+          quantity: {
+            type: Number,
+            required: [true, "Quantity is required"],
+            min: [1, "Quantity must be at least 1"],
+            max: [10, "Maximum quantity is 10"],
+          },
+        },
+      ],
+      required: [true, "At least one game is required"],
+      validate: {
+        validator: function (v: Array<any>) {
+          return Array.isArray(v) && v.length > 0;
+        },
+        message: "At least one game is required",
+      },
     },
 
     // Delivery details
     deliveryAddress: {
       type: String,
-      required: [true, "Delivery address is required"],
+      required: false,
       trim: true,
-      minlength: [10, "Address must be at least 10 characters"],
       maxlength: [500, "Address cannot exceed 500 characters"],
+      validate: {
+        validator: function (v: string) {
+          if (!v) return true; // Optional field
+          return v.length >= 10;
+        },
+        message: "Address must be at least 10 characters if provided",
+      },
     },
     deliveryCity: {
       type: String,
-      required: [true, "Delivery city is required"],
+      required: false,
       trim: true,
-      minlength: [2, "City must be at least 2 characters"],
       maxlength: [100, "City cannot exceed 100 characters"],
+      validate: {
+        validator: function (v: string) {
+          if (!v) return true; // Optional field
+          return v.length >= 2;
+        },
+        message: "City must be at least 2 characters if provided",
+      },
     },
     deliveryLandmark: {
       type: String,
-      required: [true, "Delivery landmark is required"],
+      required: false,
       trim: true,
-      minlength: [3, "Landmark must be at least 3 characters"],
       maxlength: [200, "Landmark cannot exceed 200 characters"],
+      validate: {
+        validator: function (v: string) {
+          if (!v) return true; // Optional field
+          return v.length >= 3;
+        },
+        message: "Landmark must be at least 3 characters if provided",
+      },
     },
     deliveryNotes: {
       type: String,
@@ -165,8 +200,9 @@ const PurchaseSchema = new Schema<IPurchase>(
       type: String,
       required: [true, "Payment method is required"],
       enum: {
-        values: ["cod", "bank_transfer", "gcash"],
-        message: "Payment method must be COD, Bank Transfer, or GCash",
+        values: ["cod", "bank_transfer", "gcash", "cash"],
+        message:
+          "Payment method must be COD, Bank Transfer, GCash, or Cash (Meet-up)",
       },
     },
     subtotal: {
@@ -253,7 +289,7 @@ const PurchaseSchema = new Schema<IPurchase>(
 // Indexes for better query performance
 PurchaseSchema.index({ orderNumber: 1 });
 PurchaseSchema.index({ customerEmail: 1 });
-PurchaseSchema.index({ gameBarcode: 1 });
+PurchaseSchema.index({ "games.gameBarcode": 1 });
 PurchaseSchema.index({ status: 1 });
 PurchaseSchema.index({ submittedAt: -1 });
 PurchaseSchema.index({ orderSource: 1 });

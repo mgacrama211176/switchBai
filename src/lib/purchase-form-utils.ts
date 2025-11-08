@@ -128,7 +128,7 @@ export function validatePurchaseData(data: PurchaseFormData): ValidationErrors {
   }
 
   // Payment method validation
-  const validPaymentMethods = ["cod", "bank_transfer", "gcash"];
+  const validPaymentMethods = ["cod", "bank_transfer", "gcash", "cash"];
   if (
     !data.paymentMethod ||
     !validPaymentMethods.includes(data.paymentMethod)

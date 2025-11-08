@@ -573,6 +573,11 @@ function PurchaseFormContent() {
                             label: "GCash",
                             description: "Pay via GCash mobile wallet",
                           },
+                          {
+                            value: "cash",
+                            label: "Cash (Meet-up)",
+                            description: "Pay cash when we meet up",
+                          },
                         ].map((method) => (
                           <label
                             key={method.value}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import PurchaseModel from "@/models/Purchase";
+import GameModel from "@/models/Game";
 import { generateOrderNumber } from "@/lib/purchase-form-utils";
 
 export async function POST(request: NextRequest) {
@@ -11,23 +12,15 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     const requiredFields = [
       "customerName",
-      "customerPhone",
-      "customerEmail",
-      "gameBarcode",
-      "gameTitle",
-      "gamePrice",
-      "quantity",
-      "deliveryAddress",
-      "deliveryCity",
-      "deliveryLandmark",
+      "games",
       "paymentMethod",
-      "subtotal",
-      "deliveryFee",
-      "totalAmount",
       "orderSource",
     ];
 
-    const missingFields = requiredFields.filter((field) => !body[field]);
+    const missingFields = requiredFields.filter(
+      (field) =>
+        body[field] === undefined || body[field] === null || body[field] === "",
+    );
     if (missingFields.length > 0) {
       return NextResponse.json(
         {
@@ -37,6 +30,71 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // Validate deliveryFee (can be 0, but must be a number)
+    if (
+      body.deliveryFee === undefined ||
+      body.deliveryFee === null ||
+      typeof body.deliveryFee !== "number"
+    ) {
+      return NextResponse.json(
+        { error: "Delivery fee must be a number" },
+        { status: 400 },
+      );
+    }
+
+    // Validate games array
+    if (!Array.isArray(body.games) || body.games.length === 0) {
+      return NextResponse.json(
+        { error: "At least one game is required" },
+        { status: 400 },
+      );
+    }
+
+    // Validate each game and check stock availability
+    for (const game of body.games) {
+      if (
+        !game.gameBarcode ||
+        !game.gameTitle ||
+        !game.gamePrice ||
+        !game.quantity
+      ) {
+        return NextResponse.json(
+          { error: "Each game must have barcode, title, price, and quantity" },
+          { status: 400 },
+        );
+      }
+
+      // Check stock availability
+      const gameDoc = await GameModel.findOne({
+        gameBarcode: game.gameBarcode,
+      });
+
+      if (!gameDoc) {
+        return NextResponse.json(
+          { error: `Game with barcode ${game.gameBarcode} not found` },
+          { status: 404 },
+        );
+      }
+
+      if (gameDoc.gameAvailableStocks < game.quantity) {
+        return NextResponse.json(
+          {
+            error: `Insufficient stock for ${game.gameTitle}. Available: ${gameDoc.gameAvailableStocks}, Requested: ${game.quantity}`,
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Calculate subtotal from all games
+    const subtotal = body.games.reduce(
+      (sum: number, game: any) => sum + game.gamePrice * game.quantity,
+      0,
+    );
+
+    // Calculate total amount
+    const totalAmount = subtotal + (body.deliveryFee || 0);
 
     // Generate order number
     const orderNumber = generateOrderNumber();
@@ -48,27 +106,29 @@ export async function POST(request: NextRequest) {
 
       // Customer details
       customerName: body.customerName,
-      customerPhone: body.customerPhone,
-      customerEmail: body.customerEmail,
+      customerPhone: body.customerPhone?.trim() || undefined,
+      customerEmail: body.customerEmail?.trim()?.toLowerCase() || undefined,
       customerFacebookUrl: body.customerFacebookUrl || undefined,
 
-      // Game details
-      gameBarcode: body.gameBarcode,
-      gameTitle: body.gameTitle,
-      gamePrice: body.gamePrice,
-      quantity: body.quantity,
+      // Game details (array)
+      games: body.games.map((game: any) => ({
+        gameBarcode: game.gameBarcode,
+        gameTitle: game.gameTitle,
+        gamePrice: game.gamePrice,
+        quantity: game.quantity,
+      })),
 
       // Delivery details
-      deliveryAddress: body.deliveryAddress,
-      deliveryCity: body.deliveryCity,
-      deliveryLandmark: body.deliveryLandmark,
-      deliveryNotes: body.deliveryNotes || undefined,
+      deliveryAddress: body.deliveryAddress?.trim() || undefined,
+      deliveryCity: body.deliveryCity?.trim() || undefined,
+      deliveryLandmark: body.deliveryLandmark?.trim() || undefined,
+      deliveryNotes: body.deliveryNotes?.trim() || undefined,
 
       // Payment details
       paymentMethod: body.paymentMethod,
-      subtotal: body.subtotal,
-      deliveryFee: body.deliveryFee,
-      totalAmount: body.totalAmount,
+      subtotal,
+      deliveryFee: body.deliveryFee || 0,
+      totalAmount,
 
       // Metadata
       orderSource: body.orderSource,
@@ -76,7 +136,9 @@ export async function POST(request: NextRequest) {
       adminNotes: body.adminNotes || undefined,
 
       // Status
-      status: body.orderSource === "manual" ? "confirmed" : "pending",
+      status:
+        body.status ||
+        (body.orderSource === "manual" ? "confirmed" : "pending"),
       submittedAt: new Date(),
     });
 
@@ -143,7 +205,8 @@ export async function GET(request: NextRequest) {
         { orderNumber: searchRegex },
         { customerName: searchRegex },
         { customerEmail: searchRegex },
-        { gameTitle: searchRegex },
+        { "games.gameTitle": searchRegex },
+        { "games.gameBarcode": searchRegex },
       ];
     }
 

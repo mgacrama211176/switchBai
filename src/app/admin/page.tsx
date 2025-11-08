@@ -6,9 +6,17 @@ import GameForm from "./components/GameForm";
 import GamesTable from "./components/GamesTable";
 import RentalsTable from "./components/RentalsTable";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { HiPlus, HiViewList, HiClipboardList } from "react-icons/hi";
+import {
+  HiPlus,
+  HiViewList,
+  HiClipboardList,
+  HiShoppingCart,
+  HiSwitchHorizontal,
+} from "react-icons/hi";
+import OrdersTable from "./components/OrdersTable";
+import TradesTable from "./components/TradesTable";
 
-type TabType = "games" | "rentals" | "add-game";
+type TabType = "games" | "rentals" | "orders" | "trades" | "add-game";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabType>("games");
@@ -28,6 +36,14 @@ export default function AdminPage() {
   }
 
   function handleRentalUpdated() {
+    setRefreshTrigger((prev) => prev + 1);
+  }
+
+  function handleOrderUpdated() {
+    setRefreshTrigger((prev) => prev + 1);
+  }
+
+  function handleTradeUpdated() {
     setRefreshTrigger((prev) => prev + 1);
   }
 
@@ -72,6 +88,28 @@ export default function AdminPage() {
                 <span>Rentals</span>
               </button>
               <button
+                onClick={() => setActiveTab("orders")}
+                className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
+                  activeTab === "orders"
+                    ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <HiShoppingCart className="w-5 h-5" />
+                <span>Orders</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("trades")}
+                className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
+                  activeTab === "trades"
+                    ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <HiSwitchHorizontal className="w-5 h-5" />
+                <span>Trades</span>
+              </button>
+              <button
                 onClick={() => setActiveTab("add-game")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "add-game"
@@ -98,6 +136,18 @@ export default function AdminPage() {
               <RentalsTable
                 refreshTrigger={refreshTrigger}
                 onRentalUpdated={handleRentalUpdated}
+              />
+            )}
+            {activeTab === "orders" && (
+              <OrdersTable
+                refreshTrigger={refreshTrigger}
+                onOrderUpdated={handleOrderUpdated}
+              />
+            )}
+            {activeTab === "trades" && (
+              <TradesTable
+                refreshTrigger={refreshTrigger}
+                onTradeUpdated={handleTradeUpdated}
               />
             )}
             {activeTab === "add-game" && (
