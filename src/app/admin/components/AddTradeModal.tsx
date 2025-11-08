@@ -98,7 +98,7 @@ export default function AddTradeModal({
   const searchResultsRefsGiven = useRef<Record<number, HTMLDivElement | null>>(
     {},
   );
-  const debounceTimeouts = useRef<Record<number, NodeJS.Timeout>>({});
+  const debounceTimeouts = useRef<Record<number | string, NodeJS.Timeout>>({});
 
   // New game form state (for games given)
   const [showNewGameForm, setShowNewGameForm] = useState<
@@ -177,6 +177,13 @@ export default function AddTradeModal({
 
   function removeGameGiven(index: number) {
     setGamesGiven(gamesGiven.filter((_, i) => i !== index));
+    // Clean up search state
+    const newStates = { ...gameSearchStatesGiven };
+    delete newStates[index];
+    setGameSearchStatesGiven(newStates);
+    const newDebounced = { ...debouncedSearchTermsGiven };
+    delete newDebounced[index];
+    setDebouncedSearchTermsGiven(newDebounced);
     // Clean up new game form if exists
     const newForms = { ...newGameForms };
     delete newForms[index];
@@ -184,6 +191,12 @@ export default function AddTradeModal({
     const newShow = { ...showNewGameForm };
     delete newShow[index];
     setShowNewGameForm(newShow);
+    // Clean up timeout
+    const timeoutKey = `given-${index}`;
+    if (debounceTimeouts.current[timeoutKey]) {
+      clearTimeout(debounceTimeouts.current[timeoutKey]);
+      delete debounceTimeouts.current[timeoutKey];
+    }
   }
 
   function updateGameGiven(index: number, updates: Partial<GameRowGiven>) {
@@ -208,12 +221,17 @@ export default function AddTradeModal({
   function removeGameReceived(index: number) {
     setGamesReceived(gamesReceived.filter((_, i) => i !== index));
     // Clean up search state
-    const newStates = { ...gameSearchStates };
+    const newStates = { ...gameSearchStatesReceived };
     delete newStates[index];
-    setGameSearchStates(newStates);
-    const newDebounced = { ...debouncedSearchTerms };
+    setGameSearchStatesReceived(newStates);
+    const newDebounced = { ...debouncedSearchTermsReceived };
     delete newDebounced[index];
-    setDebouncedSearchTerms(newDebounced);
+    setDebouncedSearchTermsReceived(newDebounced);
+    // Clean up timeout
+    if (debounceTimeouts.current[index]) {
+      clearTimeout(debounceTimeouts.current[index]);
+      delete debounceTimeouts.current[index];
+    }
   }
 
   function updateGameReceived(

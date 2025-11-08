@@ -106,7 +106,8 @@ export default function OrdersTable({
         (order) =>
           order.orderNumber.toLowerCase().includes(searchLower) ||
           order.customerName.toLowerCase().includes(searchLower) ||
-          order.customerEmail.toLowerCase().includes(searchLower) ||
+          (order.customerEmail &&
+            order.customerEmail.toLowerCase().includes(searchLower)) ||
           order.games.some(
             (game) =>
               game.gameTitle.toLowerCase().includes(searchLower) ||
