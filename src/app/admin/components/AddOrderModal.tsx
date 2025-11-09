@@ -67,13 +67,10 @@ export default function AddOrderModal({
     async function fetchGames() {
       setIsLoadingGames(true);
       try {
-        const response = await fetch("/api/games");
+        // Use API filter to only get games with stock > 0
+        const response = await fetch("/api/games?inStock=true");
         const data = await response.json();
-        // Filter games with stock > 0
-        const availableGames = (data.games || []).filter(
-          (game: Game) => game.gameAvailableStocks > 0,
-        );
-        setGames(availableGames);
+        setGames(data.games || []);
       } catch (error) {
         console.error("Error fetching games:", error);
         setToast({ message: "Failed to fetch games", type: "error" });

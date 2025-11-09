@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Game } from "@/app/types/games";
 import GameCardSkeleton from "./GameCardSkeleton";
 import ComparisonModal from "./ComparisonModal";
+import ErrorState from "../ErrorState";
 import { fetchLatestGames } from "@/lib/api-client";
 import {
   formatPrice,
@@ -12,6 +13,7 @@ import {
   getPlatformInfo,
   getStockUrgency,
 } from "./game-utils";
+import { getCachedGames, setCachedGames, CACHE_KEYS } from "@/lib/cache-utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -27,32 +29,69 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
   const [latestGames, setLatestGames] = useState<Game[]>(initialGames);
   const [isLoading, setIsLoading] = useState(initialGames.length === 0);
-  const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [error, setError] = useState<string | Error | null>(null);
+  const [fallbackGames, setFallbackGames] = useState<Game[] | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Load games function with caching and error handling
+  const loadGames = async (useCache: boolean = true) => {
+    setIsLoading(true);
+    setError(null);
+    setIsRetrying(false);
+
+    // Try to load from cache first if available
+    let cachedGames: Game[] | null = null;
+    if (useCache) {
+      cachedGames = getCachedGames(CACHE_KEYS.LATEST_GAMES);
+      if (cachedGames && cachedGames.length > 0) {
+        setLatestGames(cachedGames);
+        setFallbackGames(cachedGames);
+      }
+    }
+
+    try {
+      const response = await fetchLatestGames(10);
+      if (response.success && response.data) {
+        setLatestGames(response.data);
+        setFallbackGames(null); // Clear fallback since we have fresh data
+        // Cache the successful response
+        setCachedGames(CACHE_KEYS.LATEST_GAMES, response.data);
+      } else {
+        // If we have cached data, show it as fallback
+        if (cachedGames && cachedGames.length > 0) {
+          setLatestGames(cachedGames);
+          setFallbackGames(cachedGames);
+        }
+        setError(response.error || new Error("Failed to load games"));
+      }
+    } catch (err) {
+      console.error("Error loading games:", err);
+      // If we have cached data, show it as fallback
+      if (cachedGames && cachedGames.length > 0) {
+        setLatestGames(cachedGames);
+        setFallbackGames(cachedGames);
+      }
+      setError(err instanceof Error ? err : new Error("Failed to load games"));
+    } finally {
+      setIsLoading(false);
+      setIsRetrying(false);
+    }
+  };
+
+  // Retry handler
+  const handleRetry = () => {
+    setIsRetrying(true);
+    loadGames(false); // Don't use cache on retry
+  };
 
   // Fetch games on client side if no initial games provided
   useEffect(() => {
     if (initialGames.length === 0) {
-      const loadGames = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-          const response = await fetchLatestGames(10);
-          if (response.success && response.data) {
-            setLatestGames(response.data);
-          } else {
-            setError(response.error || "Failed to load games");
-          }
-        } catch (err) {
-          console.error("Error loading games:", err);
-          setError("Failed to load games");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      loadGames();
+      loadGames(true);
+    } else {
+      // Cache initial games if provided
+      setCachedGames(CACHE_KEYS.LATEST_GAMES, initialGames);
     }
   }, [initialGames.length]);
 
@@ -257,22 +296,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {/* Error State */}
-            {error && (
-              <div className="flex-shrink-0 w-48 md:w-52 bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-                <div className="text-red-600 text-4xl mb-4">⚠️</div>
-                <h3 className="text-lg font-bold text-red-800 mb-2">
-                  Failed to Load Games
-                </h3>
-                <p className="text-red-600 text-sm mb-4">
-                  Unable to fetch the latest games. Please try refreshing the
-                  page.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Refresh Page
-                </button>
+            {error && !isLoading && (
+              <div className="flex-shrink-0 w-full max-w-md">
+                <ErrorState
+                  error={error}
+                  onRetry={handleRetry}
+                  isRetrying={isRetrying}
+                  fallbackData={fallbackGames}
+                />
               </div>
             )}
 

@@ -1,5 +1,12 @@
 import axios, { AxiosResponse } from "axios";
 import { Game } from "@/app/types/games";
+import { retryWithBackoff } from "./retry-utils";
+import {
+  classifyError,
+  getErrorMessage,
+  isRetryableError,
+  ErrorType,
+} from "./error-utils";
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -33,7 +40,7 @@ export interface GamesApiResponse {
 }
 
 /**
- * Generic API request wrapper with error handling
+ * Generic API request wrapper with error handling and retry logic
  */
 async function apiRequest<T>(url: string): Promise<ApiResponse<T>> {
   // Prevent API calls during build time
@@ -51,20 +58,32 @@ async function apiRequest<T>(url: string): Promise<ApiResponse<T>> {
       ? url
       : `${apiClient.defaults.baseURL}${url}`;
 
-    const response: AxiosResponse<T> = await apiClient.get(fullUrl);
+    // Retry with exponential backoff for retryable errors
+    const response: AxiosResponse<T> = await retryWithBackoff(
+      () => apiClient.get(fullUrl),
+      {
+        maxAttempts: 3,
+        initialDelay: 1000,
+        multiplier: 2,
+        maxDelay: 10000,
+        jitter: true,
+        retryable: (error) => {
+          // Only retry network errors and server errors
+          return isRetryableError(error);
+        },
+      },
+    );
+
     return { data: response.data, success: true };
   } catch (error) {
     console.error("API request error:", error);
-    if (axios.isAxiosError(error)) {
-      const errorMessage =
-        error.response?.data?.error || error.message || "API request failed";
-      return {
-        error: errorMessage,
-        success: false,
-      };
-    }
+
+    // Classify and format error
+    const classifiedError = classifyError(error);
+    const errorMessage = getErrorMessage(error);
+
     return {
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      error: errorMessage,
       success: false,
     };
   }
@@ -72,11 +91,12 @@ async function apiRequest<T>(url: string): Promise<ApiResponse<T>> {
 
 /**
  * Fetch latest games with pagination
+ * Only returns games with stock > 0 by default
  */
 export async function fetchLatestGames(
   limit: number = 10,
 ): Promise<ApiResponse<Game[]>> {
-  const url = `/api/games?limit=${limit}&page=1`;
+  const url = `/api/games?limit=${limit}&page=1&inStock=true`;
   const response = await apiRequest<GamesApiResponse>(url);
 
   if (response.success && response.data) {

@@ -35,6 +35,12 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // Filter by stock availability (only games with stock > 0)
+    const inStockOnly = searchParams.get("inStock") === "true";
+    if (inStockOnly) {
+      query.gameAvailableStocks = { $gt: 0 };
+    }
+
     // Pagination
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
