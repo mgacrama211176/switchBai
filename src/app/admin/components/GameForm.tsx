@@ -62,6 +62,8 @@ export default function GameForm({
     tradable: initialData?.tradable ?? true,
     rentalAvailable: initialData?.rentalAvailable || false,
     rentalWeeklyRate: initialData?.rentalWeeklyRate || 0,
+    isOnSale: initialData?.isOnSale || false,
+    salePrice: initialData?.salePrice || 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -586,7 +588,7 @@ export default function GameForm({
               htmlFor="gamePrice"
               className="block text-sm font-semibold text-gray-700 mb-2"
             >
-              Price (₱) *
+              Original Price (₱) *
             </label>
             <input
               id="gamePrice"
@@ -660,6 +662,72 @@ export default function GameForm({
               </p>
             )}
           </div>
+        </div>
+
+        {/* Sale Section */}
+        <div className="border-2 border-gray-200 rounded-xl p-6 bg-gray-50">
+          <div className="flex items-center space-x-3 mb-4">
+            <input
+              type="checkbox"
+              name="isOnSale"
+              checked={formData.isOnSale}
+              onChange={handleInputChange}
+              className="w-5 h-5 text-funBlue rounded focus:ring-2 focus:ring-funBlue/20"
+            />
+            <label
+              htmlFor="isOnSale"
+              className="text-lg font-bold text-gray-900 cursor-pointer"
+            >
+              Put this game on sale
+            </label>
+          </div>
+          {formData.isOnSale && (
+            <div className="mt-4 pl-8 border-l-4 border-funBlue">
+              <div>
+                <label
+                  htmlFor="salePrice"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
+                  Sale Price (₱) *
+                </label>
+                <input
+                  id="salePrice"
+                  name="salePrice"
+                  type="number"
+                  value={formData.salePrice}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="1"
+                  className={`w-full max-w-md px-4 py-3 rounded-xl border-2 ${
+                    errors.salePrice ? "border-lameRed" : "border-gray-200"
+                  } focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300 text-black`}
+                  placeholder="2399"
+                />
+                {errors.salePrice && (
+                  <p className="text-sm text-lameRed mt-1">
+                    {errors.salePrice}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-2">
+                  Sale price must be less than the original price (₱
+                  {formData.gamePrice.toLocaleString()})
+                </p>
+                {formData.salePrice > 0 && formData.gamePrice > 0 && (
+                  <p className="text-sm text-green-600 font-semibold mt-2">
+                    Savings: ₱
+                    {(formData.gamePrice - formData.salePrice).toLocaleString()}{" "}
+                    (
+                    {Math.round(
+                      ((formData.gamePrice - formData.salePrice) /
+                        formData.gamePrice) *
+                        100,
+                    )}
+                    % off)
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Optional Fields */}

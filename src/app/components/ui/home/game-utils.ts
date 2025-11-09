@@ -3,7 +3,25 @@ export function formatPrice(price: number): string {
   return `₱${price.toLocaleString()}`;
 }
 
-export function calculateSavings(price: number, gameBarcode: string) {
+export function calculateSavings(
+  price: number,
+  gameBarcode: string,
+  game?: { isOnSale?: boolean; salePrice?: number; gamePrice?: number },
+) {
+  // If game is on sale, use actual sale data
+  if (game?.isOnSale && game.salePrice && game.gamePrice) {
+    const originalPrice = game.gamePrice;
+    const salePrice = game.salePrice;
+    const savings = originalPrice - salePrice;
+    const savingsPercentage = Math.round((savings / originalPrice) * 100);
+    return {
+      original: originalPrice,
+      savings,
+      percentage: savingsPercentage,
+    };
+  }
+
+  // Fallback to default 10% calculation
   const savingsPercentage = 10;
   const originalPrice = Math.round(price / (1 - savingsPercentage / 100));
   const savings = originalPrice - price;

@@ -121,6 +121,8 @@ export async function fetchGames(params: {
   platform?: string;
   category?: string;
   search?: string;
+  tradable?: boolean;
+  inStock?: boolean;
 }): Promise<ApiResponse<GamesApiResponse>> {
   const searchParams = new URLSearchParams();
 
@@ -129,6 +131,8 @@ export async function fetchGames(params: {
   if (params.platform) searchParams.set("platform", params.platform);
   if (params.category) searchParams.set("category", params.category);
   if (params.search) searchParams.set("search", params.search);
+  if (params.tradable) searchParams.set("tradable", "true");
+  if (params.inStock) searchParams.set("inStock", "true");
 
   const url = `/api/games?${searchParams.toString()}`;
   return apiRequest<GamesApiResponse>(url);

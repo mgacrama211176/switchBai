@@ -41,6 +41,12 @@ export async function GET(request: NextRequest) {
       query.gameAvailableStocks = { $gt: 0 };
     }
 
+    // Filter by tradable games
+    const tradableOnly = searchParams.get("tradable") === "true";
+    if (tradableOnly) {
+      query.tradable = true;
+    }
+
     // Pagination
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
@@ -76,6 +82,8 @@ export async function GET(request: NextRequest) {
       rentalWeeklyRate: game.rentalWeeklyRate,
       class: game.class,
       tradable: game.tradable,
+      isOnSale: game.isOnSale,
+      salePrice: game.salePrice,
     }));
 
     return NextResponse.json({
@@ -144,6 +152,8 @@ export async function POST(request: NextRequest) {
       rentalWeeklyRate: body.rentalWeeklyRate || 0,
       class: body.class || "",
       tradable: body.tradable ?? true,
+      isOnSale: body.isOnSale || false,
+      salePrice: body.isOnSale ? body.salePrice : undefined,
     });
 
     await gameDoc.save();
@@ -168,6 +178,8 @@ export async function POST(request: NextRequest) {
       rentalWeeklyRate: gameDoc.rentalWeeklyRate,
       class: gameDoc.class,
       tradable: gameDoc.tradable,
+      isOnSale: gameDoc.isOnSale,
+      salePrice: gameDoc.salePrice,
     };
 
     return NextResponse.json({ success: true, game: newGame }, { status: 201 });

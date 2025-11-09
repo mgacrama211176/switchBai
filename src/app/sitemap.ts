@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "",
     "/games",
     "/rent-a-game",
+    "/trade-game",
     "/compare",
     "/about",
     "/contact",

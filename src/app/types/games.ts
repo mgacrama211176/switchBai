@@ -17,4 +17,6 @@ export interface Game {
   rentalWeeklyRate?: number;
   class?: string;
   tradable?: boolean;
+  isOnSale?: boolean;
+  salePrice?: number;
 }

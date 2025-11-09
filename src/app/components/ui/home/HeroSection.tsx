@@ -333,6 +333,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                 const savings = calculateSavings(
                   game.gamePrice,
                   game.gameBarcode,
+                  game,
                 );
 
                 return (
@@ -392,22 +393,43 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                       {/* Enhanced Pricing Section */}
                       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-100">
                         <div className="space-y-1">
-                          <div className="text-lg md:text-xl font-black text-funBlue">
-                            {formatPrice(game.gamePrice)}
-                          </div>
-                          {savings.percentage > 0 && (
-                            <div className="flex items-center justify-between text-xs">
-                              <div className="text-gray-500 line-through">
-                                {formatPrice(savings.original)}
+                          {game.isOnSale && game.salePrice ? (
+                            <>
+                              <div className="text-lg md:text-xl font-black text-red-600">
+                                {formatPrice(game.salePrice)}
                               </div>
-                              <div className="font-bold text-green-600">
-                                Save ₱{savings.savings.toLocaleString()}
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="text-gray-500 line-through">
+                                  {formatPrice(game.gamePrice)}
+                                </div>
+                                <div className="font-bold text-green-600">
+                                  Save ₱{savings.savings.toLocaleString()}
+                                </div>
                               </div>
-                            </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-lg md:text-xl font-black text-funBlue">
+                                {formatPrice(game.gamePrice)}
+                              </div>
+                              {savings.percentage > 0 && (
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="text-gray-500 line-through">
+                                    {formatPrice(savings.original)}
+                                  </div>
+                                  <div className="font-bold text-green-600">
+                                    Save ₱{savings.savings.toLocaleString()}
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                         <div className="text-[10px] text-gray-600 font-medium mt-2">
-                          💡 {savings.percentage}% below market price
+                          💡{" "}
+                          {game.isOnSale
+                            ? "On Sale - Limited Time Offer"
+                            : `${savings.percentage}% below market price`}
                         </div>
                       </div>
 

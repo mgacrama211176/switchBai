@@ -32,6 +32,7 @@ export default function GamesTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [platformFilter, setPlatformFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [stockSort, setStockSort] = useState<"asc" | "desc" | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [deletingGame, setDeletingGame] = useState<Game | null>(null);
@@ -91,9 +92,20 @@ export default function GamesTable({
       );
     }
 
+    // Stock sorting
+    if (stockSort) {
+      filtered.sort((a, b) => {
+        if (stockSort === "asc") {
+          return a.gameAvailableStocks - b.gameAvailableStocks;
+        } else {
+          return b.gameAvailableStocks - a.gameAvailableStocks;
+        }
+      });
+    }
+
     setFilteredGames(filtered);
     setCurrentPage(1);
-  }, [searchTerm, platformFilter, categoryFilter, games]);
+  }, [searchTerm, platformFilter, categoryFilter, stockSort, games]);
 
   const totalPages = Math.ceil(filteredGames.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -154,7 +166,7 @@ export default function GamesTable({
       )}
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Search */}
         <div className="relative text-black">
           <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 " />
@@ -191,6 +203,21 @@ export default function GamesTable({
             </option>
           ))}
         </select>
+
+        {/* Stock Sort */}
+        <select
+          value={stockSort || ""}
+          onChange={(e) =>
+            setStockSort(
+              e.target.value === "" ? null : (e.target.value as "asc" | "desc"),
+            )
+          }
+          className="px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300"
+        >
+          <option value="">No Sort</option>
+          <option value="asc">Stock: Low to High</option>
+          <option value="desc">Stock: High to Low</option>
+        </select>
       </div>
 
       {/* Results Count */}
@@ -199,12 +226,13 @@ export default function GamesTable({
           Showing {startIndex + 1}-{Math.min(endIndex, filteredGames.length)} of{" "}
           {filteredGames.length} games
         </p>
-        {(searchTerm || platformFilter || categoryFilter) && (
+        {(searchTerm || platformFilter || categoryFilter || stockSort) && (
           <button
             onClick={() => {
               setSearchTerm("");
               setPlatformFilter("");
               setCategoryFilter("");
+              setStockSort(null);
             }}
             className="text-sm text-funBlue hover:text-funBlue/80 font-medium"
           >
@@ -244,6 +272,9 @@ export default function GamesTable({
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Platform
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Tradable
+                </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
@@ -267,18 +298,38 @@ export default function GamesTable({
                   </td>
                   <td className="px-4 py-3">
                     <div>
-                      <p className="font-semibold text-gray-900">
-                        {game.gameTitle}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900">
+                          {game.gameTitle}
+                        </p>
+                        {game.isOnSale && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white">
+                            🏷️ Sale
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">
                         {game.gameBarcode}
                       </p>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-gray-900">
-                      {formatPrice(game.gamePrice)}
-                    </p>
+                    <div>
+                      {game.isOnSale && game.salePrice ? (
+                        <>
+                          <p className="font-semibold text-red-600">
+                            {formatPrice(game.salePrice)}
+                          </p>
+                          <p className="text-xs text-gray-500 line-through">
+                            {formatPrice(game.gamePrice)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="font-semibold text-gray-900">
+                          {formatPrice(game.gamePrice)}
+                        </p>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -315,6 +366,17 @@ export default function GamesTable({
                         </span>
                       )}
                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        game.tradable
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {game.tradable ? "Yes" : "No"}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end space-x-2">

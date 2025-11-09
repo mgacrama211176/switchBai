@@ -115,6 +115,12 @@ const Navigation: React.FC = () => {
           icon: <HiSwitchHorizontal className="w-5 h-5" />,
           description: "Compare game features and prices",
         },
+        {
+          name: "Trade Game",
+          href: "/trade-game",
+          icon: <HiSwitchHorizontal className="w-5 h-5" />,
+          description: "Trade your games with us",
+        },
       ],
     },
     {

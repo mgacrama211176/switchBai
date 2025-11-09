@@ -99,7 +99,9 @@ const GameDetailPage: React.FC = () => {
 
   const platformInfo = getPlatformInfo(game.gamePlatform);
   const stockInfo = getStockUrgency(game.gameAvailableStocks);
-  const savings = calculateSavings(game.gamePrice, game.gameBarcode);
+  const displayPrice =
+    game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice;
+  const savings = calculateSavings(displayPrice, game.gameBarcode, game);
 
   return (
     <main className="min-h-screen bg-white">
@@ -135,9 +137,9 @@ const GameDetailPage: React.FC = () => {
                 priority
               />
 
-              {savings.percentage > 0 && (
+              {game.isOnSale && savings.percentage > 0 && (
                 <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-                  Save {savings.percentage}%
+                  🏷️ Save {savings.percentage}%
                 </div>
               )}
             </div>
@@ -180,25 +182,47 @@ const GameDetailPage: React.FC = () => {
               </div>
 
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-                <div className="flex items-baseline gap-3 mb-2">
-                  <div className="text-4xl font-black text-funBlue">
-                    {formatPrice(game.gamePrice)}
-                  </div>
-                  {savings.percentage > 0 && (
-                    <div className="text-xl text-gray-500 line-through">
-                      {formatPrice(savings.original)}
+                {game.isOnSale && game.salePrice ? (
+                  <>
+                    <div className="flex items-baseline gap-3 mb-2">
+                      <div className="text-4xl font-black text-red-600">
+                        {formatPrice(game.salePrice)}
+                      </div>
+                      <div className="text-xl text-gray-500 line-through">
+                        {formatPrice(game.gamePrice)}
+                      </div>
                     </div>
-                  )}
-                </div>
-                {savings.percentage > 0 && (
-                  <div className="text-sm font-bold text-green-600 mb-2">
-                    You save ₱{savings.savings.toLocaleString()} (
-                    {savings.percentage}% off)
-                  </div>
+                    <div className="text-sm font-bold text-green-600 mb-2">
+                      You save ₱{savings.savings.toLocaleString()} (
+                      {savings.percentage}% off)
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      💡 On Sale - Limited Time Offer
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-3 mb-2">
+                      <div className="text-4xl font-black text-funBlue">
+                        {formatPrice(game.gamePrice)}
+                      </div>
+                      {savings.percentage > 0 && (
+                        <div className="text-xl text-gray-500 line-through">
+                          {formatPrice(savings.original)}
+                        </div>
+                      )}
+                    </div>
+                    {savings.percentage > 0 && (
+                      <div className="text-sm font-bold text-green-600 mb-2">
+                        You save ₱{savings.savings.toLocaleString()} (
+                        {savings.percentage}% off)
+                      </div>
+                    )}
+                    <div className="text-sm text-gray-700">
+                      💡 {savings.percentage}% below market price
+                    </div>
+                  </>
                 )}
-                <div className="text-sm text-gray-700">
-                  💡 {savings.percentage}% below market price
-                </div>
               </div>
 
               {game.gameAvailableStocks > 0 && (

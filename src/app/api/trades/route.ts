@@ -72,9 +72,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate values
-    const totalValueGiven = calculateGamesValue(body.gamesGiven);
-    const totalValueReceived = calculateGamesValue(body.gamesReceived);
+    // Calculate values - use sale price if game is on sale
+    const totalValueGiven = await Promise.all(
+      body.gamesGiven.map(async (game: any) => {
+        if (game.isNewGame) {
+          return game.gamePrice * game.quantity;
+        }
+        const gameDoc = await GameModel.findOne({
+          gameBarcode: game.gameBarcode,
+        });
+        const priceToUse =
+          gameDoc?.isOnSale && gameDoc?.salePrice
+            ? gameDoc.salePrice
+            : game.gamePrice;
+        return priceToUse * game.quantity;
+      }),
+    ).then((values) => values.reduce((sum, val) => sum + val, 0));
+
+    const totalValueReceived = await Promise.all(
+      body.gamesReceived.map(async (game: any) => {
+        const gameDoc = await GameModel.findOne({
+          gameBarcode: game.gameBarcode,
+        });
+        const priceToUse =
+          gameDoc?.isOnSale && gameDoc?.salePrice
+            ? gameDoc.salePrice
+            : game.gamePrice;
+        return priceToUse * game.quantity;
+      }),
+    ).then((values) => values.reduce((sum, val) => sum + val, 0));
 
     // Calculate cash difference and trade fee
     const { cashDifference, tradeFee, tradeType } =
@@ -90,20 +116,45 @@ export async function POST(request: NextRequest) {
       customerPhone: body.customerPhone?.trim() || undefined,
       customerEmail: body.customerEmail?.trim()?.toLowerCase() || undefined,
       customerFacebookUrl: body.customerFacebookUrl?.trim() || undefined,
-      gamesGiven: body.gamesGiven.map((game: any) => ({
-        gameBarcode: game.gameBarcode,
-        gameTitle: game.gameTitle,
-        gamePrice: game.gamePrice,
-        quantity: game.quantity,
-        isNewGame: game.isNewGame || false,
-        newGameDetails: game.newGameDetails || undefined,
-      })),
-      gamesReceived: body.gamesReceived.map((game: any) => ({
-        gameBarcode: game.gameBarcode,
-        gameTitle: game.gameTitle,
-        gamePrice: game.gamePrice,
-        quantity: game.quantity,
-      })),
+      gamesGiven: await Promise.all(
+        body.gamesGiven.map(async (game: any) => {
+          let priceToUse = game.gamePrice;
+          if (!game.isNewGame) {
+            const gameDoc = await GameModel.findOne({
+              gameBarcode: game.gameBarcode,
+            });
+            priceToUse =
+              gameDoc?.isOnSale && gameDoc?.salePrice
+                ? gameDoc.salePrice
+                : game.gamePrice;
+          }
+          return {
+            gameBarcode: game.gameBarcode,
+            gameTitle: game.gameTitle,
+            gamePrice: priceToUse,
+            quantity: game.quantity,
+            isNewGame: game.isNewGame || false,
+            newGameDetails: game.newGameDetails || undefined,
+          };
+        }),
+      ),
+      gamesReceived: await Promise.all(
+        body.gamesReceived.map(async (game: any) => {
+          const gameDoc = await GameModel.findOne({
+            gameBarcode: game.gameBarcode,
+          });
+          const priceToUse =
+            gameDoc?.isOnSale && gameDoc?.salePrice
+              ? gameDoc.salePrice
+              : game.gamePrice;
+          return {
+            gameBarcode: game.gameBarcode,
+            gameTitle: game.gameTitle,
+            gamePrice: priceToUse,
+            quantity: game.quantity,
+          };
+        }),
+      ),
       tradeLocation: body.tradeLocation?.trim() || undefined,
       notes: body.notes?.trim() || undefined,
       totalValueGiven,

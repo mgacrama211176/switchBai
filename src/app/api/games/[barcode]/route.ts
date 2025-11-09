@@ -42,6 +42,8 @@ export async function GET(
       rentalWeeklyRate: game.rentalWeeklyRate,
       class: game.class,
       tradable: game.tradable,
+      isOnSale: game.isOnSale,
+      salePrice: game.salePrice,
     };
 
     return NextResponse.json({ game: formattedGame });
@@ -128,6 +130,14 @@ export async function PUT(
         class: body.class || existingGame.class || "",
         tradable:
           body.tradable !== undefined ? body.tradable : existingGame.tradable,
+        isOnSale:
+          body.isOnSale !== undefined ? body.isOnSale : existingGame.isOnSale,
+        salePrice:
+          body.isOnSale !== undefined
+            ? body.isOnSale
+              ? body.salePrice
+              : undefined
+            : existingGame.salePrice,
       },
       { new: true, runValidators: true },
     );
@@ -152,6 +162,8 @@ export async function PUT(
       rentalWeeklyRate: updatedGame.rentalWeeklyRate,
       class: updatedGame.class,
       tradable: updatedGame.tradable,
+      isOnSale: updatedGame.isOnSale,
+      salePrice: updatedGame.salePrice,
     };
 
     return NextResponse.json({ success: true, game: formattedGame });

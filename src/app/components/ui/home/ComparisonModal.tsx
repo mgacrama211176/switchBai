@@ -78,6 +78,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
               const savings = calculateSavings(
                 game.gamePrice,
                 game.gameBarcode,
+                game,
               );
 
               return (
@@ -155,18 +156,36 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
                     {/* Pricing */}
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
                       <div className="space-y-1">
-                        <div className="text-2xl font-black text-funBlue">
-                          {formatPrice(game.gamePrice)}
-                        </div>
-                        {savings.percentage > 0 && (
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="text-gray-500 line-through">
-                              {formatPrice(savings.original)}
+                        {game.isOnSale && game.salePrice ? (
+                          <>
+                            <div className="text-2xl font-black text-red-600">
+                              {formatPrice(game.salePrice)}
                             </div>
-                            <div className="font-bold text-green-600">
-                              Save ₱{savings.savings.toLocaleString()}
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="text-gray-500 line-through">
+                                {formatPrice(game.gamePrice)}
+                              </div>
+                              <div className="font-bold text-green-600">
+                                Save ₱{savings.savings.toLocaleString()}
+                              </div>
                             </div>
-                          </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-2xl font-black text-funBlue">
+                              {formatPrice(game.gamePrice)}
+                            </div>
+                            {savings.percentage > 0 && (
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="text-gray-500 line-through">
+                                  {formatPrice(savings.original)}
+                                </div>
+                                <div className="font-bold text-green-600">
+                                  Save ₱{savings.savings.toLocaleString()}
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                       <div className="text-xs text-gray-600 font-medium mt-1">

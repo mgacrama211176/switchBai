@@ -87,10 +87,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate subtotal from all games
-    const subtotal = body.games.reduce(
-      (sum: number, game: any) => sum + game.gamePrice * game.quantity,
-      0,
+    // Calculate subtotal from all games, using sale price if game is on sale
+    const subtotal = await body.games.reduce(
+      async (sumPromise: Promise<number>, game: any) => {
+        const sum = await sumPromise;
+        const gameDoc = await GameModel.findOne({
+          gameBarcode: game.gameBarcode,
+        });
+        const priceToUse =
+          gameDoc?.isOnSale && gameDoc?.salePrice
+            ? gameDoc.salePrice
+            : game.gamePrice;
+        return sum + priceToUse * game.quantity;
+      },
+      Promise.resolve(0),
     );
 
     // Calculate total amount
@@ -110,13 +120,24 @@ export async function POST(request: NextRequest) {
       customerEmail: body.customerEmail?.trim()?.toLowerCase() || undefined,
       customerFacebookUrl: body.customerFacebookUrl || undefined,
 
-      // Game details (array)
-      games: body.games.map((game: any) => ({
-        gameBarcode: game.gameBarcode,
-        gameTitle: game.gameTitle,
-        gamePrice: game.gamePrice,
-        quantity: game.quantity,
-      })),
+      // Game details (array) - use sale price if game is on sale
+      games: await Promise.all(
+        body.games.map(async (game: any) => {
+          const gameDoc = await GameModel.findOne({
+            gameBarcode: game.gameBarcode,
+          });
+          const priceToUse =
+            gameDoc?.isOnSale && gameDoc?.salePrice
+              ? gameDoc.salePrice
+              : game.gamePrice;
+          return {
+            gameBarcode: game.gameBarcode,
+            gameTitle: game.gameTitle,
+            gamePrice: priceToUse,
+            quantity: game.quantity,
+          };
+        }),
+      ),
 
       // Delivery details
       deliveryAddress: body.deliveryAddress?.trim() || undefined,

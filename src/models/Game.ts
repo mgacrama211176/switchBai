@@ -16,6 +16,8 @@ export interface IGame extends Document {
   rentalWeeklyRate?: number;
   class?: string;
   tradable?: boolean;
+  isOnSale?: boolean;
+  salePrice?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -157,6 +159,35 @@ const GameSchema = new Schema<IGame>(
       type: Boolean,
       default: true,
     },
+    isOnSale: {
+      type: Boolean,
+      default: false,
+    },
+    salePrice: {
+      type: Number,
+      min: [0, "Sale price cannot be negative"],
+      max: [99999, "Sale price cannot exceed 99999"],
+      validate: {
+        validator: function (this: any, v: number | undefined) {
+          // If isOnSale is true, salePrice is required
+          if (this.isOnSale && (v === undefined || v === null)) {
+            return false;
+          }
+          // If isOnSale is true, salePrice must be less than gamePrice
+          if (
+            this.isOnSale &&
+            v !== undefined &&
+            v !== null &&
+            this.gamePrice
+          ) {
+            return v < this.gamePrice;
+          }
+          return true;
+        },
+        message:
+          "Sale price is required when game is on sale and must be less than original price",
+      },
+    },
   },
   {
     timestamps: true,
@@ -177,6 +208,7 @@ GameSchema.index({ gamePlatform: 1 });
 GameSchema.index({ gamePrice: 1 });
 GameSchema.index({ gameAvailableStocks: 1 });
 GameSchema.index({ rentalAvailable: 1 });
+GameSchema.index({ isOnSale: 1 });
 GameSchema.index({ createdAt: -1 });
 
 // Pre-save middleware to ensure platform is always an array

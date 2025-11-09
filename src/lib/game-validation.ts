@@ -104,6 +104,17 @@ export function validateGameForm(
       "Weekly rate is required when rental is available";
   }
 
+  // Sale Price (only if game is on sale)
+  if (formData.isOnSale) {
+    if (!formData.salePrice || formData.salePrice === "") {
+      errors.salePrice = "Sale price is required when game is on sale";
+    } else if (formData.salePrice <= 0) {
+      errors.salePrice = "Sale price must be greater than 0";
+    } else if (formData.gamePrice && formData.salePrice >= formData.gamePrice) {
+      errors.salePrice = "Sale price must be less than the original price";
+    }
+  }
+
   return {
     valid: Object.keys(errors).length === 0,
     errors,

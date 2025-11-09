@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { Game } from "@/app/types/games";
 import { fetchGameByBarcode } from "@/lib/api-client";
 import Navigation from "@/app/components/ui/globalUI/Navigation";
@@ -40,6 +41,17 @@ function PurchaseFormContent() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Calculate order summary values reactively (must be before any conditional returns)
+  const { deliveryFee, subtotal, totalAmount } = useMemo(() => {
+    if (!game) {
+      return { deliveryFee: 0, subtotal: 0, totalAmount: 0 };
+    }
+    const fee = calculateDeliveryFee(formData.deliveryCity);
+    const sub = game.gamePrice * formData.quantity;
+    const total = calculateTotal(sub, fee);
+    return { deliveryFee: fee, subtotal: sub, totalAmount: total };
+  }, [game, formData.quantity, formData.deliveryCity]);
 
   useEffect(() => {
     if (gameBarcode) {
@@ -116,26 +128,30 @@ function PurchaseFormContent() {
       const purchaseRequest = {
         // Customer details
         customerName: formData.customerName.trim(),
-        customerPhone: formData.customerPhone.trim(),
-        customerEmail: formData.customerEmail.trim(),
+        customerPhone: formData.customerPhone.trim() || undefined,
+        customerEmail: formData.customerEmail.trim() || undefined,
         customerFacebookUrl: formData.customerFacebookUrl.trim() || undefined,
 
-        // Game details
-        gameBarcode: game.gameBarcode,
-        gameTitle: game.gameTitle,
-        gamePrice: game.gamePrice,
-        quantity: formData.quantity,
+        // Games array (new format)
+        games: [
+          {
+            gameBarcode: game.gameBarcode,
+            gameTitle: game.gameTitle,
+            gamePrice: game.gamePrice,
+            quantity: formData.quantity,
+          },
+        ],
 
         // Delivery details
-        deliveryAddress: formData.deliveryAddress.trim(),
-        deliveryCity: formData.deliveryCity.trim(),
-        deliveryLandmark: formData.deliveryLandmark.trim(),
+        deliveryAddress: formData.deliveryAddress.trim() || undefined,
+        deliveryCity: formData.deliveryCity.trim() || undefined,
+        deliveryLandmark: formData.deliveryLandmark.trim() || undefined,
         deliveryNotes: formData.deliveryNotes.trim() || undefined,
 
         // Payment details
         paymentMethod: formData.paymentMethod,
-        subtotal,
         deliveryFee,
+        subtotal,
         totalAmount,
 
         // Metadata
@@ -210,12 +226,8 @@ function PurchaseFormContent() {
     );
   }
 
-  const deliveryFee = calculateDeliveryFee(formData.deliveryCity);
-  const subtotal = game.gamePrice * formData.quantity;
-  const totalAmount = calculateTotal(subtotal, deliveryFee);
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 text-black">
       <Navigation />
 
       <div className="pt-24 md:pt-32 pb-16 px-4 md:px-8">
@@ -238,45 +250,63 @@ function PurchaseFormContent() {
                   Order Summary
                 </h2>
 
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-500 text-xs">Game Image</span>
+                <div className="space-y-5">
+                  {/* Game Info */}
+                  <div className="flex items-start gap-3">
+                    <div className="relative w-20 h-28 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-sm">
+                      <Image
+                        src={game.gameImageURL}
+                        alt={game.gameTitle}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1.5 line-clamp-2 break-words">
                         {game.gameTitle}
                       </h3>
-                      <p className="text-sm text-gray-600">
-                        Barcode: {game.gameBarcode}
+                      <p className="text-xs text-gray-500 mb-1.5 font-mono truncate">
+                        {game.gameBarcode}
                       </p>
-                      <p className="text-sm text-gray-600">
-                        Unit Price: {formatPrice(game.gamePrice)}
+                      <p className="text-sm font-semibold text-funBlue">
+                        {formatPrice(game.gamePrice)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="border-t pt-4 space-y-2">
-                    <div className="flex justify-between">
-                      <span>Quantity:</span>
-                      <span className="font-semibold">{formData.quantity}</span>
+                  {/* Order Summary */}
+                  <div className="border-t border-gray-200 pt-4 space-y-2.5">
+                    <div className="flex justify-between items-center text-sm py-1">
+                      <span className="text-gray-600 font-medium">
+                        Quantity:
+                      </span>
+                      <span className="font-semibold text-gray-900">
+                        {formData.quantity}
+                      </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span className="font-semibold">
+                    <div className="flex justify-between items-center text-sm py-1">
+                      <span className="text-gray-600 font-medium">
+                        Subtotal:
+                      </span>
+                      <span className="font-semibold text-gray-900">
                         {formatPrice(subtotal)}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Delivery Fee:</span>
-                      <span className="font-semibold">
+                    <div className="flex justify-between items-center text-sm py-1">
+                      <span className="text-gray-600 font-medium">
+                        Delivery Fee:
+                      </span>
+                      <span className="font-semibold text-gray-900">
                         {formatPrice(deliveryFee)}
                       </span>
                     </div>
-                    <div className="border-t pt-2">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Total:</span>
-                        <span className="text-funBlue">
+                    <div className="border-t border-gray-300 pt-3 mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-base font-bold text-gray-900">
+                          Total:
+                        </span>
+                        <span className="text-lg font-bold text-funBlue">
                           {formatPrice(totalAmount)}
                         </span>
                       </div>

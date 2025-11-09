@@ -69,7 +69,8 @@ const GamesPageContent = () => {
     availability: (searchParams.get("availability") || "inStock") as
       | "all"
       | "inStock"
-      | "outOfStock",
+      | "outOfStock"
+      | "onSale",
     sortBy: searchParams.get("sort") || "newest",
   });
 
@@ -90,7 +91,8 @@ const GamesPageContent = () => {
       availability: (searchParams.get("availability") || "inStock") as
         | "all"
         | "inStock"
-        | "outOfStock",
+        | "outOfStock"
+        | "onSale",
       sortBy: searchParams.get("sort") || "newest",
     };
     setFilters(urlFilters);
@@ -176,6 +178,8 @@ const GamesPageContent = () => {
       filtered = filtered.filter((g) => g.gameAvailableStocks > 0);
     } else if (filters.availability === "outOfStock") {
       filtered = filtered.filter((g) => g.gameAvailableStocks === 0);
+    } else if (filters.availability === "onSale") {
+      filtered = filtered.filter((g) => g.isOnSale === true);
     }
 
     // Sort (client-side)
@@ -239,7 +243,7 @@ const GamesPageContent = () => {
   };
 
   const handleAvailabilityChange = (
-    availability: "all" | "inStock" | "outOfStock",
+    availability: "all" | "inStock" | "outOfStock" | "onSale",
   ) => {
     setFilters((prev) => ({ ...prev, availability }));
     setCurrentPage(1);
@@ -302,7 +306,9 @@ const GamesPageContent = () => {
   }> = ({ game, isInCart, isInCompare, onAddToCart, onAddToCompare }) => {
     const platformInfo = getPlatformInfo(game.gamePlatform);
     const stockInfo = getStockUrgency(game.gameAvailableStocks);
-    const savings = calculateSavings(game.gamePrice, game.gameBarcode);
+    const displayPrice =
+      game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice;
+    const savings = calculateSavings(displayPrice, game.gameBarcode, game);
 
     return (
       <article className="bg-white rounded-2xl overflow-hidden shadow-lg border hover:shadow-xl transition-all duration-300 group">
@@ -317,10 +323,10 @@ const GamesPageContent = () => {
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
 
-            {/* Savings Badge */}
-            {savings.percentage > 0 && (
+            {/* Sale Badge */}
+            {game.isOnSale && savings.percentage > 0 && (
               <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                Save {savings.percentage}%
+                🏷️ Save {savings.percentage}%
               </div>
             )}
 
@@ -353,18 +359,36 @@ const GamesPageContent = () => {
 
           {/* Pricing */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-100">
-            <div className="text-lg md:text-xl font-black text-funBlue">
-              {formatPrice(game.gamePrice)}
-            </div>
-            {savings.percentage > 0 && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500 line-through">
-                  {formatPrice(savings.original)}
-                </span>
-                <span className="font-bold text-green-600">
-                  Save ₱{savings.savings.toLocaleString()}
-                </span>
-              </div>
+            {game.isOnSale && game.salePrice ? (
+              <>
+                <div className="text-lg md:text-xl font-black text-red-600">
+                  {formatPrice(game.salePrice)}
+                </div>
+                <div className="flex items-center justify-between text-xs mt-1">
+                  <span className="text-gray-500 line-through">
+                    {formatPrice(game.gamePrice)}
+                  </span>
+                  <span className="font-bold text-green-600">
+                    Save ₱{savings.savings.toLocaleString()}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-lg md:text-xl font-black text-funBlue">
+                  {formatPrice(game.gamePrice)}
+                </div>
+                {savings.percentage > 0 && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500 line-through">
+                      {formatPrice(savings.original)}
+                    </span>
+                    <span className="font-bold text-green-600">
+                      Save ₱{savings.savings.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -496,7 +520,9 @@ const GamesPageContent = () => {
                 >
                   {filters.availability === "all"
                     ? "All Items"
-                    : "Out of Stock"}
+                    : filters.availability === "outOfStock"
+                      ? "Out of Stock"
+                      : "On Sale"}
                   <span className="text-xs">✕</span>
                 </button>
               )}
@@ -699,6 +725,18 @@ const GamesPageContent = () => {
                         />
                         <span className="text-gray-700 group-hover:text-funBlue transition-colors">
                           Out of Stock
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="radio"
+                          name="availability"
+                          checked={filters.availability === "onSale"}
+                          onChange={() => handleAvailabilityChange("onSale")}
+                          className="border-gray-300 text-funBlue focus:ring-funBlue cursor-pointer"
+                        />
+                        <span className="text-gray-700 group-hover:text-funBlue transition-colors font-semibold">
+                          🏷️ On Sale
                         </span>
                       </label>
                     </div>
