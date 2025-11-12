@@ -34,8 +34,7 @@ export default function BuyingDetailsModal({
     };
 
     const config =
-      statusConfig[status as keyof typeof statusConfig] ||
-      statusConfig.pending;
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
 
     return (
       <span
@@ -58,7 +57,9 @@ export default function BuyingDetailsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Purchase Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Purchase Details
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               {purchase.purchaseReference}
             </p>
@@ -142,7 +143,8 @@ export default function BuyingDetailsModal({
                         Price: {formatPrice(game.sellingPrice)}
                       </div>
                       <div className="text-sm font-semibold text-funBlue mt-1">
-                        Revenue: {formatPrice(game.sellingPrice * game.quantity)}
+                        Revenue:{" "}
+                        {formatPrice(game.sellingPrice * game.quantity)}
                       </div>
                     </div>
                   </div>
@@ -204,7 +206,9 @@ export default function BuyingDetailsModal({
             </h3>
             <div className="bg-gray-50 p-4 rounded-lg space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Status:</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Status:
+                </span>
                 {getStatusBadge(purchase.status)}
               </div>
               <div>
@@ -254,4 +258,3 @@ export default function BuyingDetailsModal({
     </div>
   );
 }
-

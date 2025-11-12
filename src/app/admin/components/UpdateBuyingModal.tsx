@@ -24,9 +24,9 @@ export default function UpdateBuyingModal({
     purchase.supplierNotes || "",
   );
   const [adminNotes, setAdminNotes] = useState(purchase.adminNotes || "");
-  const [status, setStatus] = useState<
-    "pending" | "completed" | "cancelled"
-  >(purchase.status);
+  const [status, setStatus] = useState<"pending" | "completed" | "cancelled">(
+    purchase.status,
+  );
   const [isUpdating, setIsUpdating] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -83,7 +83,9 @@ export default function UpdateBuyingModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Update Purchase</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Update Purchase
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               {purchase.purchaseReference}
             </p>
@@ -148,7 +150,9 @@ export default function UpdateBuyingModal({
             <select
               value={status}
               onChange={(e) =>
-                setStatus(e.target.value as "pending" | "completed" | "cancelled")
+                setStatus(
+                  e.target.value as "pending" | "completed" | "cancelled",
+                )
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
             >
@@ -206,4 +210,3 @@ export default function UpdateBuyingModal({
     </div>
   );
 }
-

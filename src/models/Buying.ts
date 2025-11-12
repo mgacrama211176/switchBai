@@ -197,4 +197,3 @@ const BuyingModel =
   mongoose.models.Buying || mongoose.model<IBuying>("Buying", BuyingSchema);
 
 export default BuyingModel;
-

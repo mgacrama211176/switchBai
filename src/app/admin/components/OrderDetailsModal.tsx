@@ -277,7 +277,9 @@ export default function OrderDetailsModal({
           deliveryFee: formData.deliveryFee,
           discountType: formData.discountType || undefined,
           discountValue:
-            formData.discountValue !== "" ? Number(formData.discountValue) : undefined,
+            formData.discountValue !== ""
+              ? Number(formData.discountValue)
+              : undefined,
         }),
       });
 
@@ -320,6 +322,8 @@ export default function OrderDetailsModal({
       deliveryNotes: currentOrder.deliveryNotes || "",
       paymentMethod: currentOrder.paymentMethod,
       deliveryFee: currentOrder.deliveryFee,
+      discountType: currentOrder.discountType || "",
+      discountValue: currentOrder.discountValue || "",
     });
     setIsEditing(false);
   }
@@ -734,33 +738,34 @@ export default function OrderDetailsModal({
                         {formatPrice(currentOrder.subtotal)}
                       </span>
                     </div>
-                    {currentOrder.discountType && currentOrder.discountAmount && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">
-                            Discount (
-                            {currentOrder.discountType === "percentage"
-                              ? `${currentOrder.discountValue}%`
-                              : "Fixed"}
-                            ):
-                          </span>
-                          <span className="text-sm font-medium text-red-600">
-                            -{formatPrice(currentOrder.discountAmount)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between border-t border-gray-200 pt-2">
-                          <span className="text-sm text-gray-600">
-                            Subtotal After Discount:
-                          </span>
-                          <span className="text-sm font-medium text-gray-900">
-                            {formatPrice(
-                              currentOrder.subtotal -
-                                (currentOrder.discountAmount || 0),
-                            )}
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    {currentOrder.discountType &&
+                      currentOrder.discountAmount && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">
+                              Discount (
+                              {currentOrder.discountType === "percentage"
+                                ? `${currentOrder.discountValue}%`
+                                : "Fixed"}
+                              ):
+                            </span>
+                            <span className="text-sm font-medium text-red-600">
+                              -{formatPrice(currentOrder.discountAmount)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between border-t border-gray-200 pt-2">
+                            <span className="text-sm text-gray-600">
+                              Subtotal After Discount:
+                            </span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {formatPrice(
+                                currentOrder.subtotal -
+                                  (currentOrder.discountAmount || 0),
+                              )}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">
                         Delivery Fee:

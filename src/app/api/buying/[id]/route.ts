@@ -2,18 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import BuyingModel from "@/models/Buying";
 import GameModel from "@/models/Game";
-import {
-  calculatePurchaseMetrics,
-} from "@/lib/buying-utils";
+import { calculatePurchaseMetrics } from "@/lib/buying-utils";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const purchase = await BuyingModel.findById(params.id).lean();
+    const purchase = await BuyingModel.findById(id).lean();
 
     if (!purchase) {
       return NextResponse.json(
@@ -34,13 +33,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
+    const { id } = await params;
     const body = await request.json();
 
-    const purchase = await BuyingModel.findById(params.id);
+    const purchase = await BuyingModel.findById(id);
 
     if (!purchase) {
       return NextResponse.json(
@@ -56,7 +56,7 @@ export async function PUT(
     if (oldStatus !== "completed" && newStatus === "completed") {
       // Calculate average cost price per game
       const totalQuantity = purchase.games.reduce(
-        (sum, game) => sum + game.quantity,
+        (sum: number, game: { quantity: number }) => sum + game.quantity,
         0,
       );
       const averageCostPerUnit =
@@ -215,7 +215,8 @@ export async function PUT(
     // If games or totalCost changed, recalculate metrics
     if (body.games || body.totalCost !== undefined) {
       const games = body.games || purchase.games;
-      const totalCost = body.totalCost !== undefined ? body.totalCost : purchase.totalCost;
+      const totalCost =
+        body.totalCost !== undefined ? body.totalCost : purchase.totalCost;
 
       const { totalExpectedRevenue, totalExpectedProfit, profitMargin } =
         calculatePurchaseMetrics(games, totalCost);
@@ -249,12 +250,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const purchase = await BuyingModel.findById(params.id);
+    const purchase = await BuyingModel.findById(id);
 
     if (!purchase) {
       return NextResponse.json(
@@ -313,7 +315,7 @@ export async function DELETE(
       }
     }
 
-    await BuyingModel.findByIdAndDelete(params.id);
+    await BuyingModel.findByIdAndDelete(id);
 
     return NextResponse.json({
       message: "Purchase deleted successfully",
@@ -326,4 +328,3 @@ export async function DELETE(
     );
   }
 }
-

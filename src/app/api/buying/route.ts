@@ -193,7 +193,11 @@ export async function POST(request: NextRequest) {
       .lean();
 
     let sequenceNumber = 1;
-    if (lastPurchase) {
+    if (
+      lastPurchase &&
+      !Array.isArray(lastPurchase) &&
+      lastPurchase.purchaseReference
+    ) {
       // Extract the sequence number from the last reference
       const lastSeq = parseInt(
         lastPurchase.purchaseReference.replace(datePrefix, ""),
@@ -211,10 +215,11 @@ export async function POST(request: NextRequest) {
     // Calculate average cost price per game
     // For simplicity, we'll use: totalCost / totalQuantity
     const totalQuantity = body.games.reduce(
-      (sum, game) => sum + game.quantity,
+      (sum: number, game: { quantity: number }) => sum + game.quantity,
       0,
     );
-    const averageCostPerUnit = totalQuantity > 0 ? body.totalCost / totalQuantity : 0;
+    const averageCostPerUnit =
+      totalQuantity > 0 ? body.totalCost / totalQuantity : 0;
 
     // Process games and update stock (only if status is "completed")
     // Note: According to plan, stock updates only when status changes to "completed"
@@ -306,8 +311,7 @@ export async function POST(request: NextRequest) {
       profitMargin,
       status: body.status || "pending",
       purchasedAt: body.purchasedAt ? new Date(body.purchasedAt) : new Date(),
-      completedAt:
-        body.status === "completed" ? new Date() : undefined,
+      completedAt: body.status === "completed" ? new Date() : undefined,
       adminNotes: body.adminNotes?.trim() || undefined,
     });
 
@@ -328,4 +332,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

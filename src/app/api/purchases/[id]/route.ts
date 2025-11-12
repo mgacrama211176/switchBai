@@ -221,7 +221,9 @@ export async function PUT(
           !game.quantity
         ) {
           return NextResponse.json(
-            { error: "Each game must have barcode, title, price, and quantity" },
+            {
+              error: "Each game must have barcode, title, price, and quantity",
+            },
             { status: 400 },
           );
         }
@@ -282,7 +284,9 @@ export async function PUT(
     let discountAmount = 0;
     if (body.discountType !== undefined || body.discountValue !== undefined) {
       const discountType =
-        body.discountType !== undefined ? body.discountType : order.discountType;
+        body.discountType !== undefined
+          ? body.discountType
+          : order.discountType;
       const discountValue =
         body.discountValue !== undefined
           ? body.discountValue
@@ -299,7 +303,8 @@ export async function PUT(
 
       updateData.discountType = discountType || undefined;
       updateData.discountValue = discountValue || undefined;
-      updateData.discountAmount = discountAmount > 0 ? discountAmount : undefined;
+      updateData.discountAmount =
+        discountAmount > 0 ? discountAmount : undefined;
     } else if (order.discountType && order.discountValue !== undefined) {
       // Use existing discount if not being updated
       if (order.discountType === "percentage") {
@@ -339,7 +344,8 @@ export async function PUT(
       totalAfterDiscount > 0 ? (totalProfit / totalAfterDiscount) * 100 : 0;
 
     updateData.totalCost = totalCost > 0 ? totalCost : undefined;
-    updateData.totalProfit = totalProfit !== undefined ? totalProfit : undefined;
+    updateData.totalProfit =
+      totalProfit !== undefined ? totalProfit : undefined;
     updateData.profitMargin =
       profitMargin !== undefined ? profitMargin : undefined;
 

@@ -129,7 +129,8 @@ export default function AddOrderModal({
     updateGameRow(index, {
       gameBarcode: game.gameBarcode,
       gameTitle: game.gameTitle,
-      gamePrice: game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice,
+      gamePrice:
+        game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice,
       availableStock: game.gameAvailableStocks,
       quantity: 1,
     });
@@ -637,10 +638,12 @@ export default function AddOrderModal({
                                           {game.isOnSale && game.salePrice ? (
                                             <div>
                                               <div className="text-sm font-medium text-gray-900 line-through text-gray-400">
-                                                ₱{game.gamePrice.toLocaleString()}
+                                                ₱
+                                                {game.gamePrice.toLocaleString()}
                                               </div>
                                               <div className="text-sm font-bold text-red-600">
-                                                ₱{game.salePrice.toLocaleString()}
+                                                ₱
+                                                {game.salePrice.toLocaleString()}
                                               </div>
                                               <div className="text-xs text-red-600 font-semibold">
                                                 ON SALE
@@ -857,7 +860,9 @@ export default function AddOrderModal({
                       </span>
                     </div>
                     <div className="flex justify-between text-sm pt-2 border-t border-gray-300">
-                      <span className="text-gray-600">Subtotal After Discount:</span>
+                      <span className="text-gray-600">
+                        Subtotal After Discount:
+                      </span>
                       <span className="font-medium text-gray-900">
                         ₱{calculateTotalAfterDiscount().toLocaleString()}
                       </span>
@@ -871,7 +876,9 @@ export default function AddOrderModal({
                   </span>
                 </div>
                 <div className="flex justify-between text-sm pt-2 border-t-2 border-gray-400">
-                  <span className="font-semibold text-gray-900">Total Amount:</span>
+                  <span className="font-semibold text-gray-900">
+                    Total Amount:
+                  </span>
                   <span className="font-bold text-lg text-funBlue">
                     ₱{total.toLocaleString()}
                   </span>

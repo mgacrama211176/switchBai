@@ -105,13 +105,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate time series data
-    const timeSeriesMap = new Map<string, {
-      revenue: number;
-      costs: number;
-      profit: number;
-      orderCount: number;
-      rentalCount: number;
-    }>();
+    const timeSeriesMap = new Map<
+      string,
+      {
+        revenue: number;
+        costs: number;
+        profit: number;
+        orderCount: number;
+        rentalCount: number;
+      }
+    >();
 
     // Process orders for time series
     orders.forEach((order) => {
@@ -248,7 +251,8 @@ export async function GET(request: NextRequest) {
     orders.forEach((order) => {
       // By status
       const status = order.status || "unknown";
-      revenueByStatus[status] = (revenueByStatus[status] || 0) + (order.totalAmount || 0);
+      revenueByStatus[status] =
+        (revenueByStatus[status] || 0) + (order.totalAmount || 0);
 
       // By payment method
       const paymentMethod = order.paymentMethod || "unknown";
@@ -291,22 +295,29 @@ export async function GET(request: NextRequest) {
     >();
 
     orders.forEach((order) => {
-      order.games.forEach((game) => {
-        const barcode = game.gameBarcode;
-        if (!gameStats.has(barcode)) {
-          gameStats.set(barcode, {
-            gameTitle: game.gameTitle,
-            revenue: 0,
-            cost: 0,
-            profit: 0,
-            quantitySold: 0,
-          });
-        }
+      order.games.forEach(
+        (game: {
+          gameBarcode: string;
+          gameTitle: string;
+          gamePrice: number;
+          quantity: number;
+        }) => {
+          const barcode = game.gameBarcode;
+          if (!gameStats.has(barcode)) {
+            gameStats.set(barcode, {
+              gameTitle: game.gameTitle,
+              revenue: 0,
+              cost: 0,
+              profit: 0,
+              quantitySold: 0,
+            });
+          }
 
-        const stats = gameStats.get(barcode)!;
-        stats.revenue += (game.gamePrice || 0) * (game.quantity || 0);
-        stats.quantitySold += game.quantity || 0;
-      });
+          const stats = gameStats.get(barcode)!;
+          stats.revenue += (game.gamePrice || 0) * (game.quantity || 0);
+          stats.quantitySold += game.quantity || 0;
+        },
+      );
     });
 
     // Calculate costs and profits for each game
@@ -329,7 +340,8 @@ export async function GET(request: NextRequest) {
     games.forEach((game) => {
       const stock = game.gameAvailableStocks || 0;
       const costPrice = game.costPrice || 0;
-      const sellingPrice = game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice;
+      const sellingPrice =
+        game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice;
 
       inventoryValue += stock * costPrice;
       potentialRevenue += stock * sellingPrice;
@@ -344,14 +356,17 @@ export async function GET(request: NextRequest) {
 
     const recentOrders = orders.filter(
       (order) =>
-        order.deliveredAt &&
-        new Date(order.deliveredAt) >= thirtyDaysAgo,
+        order.deliveredAt && new Date(order.deliveredAt) >= thirtyDaysAgo,
     );
 
     const totalGamesSold = recentOrders.reduce(
-      (sum, order) =>
+      (sum: number, order: any) =>
         sum +
-        order.games.reduce((gameSum, game) => gameSum + (game.quantity || 0), 0),
+        order.games.reduce(
+          (gameSum: number, game: { quantity?: number }) =>
+            gameSum + (game.quantity || 0),
+          0,
+        ),
       0,
     );
 
@@ -360,35 +375,40 @@ export async function GET(request: NextRequest) {
 
     // Projected Monthly Revenue (based on last 30 days average)
     const recentRevenue = recentOrders.reduce(
-      (sum, order) => sum + (order.totalAmount || 0),
+      (sum: number, order: any) => sum + (order.totalAmount || 0),
       0,
     );
-    const averageDailyRevenue = daysInPeriod > 0 ? recentRevenue / daysInPeriod : 0;
+    const averageDailyRevenue =
+      daysInPeriod > 0 ? recentRevenue / daysInPeriod : 0;
     const projectedMonthlyRevenue = averageDailyRevenue * 30;
 
     // Projected Monthly Profit
     const recentCosts = buyingRecords
       .filter(
         (buying) =>
-          buying.completedAt &&
-          new Date(buying.completedAt) >= thirtyDaysAgo,
+          buying.completedAt && new Date(buying.completedAt) >= thirtyDaysAgo,
       )
-      .reduce((sum, buying) => sum + (buying.totalCost || 0), 0);
+      .reduce((sum: number, buying: any) => sum + (buying.totalCost || 0), 0);
 
     const averageDailyCost = daysInPeriod > 0 ? recentCosts / daysInPeriod : 0;
     const projectedMonthlyCost = averageDailyCost * 30;
-    const projectedMonthlyProfit = projectedMonthlyRevenue - projectedMonthlyCost;
+    const projectedMonthlyProfit =
+      projectedMonthlyRevenue - projectedMonthlyCost;
 
     // Inventory Turnover (how many times inventory is sold per year)
     const totalGamesSoldAllTime = orders.reduce(
-      (sum, order) =>
+      (sum: number, order: any) =>
         sum +
-        order.games.reduce((gameSum, game) => gameSum + (game.quantity || 0), 0),
+        order.games.reduce(
+          (gameSum: number, game: { quantity?: number }) =>
+            gameSum + (game.quantity || 0),
+          0,
+        ),
       0,
     );
 
     const currentInventory = games.reduce(
-      (sum, game) => sum + (game.gameAvailableStocks || 0),
+      (sum: number, game: any) => sum + (game.gameAvailableStocks || 0),
       0,
     );
 
@@ -402,20 +422,19 @@ export async function GET(request: NextRequest) {
 
     const currentMonthRevenue = orders
       .filter(
-        (order) =>
-          order.deliveredAt &&
-          new Date(order.deliveredAt) >= currentMonth,
+        (order: any) =>
+          order.deliveredAt && new Date(order.deliveredAt) >= currentMonth,
       )
-      .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+      .reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
 
     const lastMonthRevenue = orders
       .filter(
-        (order) =>
+        (order: any) =>
           order.deliveredAt &&
           new Date(order.deliveredAt) >= lastMonth &&
           new Date(order.deliveredAt) < currentMonth,
       )
-      .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+      .reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
 
     const growthRate =
       lastMonthRevenue > 0
@@ -468,4 +487,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

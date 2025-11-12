@@ -82,7 +82,9 @@ export default function BuyingTable({
 
     // Status filter
     if (statusFilter) {
-      filtered = filtered.filter((purchase) => purchase.status === statusFilter);
+      filtered = filtered.filter(
+        (purchase) => purchase.status === statusFilter,
+      );
     }
 
     setFilteredPurchases(filtered);
@@ -109,8 +111,7 @@ export default function BuyingTable({
     };
 
     const config =
-      statusConfig[status as keyof typeof statusConfig] ||
-      statusConfig.pending;
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
 
     return (
       <span
@@ -461,4 +462,3 @@ export default function BuyingTable({
     </div>
   );
 }
-

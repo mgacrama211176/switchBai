@@ -113,8 +113,15 @@ export default function FinancialsTable({
     );
   }
 
-  const { summary, timeSeries, revenueBreakdown, costBreakdown, topGames, inventory, projections } =
-    financialData;
+  const {
+    summary,
+    timeSeries,
+    revenueBreakdown,
+    costBreakdown,
+    topGames,
+    inventory,
+    projections,
+  } = financialData;
 
   const statusColor = getStatusColor(summary.grossProfit);
   const statusColors = {
@@ -274,10 +281,7 @@ export default function FinancialsTable({
             <div className="space-y-2">
               {Object.entries(revenueBreakdown.byPaymentMethod).map(
                 ([method, amount]) => (
-                  <div
-                    key={method}
-                    className="flex justify-between text-sm"
-                  >
+                  <div key={method} className="flex justify-between text-sm">
                     <span className="text-gray-600 capitalize">
                       {method.replace("_", " ")}
                     </span>
@@ -296,10 +300,7 @@ export default function FinancialsTable({
             <div className="space-y-2">
               {Object.entries(revenueBreakdown.bySource).map(
                 ([source, amount]) => (
-                  <div
-                    key={source}
-                    className="flex justify-between text-sm"
-                  >
+                  <div key={source} className="flex justify-between text-sm">
                     <span className="text-gray-600 capitalize">{source}</span>
                     <span className="font-medium text-gray-900">
                       {formatCurrency(amount)}
@@ -430,22 +431,20 @@ export default function FinancialsTable({
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Current Inventory Value</p>
+            <p className="text-sm text-gray-600 mb-1">
+              Current Inventory Value
+            </p>
             <p className="text-xl font-bold text-gray-900">
               {formatCurrency(inventory.totalValue)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Based on cost prices
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Based on cost prices</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Potential Revenue</p>
             <p className="text-xl font-bold text-blue-600">
               {formatCurrency(inventory.potentialRevenue)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              If all stock is sold
-            </p>
+            <p className="text-xs text-gray-500 mt-1">If all stock is sold</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Potential Profit</p>
@@ -474,16 +473,18 @@ export default function FinancialsTable({
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Projected Monthly Revenue</p>
+            <p className="text-sm text-gray-600 mb-1">
+              Projected Monthly Revenue
+            </p>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(projections.projectedMonthlyRevenue)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Based on last 30 days
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Based on last 30 days</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 mb-1">Projected Monthly Profit</p>
+            <p className="text-sm text-gray-600 mb-1">
+              Projected Monthly Profit
+            </p>
             <p
               className={`text-lg font-bold ${
                 projections.projectedMonthlyProfit > 0
@@ -495,9 +496,7 @@ export default function FinancialsTable({
             >
               {formatCurrency(projections.projectedMonthlyProfit)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Based on trends
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Based on trends</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Sales Velocity</p>
@@ -513,9 +512,7 @@ export default function FinancialsTable({
             <p className="text-lg font-bold text-gray-900">
               {projections.inventoryTurnover.toFixed(2)}x
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Times inventory sold
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Times inventory sold</p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Growth Rate</p>
@@ -536,9 +533,7 @@ export default function FinancialsTable({
               )}
               {formatPercentage(projections.growthRate)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Month-over-month
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Month-over-month</p>
           </div>
         </div>
       </div>
@@ -621,4 +616,3 @@ export default function FinancialsTable({
     </div>
   );
 }
-

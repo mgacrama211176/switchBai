@@ -156,13 +156,13 @@ export default function AddBuyingModal({
   function updateGameRow(index: number, updates: Partial<BuyingGameRow>) {
     const newRows = [...gameRows];
     newRows[index] = { ...newRows[index], ...updates };
-    
+
     // Recalculate expected revenue
     if (updates.sellingPrice !== undefined || updates.quantity !== undefined) {
       const row = newRows[index];
       newRows[index].expectedRevenue = row.sellingPrice * row.quantity;
     }
-    
+
     setGameRows(newRows);
     calculateTotals(newRows);
   }
@@ -170,7 +170,7 @@ export default function AddBuyingModal({
   function toggleGameMode(index: number) {
     const newRows = [...gameRows];
     newRows[index].isNewGame = !newRows[index].isNewGame;
-    
+
     if (newRows[index].isNewGame) {
       // Switch to new game: clear existing game data
       newRows[index].gameBarcode = "";
@@ -195,7 +195,7 @@ export default function AddBuyingModal({
       newRows[index].gameTitle = "";
       newRows[index].sellingPrice = 0;
     }
-    
+
     setGameRows(newRows);
   }
 
@@ -317,19 +317,19 @@ export default function AddBuyingModal({
 
     for (let i = 0; i < gameRows.length; i++) {
       const row = gameRows[i];
-      
+
       if (!row.gameBarcode) {
         return `Game ${i + 1}: Barcode is required`;
       }
-      
+
       if (!row.gameTitle) {
         return `Game ${i + 1}: Title is required`;
       }
-      
+
       if (!row.sellingPrice || row.sellingPrice <= 0) {
         return `Game ${i + 1}: Selling price must be greater than 0`;
       }
-      
+
       if (!row.quantity || row.quantity <= 0) {
         return `Game ${i + 1}: Quantity must be greater than 0`;
       }
@@ -341,7 +341,8 @@ export default function AddBuyingModal({
         const details = row.newGameDetails;
         if (
           !details.gamePlatform ||
-          (Array.isArray(details.gamePlatform) && details.gamePlatform.length === 0) ||
+          (Array.isArray(details.gamePlatform) &&
+            details.gamePlatform.length === 0) ||
           !details.gameRatings ||
           !details.gameDescription ||
           !details.gameImageURL ||
@@ -608,8 +609,7 @@ export default function AddBuyingModal({
                                         }
                                         className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${
                                           idx ===
-                                          gameSearchStates[index]
-                                            ?.selectedIndex
+                                          gameSearchStates[index]?.selectedIndex
                                             ? "bg-gray-100"
                                             : ""
                                         }`}
@@ -649,14 +649,16 @@ export default function AddBuyingModal({
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Selling Price <span className="text-red-500">*</span>
+                                Selling Price{" "}
+                                <span className="text-red-500">*</span>
                               </label>
                               <input
                                 type="number"
                                 value={row.sellingPrice || ""}
                                 onChange={(e) =>
                                   updateGameRow(index, {
-                                    sellingPrice: parseFloat(e.target.value) || 0,
+                                    sellingPrice:
+                                      parseFloat(e.target.value) || 0,
                                   })
                                 }
                                 min="0"
@@ -808,7 +810,8 @@ export default function AddBuyingModal({
                           </div>
                           <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Description <span className="text-red-500">*</span>
+                              Description{" "}
+                              <span className="text-red-500">*</span>
                             </label>
                             <textarea
                               value={row.newGameDetails?.gameDescription || ""}
@@ -901,7 +904,8 @@ export default function AddBuyingModal({
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Release Date <span className="text-red-500">*</span>
+                              Release Date{" "}
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               type="date"
@@ -930,7 +934,8 @@ export default function AddBuyingModal({
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Selling Price <span className="text-red-500">*</span>
+                              Selling Price{" "}
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               type="number"
@@ -998,12 +1003,15 @@ export default function AddBuyingModal({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Cost (What you paid) <span className="text-red-500">*</span>
+                  Total Cost (What you paid){" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
                   value={totalCost || ""}
-                  onChange={(e) => setTotalCost(parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setTotalCost(parseFloat(e.target.value) || 0)
+                  }
                   min="0"
                   step="0.01"
                   required
@@ -1024,8 +1032,8 @@ export default function AddBuyingModal({
                           : "text-red-600"
                     }`}
                   >
-                    {totalExpectedProfit >= 0 ? "+" : ""}
-                    ₱{totalExpectedProfit.toLocaleString()}
+                    {totalExpectedProfit >= 0 ? "+" : ""}₱
+                    {totalExpectedProfit.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1135,4 +1143,3 @@ export default function AddBuyingModal({
     </div>
   );
 }
-

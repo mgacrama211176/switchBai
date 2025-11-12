@@ -6,10 +6,7 @@ export function calculateGrossProfit(revenue: number, costs: number): number {
   return revenue - costs;
 }
 
-export function calculateProfitMargin(
-  revenue: number,
-  profit: number,
-): number {
+export function calculateProfitMargin(revenue: number, profit: number): number {
   if (revenue === 0) return 0;
   return (profit / revenue) * 100;
 }
@@ -65,9 +62,7 @@ export function formatCurrency(amount: number): string {
   })}`;
 }
 
-export function getStatusColor(
-  profit: number,
-): "green" | "red" | "yellow" {
+export function getStatusColor(profit: number): "green" | "red" | "yellow" {
   if (profit > 0) return "green";
   if (profit < 0) return "red";
   return "yellow";
@@ -85,4 +80,3 @@ export function getTrendIndicator(
   if (current < previous) return "down";
   return "neutral";
 }
-

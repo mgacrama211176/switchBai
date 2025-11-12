@@ -2,7 +2,7 @@
  * Generate a unique purchase reference number
  * Format: BUY-YYYYMMDD-XXX
  * Example: BUY-20240115-001
- * 
+ *
  * Note: The sequential number (XXX) will be determined by the API
  * by querying existing purchases for the same date.
  */
@@ -50,4 +50,3 @@ export function calculatePurchaseMetrics(
     profitMargin,
   };
 }
-
