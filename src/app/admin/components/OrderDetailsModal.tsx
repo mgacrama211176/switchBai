@@ -38,6 +38,12 @@ interface Order {
   subtotal: number;
   deliveryFee: number;
   totalAmount: number;
+  discountType?: "percentage" | "fixed";
+  discountValue?: number;
+  discountAmount?: number;
+  totalCost?: number;
+  totalProfit?: number;
+  profitMargin?: number;
   status:
     | "pending"
     | "confirmed"
@@ -85,6 +91,8 @@ export default function OrderDetailsModal({
     deliveryNotes: order.deliveryNotes || "",
     paymentMethod: order.paymentMethod,
     deliveryFee: order.deliveryFee,
+    discountType: order.discountType || "",
+    discountValue: order.discountValue || "",
   });
 
   // Update form data when order changes
@@ -101,6 +109,8 @@ export default function OrderDetailsModal({
       deliveryNotes: order.deliveryNotes || "",
       paymentMethod: order.paymentMethod,
       deliveryFee: order.deliveryFee,
+      discountType: order.discountType || "",
+      discountValue: order.discountValue || "",
     });
   }, [order]);
 
@@ -153,8 +163,23 @@ export default function OrderDetailsModal({
     return methods[method] || method;
   }
 
+  function calculateDiscount() {
+    if (!formData.discountType || formData.discountValue === "") {
+      return 0;
+    }
+    if (formData.discountType === "percentage") {
+      return currentOrder.subtotal * (Number(formData.discountValue) / 100);
+    } else {
+      return Math.min(Number(formData.discountValue), currentOrder.subtotal);
+    }
+  }
+
+  function calculateTotalAfterDiscount() {
+    return currentOrder.subtotal - calculateDiscount();
+  }
+
   function calculateTotal() {
-    return currentOrder.subtotal + formData.deliveryFee;
+    return calculateTotalAfterDiscount() + formData.deliveryFee;
   }
 
   function validateForm(): string | null {
@@ -250,6 +275,9 @@ export default function OrderDetailsModal({
           deliveryNotes: formData.deliveryNotes.trim() || undefined,
           paymentMethod: formData.paymentMethod,
           deliveryFee: formData.deliveryFee,
+          discountType: formData.discountType || undefined,
+          discountValue:
+            formData.discountValue !== "" ? Number(formData.discountValue) : undefined,
         }),
       });
 
@@ -706,6 +734,33 @@ export default function OrderDetailsModal({
                         {formatPrice(currentOrder.subtotal)}
                       </span>
                     </div>
+                    {currentOrder.discountType && currentOrder.discountAmount && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">
+                            Discount (
+                            {currentOrder.discountType === "percentage"
+                              ? `${currentOrder.discountValue}%`
+                              : "Fixed"}
+                            ):
+                          </span>
+                          <span className="text-sm font-medium text-red-600">
+                            -{formatPrice(currentOrder.discountAmount)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between border-t border-gray-200 pt-2">
+                          <span className="text-sm text-gray-600">
+                            Subtotal After Discount:
+                          </span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {formatPrice(
+                              currentOrder.subtotal -
+                                (currentOrder.discountAmount || 0),
+                            )}
+                          </span>
+                        </div>
+                      </>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">
                         Delivery Fee:
@@ -785,6 +840,74 @@ export default function OrderDetailsModal({
                 )}
               </div>
             </div>
+
+            {/* Profit Information */}
+            {(currentOrder.totalCost !== undefined ||
+              currentOrder.totalProfit !== undefined) && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <HiCash className="w-5 h-5 mr-2" />
+                  Profit Analysis
+                </h3>
+                <div className="space-y-2">
+                  {currentOrder.totalCost !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Total Cost:</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatPrice(currentOrder.totalCost)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">
+                      Total Revenue:
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatPrice(
+                        currentOrder.subtotal -
+                          (currentOrder.discountAmount || 0),
+                      )}
+                    </span>
+                  </div>
+                  {currentOrder.totalProfit !== undefined && (
+                    <div className="flex justify-between pt-2 border-t border-green-300">
+                      <span className="text-sm font-semibold text-gray-900">
+                        Total Profit:
+                      </span>
+                      <span
+                        className={`text-sm font-bold ${
+                          currentOrder.totalProfit > 0
+                            ? "text-green-600"
+                            : currentOrder.totalProfit < 0
+                              ? "text-red-600"
+                              : "text-yellow-600"
+                        }`}
+                      >
+                        {formatPrice(currentOrder.totalProfit)}
+                      </span>
+                    </div>
+                  )}
+                  {currentOrder.profitMargin !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">
+                        Profit Margin:
+                      </span>
+                      <span
+                        className={`text-sm font-semibold ${
+                          currentOrder.profitMargin > 0
+                            ? "text-green-600"
+                            : currentOrder.profitMargin < 0
+                              ? "text-red-600"
+                              : "text-yellow-600"
+                        }`}
+                      >
+                        {currentOrder.profitMargin.toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Admin Notes */}
             {currentOrder.adminNotes && (

@@ -103,8 +103,41 @@ export async function POST(request: NextRequest) {
       Promise.resolve(0),
     );
 
-    // Calculate total amount
-    const totalAmount = subtotal + (body.deliveryFee || 0);
+    // Calculate discount amount
+    let discountAmount = 0;
+    if (body.discountType && body.discountValue !== undefined) {
+      if (body.discountType === "percentage") {
+        discountAmount = subtotal * (body.discountValue / 100);
+      } else if (body.discountType === "fixed") {
+        discountAmount = body.discountValue;
+      }
+      // Ensure discount doesn't exceed subtotal
+      discountAmount = Math.min(discountAmount, subtotal);
+    }
+
+    // Calculate total after discount
+    const totalAfterDiscount = subtotal - discountAmount;
+
+    // Calculate total amount (after discount + delivery fee)
+    const totalAmount = totalAfterDiscount + (body.deliveryFee || 0);
+
+    // Calculate total cost (what we paid for the games)
+    const totalCost = await body.games.reduce(
+      async (sumPromise: Promise<number>, game: any) => {
+        const sum = await sumPromise;
+        const gameDoc = await GameModel.findOne({
+          gameBarcode: game.gameBarcode,
+        });
+        const costPrice = gameDoc?.costPrice || 0;
+        return sum + costPrice * game.quantity;
+      },
+      Promise.resolve(0),
+    );
+
+    // Calculate profit
+    const totalProfit = totalAfterDiscount - totalCost;
+    const profitMargin =
+      totalAfterDiscount > 0 ? (totalProfit / totalAfterDiscount) * 100 : 0;
 
     // Generate order number
     const orderNumber = generateOrderNumber();
@@ -150,6 +183,16 @@ export async function POST(request: NextRequest) {
       subtotal,
       deliveryFee: body.deliveryFee || 0,
       totalAmount,
+
+      // Discount details
+      discountType: body.discountType || undefined,
+      discountValue: body.discountValue || undefined,
+      discountAmount: discountAmount > 0 ? discountAmount : undefined,
+
+      // Profit details
+      totalCost: totalCost > 0 ? totalCost : undefined,
+      totalProfit: totalProfit !== undefined ? totalProfit : undefined,
+      profitMargin: profitMargin !== undefined ? profitMargin : undefined,
 
       // Metadata
       orderSource: body.orderSource,

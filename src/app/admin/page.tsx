@@ -12,11 +12,22 @@ import {
   HiClipboardList,
   HiShoppingCart,
   HiSwitchHorizontal,
+  HiShoppingBag,
+  HiCurrencyDollar,
 } from "react-icons/hi";
 import OrdersTable from "./components/OrdersTable";
 import TradesTable from "./components/TradesTable";
+import BuyingTable from "./components/BuyingTable";
+import FinancialsTable from "./components/FinancialsTable";
 
-type TabType = "games" | "rentals" | "orders" | "trades" | "add-game";
+type TabType =
+  | "games"
+  | "rentals"
+  | "orders"
+  | "trades"
+  | "buying"
+  | "financials"
+  | "add-game";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabType>("games");
@@ -44,6 +55,14 @@ export default function AdminPage() {
   }
 
   function handleTradeUpdated() {
+    setRefreshTrigger((prev) => prev + 1);
+  }
+
+  function handleBuyingUpdated() {
+    setRefreshTrigger((prev) => prev + 1);
+  }
+
+  function handleFinancialsUpdated() {
     setRefreshTrigger((prev) => prev + 1);
   }
 
@@ -110,6 +129,28 @@ export default function AdminPage() {
                 <span>Trades</span>
               </button>
               <button
+                onClick={() => setActiveTab("buying")}
+                className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
+                  activeTab === "buying"
+                    ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <HiShoppingBag className="w-5 h-5" />
+                <span>Buying</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("financials")}
+                className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
+                  activeTab === "financials"
+                    ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <HiCurrencyDollar className="w-5 h-5" />
+                <span>Financials</span>
+              </button>
+              <button
                 onClick={() => setActiveTab("add-game")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "add-game"
@@ -149,6 +190,15 @@ export default function AdminPage() {
                 refreshTrigger={refreshTrigger}
                 onTradeUpdated={handleTradeUpdated}
               />
+            )}
+            {activeTab === "buying" && (
+              <BuyingTable
+                refreshTrigger={refreshTrigger}
+                onBuyingUpdated={handleBuyingUpdated}
+              />
+            )}
+            {activeTab === "financials" && (
+              <FinancialsTable refreshTrigger={refreshTrigger} />
             )}
             {activeTab === "add-game" && (
               <GameForm

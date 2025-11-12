@@ -49,6 +49,10 @@ export default function AddOrderModal({
     "cod" | "bank_transfer" | "gcash" | "cash"
   >("cod");
   const [deliveryFee, setDeliveryFee] = useState(0);
+  const [discountType, setDiscountType] = useState<"percentage" | "fixed" | "">(
+    "",
+  );
+  const [discountValue, setDiscountValue] = useState<number | "">("");
   const [status, setStatus] = useState<
     "pending" | "preparing" | "shipped" | "delivered" | "cancelled"
   >("pending");
@@ -125,7 +129,7 @@ export default function AddOrderModal({
     updateGameRow(index, {
       gameBarcode: game.gameBarcode,
       gameTitle: game.gameTitle,
-      gamePrice: game.gamePrice,
+      gamePrice: game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice,
       availableStock: game.gameAvailableStocks,
       quantity: 1,
     });
@@ -224,8 +228,24 @@ export default function AddOrderModal({
     return gameRows.reduce((sum, row) => sum + row.gamePrice * row.quantity, 0);
   }
 
+  function calculateDiscount() {
+    const subtotal = calculateSubtotal();
+    if (!discountType || discountValue === "" || discountValue === 0) {
+      return 0;
+    }
+    if (discountType === "percentage") {
+      return subtotal * (Number(discountValue) / 100);
+    } else {
+      return Math.min(Number(discountValue), subtotal);
+    }
+  }
+
+  function calculateTotalAfterDiscount() {
+    return calculateSubtotal() - calculateDiscount();
+  }
+
   function calculateTotal() {
-    return calculateSubtotal() + deliveryFee;
+    return calculateTotalAfterDiscount() + deliveryFee;
   }
 
   function validateForm(): string | null {
@@ -614,10 +634,24 @@ export default function AddOrderModal({
                                           </div>
                                         </div>
                                         <div className="text-right ml-4">
-                                          <div className="text-sm font-medium text-gray-900">
-                                            ₱{game.gamePrice.toLocaleString()}
-                                          </div>
-                                          <div className="text-xs text-gray-500">
+                                          {game.isOnSale && game.salePrice ? (
+                                            <div>
+                                              <div className="text-sm font-medium text-gray-900 line-through text-gray-400">
+                                                ₱{game.gamePrice.toLocaleString()}
+                                              </div>
+                                              <div className="text-sm font-bold text-red-600">
+                                                ₱{game.salePrice.toLocaleString()}
+                                              </div>
+                                              <div className="text-xs text-red-600 font-semibold">
+                                                ON SALE
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <div className="text-sm font-medium text-gray-900">
+                                              ₱{game.gamePrice.toLocaleString()}
+                                            </div>
+                                          )}
+                                          <div className="text-xs text-gray-500 mt-1">
                                             Stock: {game.gameAvailableStocks}
                                           </div>
                                         </div>
@@ -738,20 +772,109 @@ export default function AddOrderModal({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Subtotal
-                </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg">
-                  ₱{subtotal.toLocaleString()}
+            </div>
+
+            {/* Discount Section */}
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                Discount (Optional)
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Discount Type
+                  </label>
+                  <select
+                    value={discountType}
+                    onChange={(e) => {
+                      setDiscountType(
+                        e.target.value as "percentage" | "fixed" | "",
+                      );
+                      if (e.target.value === "") {
+                        setDiscountValue("");
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+                  >
+                    <option value="">No Discount</option>
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (₱)</option>
+                  </select>
                 </div>
+                {discountType && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Discount Value
+                      {discountType === "percentage" ? " (%)" : " (₱)"}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={discountType === "percentage" ? 100 : undefined}
+                      value={discountValue}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setDiscountValue(val === "" ? "" : parseFloat(val));
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+                      placeholder={
+                        discountType === "percentage" ? "0-100" : "0"
+                      }
+                    />
+                  </div>
+                )}
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Amount
-                </label>
-                <div className="px-3 py-2 bg-funBlue/10 border-2 border-funBlue rounded-lg text-lg font-bold text-funBlue">
-                  ₱{total.toLocaleString()}
+              {discountType && discountValue !== "" && (
+                <div className="mt-3 pt-3 border-t border-yellow-300">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Discount Amount:</span>
+                    <span className="font-semibold text-red-600">
+                      -₱{calculateDiscount().toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Order Summary */}
+            <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                Order Summary
+              </h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span className="font-medium text-gray-900">
+                    ₱{subtotal.toLocaleString()}
+                  </span>
+                </div>
+                {discountType && discountValue !== "" && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Discount:</span>
+                      <span className="font-medium text-red-600">
+                        -₱{calculateDiscount().toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm pt-2 border-t border-gray-300">
+                      <span className="text-gray-600">Subtotal After Discount:</span>
+                      <span className="font-medium text-gray-900">
+                        ₱{calculateTotalAfterDiscount().toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Delivery Fee:</span>
+                  <span className="font-medium text-gray-900">
+                    ₱{deliveryFee.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm pt-2 border-t-2 border-gray-400">
+                  <span className="font-semibold text-gray-900">Total Amount:</span>
+                  <span className="font-bold text-lg text-funBlue">
+                    ₱{total.toLocaleString()}
+                  </span>
                 </div>
               </div>
             </div>

@@ -18,6 +18,7 @@ export interface IGame extends Document {
   tradable?: boolean;
   isOnSale?: boolean;
   salePrice?: number;
+  costPrice?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -187,6 +188,11 @@ const GameSchema = new Schema<IGame>(
         message:
           "Sale price is required when game is on sale and must be less than original price",
       },
+    },
+    costPrice: {
+      type: Number,
+      min: [0, "Cost price cannot be negative"],
+      max: [99999, "Cost price cannot exceed 99999"],
     },
   },
   {

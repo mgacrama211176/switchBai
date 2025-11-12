@@ -30,6 +30,16 @@ export interface IPurchase extends Document {
   deliveryFee: number;
   totalAmount: number;
 
+  // Discount details
+  discountType?: "percentage" | "fixed";
+  discountValue?: number;
+  discountAmount?: number;
+
+  // Profit details
+  totalCost?: number;
+  totalProfit?: number;
+  profitMargin?: number;
+
   // Status and timestamps
   status:
     | "pending"
@@ -219,6 +229,46 @@ const PurchaseSchema = new Schema<IPurchase>(
       type: Number,
       required: [true, "Total amount is required"],
       min: [0, "Total amount cannot be negative"],
+    },
+
+    // Discount details
+    discountType: {
+      type: String,
+      enum: {
+        values: ["percentage", "fixed"],
+        message: "Discount type must be percentage or fixed",
+      },
+    },
+    discountValue: {
+      type: Number,
+      min: [0, "Discount value cannot be negative"],
+      validate: {
+        validator: function (this: any, v: number | undefined) {
+          if (v === undefined || v === null) return true; // Optional
+          if (this.discountType === "percentage") {
+            return v >= 0 && v <= 100;
+          }
+          return v >= 0;
+        },
+        message:
+          "Discount value must be 0-100 for percentage, or >= 0 for fixed amount",
+      },
+    },
+    discountAmount: {
+      type: Number,
+      min: [0, "Discount amount cannot be negative"],
+    },
+
+    // Profit details
+    totalCost: {
+      type: Number,
+      min: [0, "Total cost cannot be negative"],
+    },
+    totalProfit: {
+      type: Number,
+    },
+    profitMargin: {
+      type: Number,
     },
 
     // Status and timestamps

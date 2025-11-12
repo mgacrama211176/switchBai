@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import PurchaseModel from "@/models/Purchase";
+import GameModel from "@/models/Game";
 
 export async function GET(
   request: NextRequest,
@@ -199,11 +200,148 @@ export async function PUT(
       updateData.paymentMethod = body.paymentMethod;
     }
 
-    // Recalculate totalAmount if deliveryFee or subtotal changes
+    // Handle games update
+    let gamesToUse = order.games;
+    let subtotalToUse = order.subtotal;
+    if (body.games !== undefined) {
+      // Validate games array
+      if (!Array.isArray(body.games) || body.games.length === 0) {
+        return NextResponse.json(
+          { error: "At least one game is required" },
+          { status: 400 },
+        );
+      }
+
+      // Validate each game
+      for (const game of body.games) {
+        if (
+          !game.gameBarcode ||
+          !game.gameTitle ||
+          !game.gamePrice ||
+          !game.quantity
+        ) {
+          return NextResponse.json(
+            { error: "Each game must have barcode, title, price, and quantity" },
+            { status: 400 },
+          );
+        }
+
+        // Check stock availability
+        const gameDoc = await GameModel.findOne({
+          gameBarcode: game.gameBarcode,
+        });
+
+        if (!gameDoc) {
+          return NextResponse.json(
+            { error: `Game with barcode ${game.gameBarcode} not found` },
+            { status: 404 },
+          );
+        }
+      }
+
+      // Calculate new subtotal
+      subtotalToUse = await body.games.reduce(
+        async (sumPromise: Promise<number>, game: any) => {
+          const sum = await sumPromise;
+          const gameDoc = await GameModel.findOne({
+            gameBarcode: game.gameBarcode,
+          });
+          const priceToUse =
+            gameDoc?.isOnSale && gameDoc?.salePrice
+              ? gameDoc.salePrice
+              : game.gamePrice;
+          return sum + priceToUse * game.quantity;
+        },
+        Promise.resolve(0),
+      );
+
+      // Update games array
+      gamesToUse = await Promise.all(
+        body.games.map(async (game: any) => {
+          const gameDoc = await GameModel.findOne({
+            gameBarcode: game.gameBarcode,
+          });
+          const priceToUse =
+            gameDoc?.isOnSale && gameDoc?.salePrice
+              ? gameDoc.salePrice
+              : game.gamePrice;
+          return {
+            gameBarcode: game.gameBarcode,
+            gameTitle: game.gameTitle,
+            gamePrice: priceToUse,
+            quantity: game.quantity,
+          };
+        }),
+      );
+
+      updateData.games = gamesToUse;
+      updateData.subtotal = subtotalToUse;
+    }
+
+    // Handle discount update
+    let discountAmount = 0;
+    if (body.discountType !== undefined || body.discountValue !== undefined) {
+      const discountType =
+        body.discountType !== undefined ? body.discountType : order.discountType;
+      const discountValue =
+        body.discountValue !== undefined
+          ? body.discountValue
+          : order.discountValue;
+
+      if (discountType && discountValue !== undefined) {
+        if (discountType === "percentage") {
+          discountAmount = subtotalToUse * (discountValue / 100);
+        } else if (discountType === "fixed") {
+          discountAmount = discountValue;
+        }
+        discountAmount = Math.min(discountAmount, subtotalToUse);
+      }
+
+      updateData.discountType = discountType || undefined;
+      updateData.discountValue = discountValue || undefined;
+      updateData.discountAmount = discountAmount > 0 ? discountAmount : undefined;
+    } else if (order.discountType && order.discountValue !== undefined) {
+      // Use existing discount if not being updated
+      if (order.discountType === "percentage") {
+        discountAmount = subtotalToUse * (order.discountValue / 100);
+      } else if (order.discountType === "fixed") {
+        discountAmount = order.discountValue;
+      }
+      discountAmount = Math.min(discountAmount, subtotalToUse);
+    }
+
+    // Calculate total after discount
+    const totalAfterDiscount = subtotalToUse - discountAmount;
+
+    // Recalculate totalAmount
+    const deliveryFeeToUse =
+      body.deliveryFee !== undefined ? body.deliveryFee : order.deliveryFee;
     if (body.deliveryFee !== undefined) {
       updateData.deliveryFee = body.deliveryFee;
-      updateData.totalAmount = order.subtotal + body.deliveryFee;
     }
+    updateData.totalAmount = totalAfterDiscount + deliveryFeeToUse;
+
+    // Recalculate profit
+    const totalCost = await gamesToUse.reduce(
+      async (sumPromise: Promise<number>, game: any) => {
+        const sum = await sumPromise;
+        const gameDoc = await GameModel.findOne({
+          gameBarcode: game.gameBarcode,
+        });
+        const costPrice = gameDoc?.costPrice || 0;
+        return sum + costPrice * game.quantity;
+      },
+      Promise.resolve(0),
+    );
+
+    const totalProfit = totalAfterDiscount - totalCost;
+    const profitMargin =
+      totalAfterDiscount > 0 ? (totalProfit / totalAfterDiscount) * 100 : 0;
+
+    updateData.totalCost = totalCost > 0 ? totalCost : undefined;
+    updateData.totalProfit = totalProfit !== undefined ? totalProfit : undefined;
+    updateData.profitMargin =
+      profitMargin !== undefined ? profitMargin : undefined;
 
     // Update the order
     const updatedOrder = await PurchaseModel.findByIdAndUpdate(id, updateData, {

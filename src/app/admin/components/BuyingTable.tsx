@@ -8,73 +8,32 @@ import {
   HiEye,
   HiPencil,
   HiPlus,
+  HiTrash,
 } from "react-icons/hi";
-import OrderDetailsModal from "./OrderDetailsModal";
-import UpdateOrderStatusModal from "./UpdateOrderStatusModal";
-import AddOrderModal from "./AddOrderModal";
+import BuyingDetailsModal from "./BuyingDetailsModal";
+import UpdateBuyingModal from "./UpdateBuyingModal";
+import AddBuyingModal from "./AddBuyingModal";
 import Toast from "./Toast";
+import { Buying } from "@/app/types/games";
 
-interface OrderGame {
-  gameBarcode: string;
-  gameTitle: string;
-  gamePrice: number;
-  quantity: number;
-}
-
-interface Order {
-  _id: string;
-  orderNumber: string;
-  customerName: string;
-  customerPhone?: string;
-  customerEmail?: string;
-  customerFacebookUrl?: string;
-  games: OrderGame[];
-  deliveryAddress?: string;
-  deliveryCity?: string;
-  deliveryLandmark?: string;
-  deliveryNotes?: string;
-  paymentMethod: "cod" | "bank_transfer" | "gcash" | "cash";
-  subtotal: number;
-  deliveryFee: number;
-  totalAmount: number;
-  discountType?: "percentage" | "fixed";
-  discountValue?: number;
-  discountAmount?: number;
-  totalCost?: number;
-  totalProfit?: number;
-  profitMargin?: number;
-  status:
-    | "pending"
-    | "confirmed"
-    | "preparing"
-    | "shipped"
-    | "delivered"
-    | "cancelled";
-  submittedAt: string;
-  confirmedAt?: string;
-  shippedAt?: string;
-  deliveredAt?: string;
-  orderSource: "website" | "manual";
-  adminNotes?: string;
-}
-
-interface OrdersTableProps {
+interface BuyingTableProps {
   refreshTrigger: number;
-  onOrderUpdated: () => void;
+  onBuyingUpdated: () => void;
 }
 
-export default function OrdersTable({
+export default function BuyingTable({
   refreshTrigger,
-  onOrderUpdated,
-}: OrdersTableProps) {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  onBuyingUpdated,
+}: BuyingTableProps) {
+  const [purchases, setPurchases] = useState<Buying[]>([]);
+  const [filteredPurchases, setFilteredPurchases] = useState<Buying[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [updatingOrder, setUpdatingOrder] = useState<Order | null>(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<Buying | null>(null);
+  const [updatingPurchase, setUpdatingPurchase] = useState<Buying | null>(null);
+  const [deletingPurchase, setDeletingPurchase] = useState<Buying | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -84,37 +43,36 @@ export default function OrdersTable({
   const itemsPerPage = 20;
 
   useEffect(() => {
-    async function fetchOrders() {
+    async function fetchPurchases() {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/purchases");
+        const response = await fetch("/api/buying");
         const data = await response.json();
-        setOrders(data.purchases || []);
-        setFilteredOrders(data.purchases || []);
+        setPurchases(data.purchases || []);
+        setFilteredPurchases(data.purchases || []);
       } catch (error) {
-        console.error("Error fetching orders:", error);
-        setToast({ message: "Failed to fetch orders", type: "error" });
+        console.error("Error fetching purchases:", error);
+        setToast({ message: "Failed to fetch purchases", type: "error" });
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchOrders();
+    fetchPurchases();
   }, [refreshTrigger]);
 
   useEffect(() => {
-    let filtered = [...orders];
+    let filtered = [...purchases];
 
     // Search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (order) =>
-          order.orderNumber.toLowerCase().includes(searchLower) ||
-          order.customerName.toLowerCase().includes(searchLower) ||
-          (order.customerEmail &&
-            order.customerEmail.toLowerCase().includes(searchLower)) ||
-          order.games.some(
+        (purchase) =>
+          purchase.purchaseReference.toLowerCase().includes(searchLower) ||
+          (purchase.supplierName &&
+            purchase.supplierName.toLowerCase().includes(searchLower)) ||
+          purchase.games.some(
             (game) =>
               game.gameTitle.toLowerCase().includes(searchLower) ||
               game.gameBarcode.toLowerCase().includes(searchLower),
@@ -124,42 +82,35 @@ export default function OrdersTable({
 
     // Status filter
     if (statusFilter) {
-      filtered = filtered.filter((order) => order.status === statusFilter);
+      filtered = filtered.filter((purchase) => purchase.status === statusFilter);
     }
 
-    setFilteredOrders(filtered);
+    setFilteredPurchases(filtered);
     setCurrentPage(1);
-  }, [orders, searchTerm, statusFilter]);
+  }, [purchases, searchTerm, statusFilter]);
 
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredPurchases.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentOrders = filteredOrders.slice(startIndex, endIndex);
+  const currentPurchases = filteredPurchases.slice(startIndex, endIndex);
 
   const statusOptions = [
     { value: "", label: "All Statuses" },
     { value: "pending", label: "Pending" },
-    { value: "preparing", label: "Processing" },
-    { value: "shipped", label: "Shipped" },
-    { value: "delivered", label: "Completed" },
+    { value: "completed", label: "Completed" },
     { value: "cancelled", label: "Cancelled" },
   ];
 
   function getStatusBadge(status: string) {
     const statusConfig = {
       pending: { color: "bg-yellow-100 text-yellow-800", label: "Pending" },
-      confirmed: { color: "bg-blue-100 text-blue-800", label: "Confirmed" },
-      preparing: {
-        color: "bg-purple-100 text-purple-800",
-        label: "Processing",
-      },
-      shipped: { color: "bg-indigo-100 text-indigo-800", label: "Shipped" },
-      delivered: { color: "bg-green-100 text-green-800", label: "Completed" },
+      completed: { color: "bg-green-100 text-green-800", label: "Completed" },
       cancelled: { color: "bg-red-100 text-red-800", label: "Cancelled" },
     };
 
     const config =
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.pending;
 
     return (
       <span
@@ -182,38 +133,69 @@ export default function OrdersTable({
     return `₱${price.toLocaleString()}`;
   }
 
-  function getGamesDisplay(games: OrderGame[]) {
-    if (games.length === 0) return "No games";
-    if (games.length === 1) {
-      return games[0].gameTitle;
+  function getProfitColor(profit: number) {
+    if (profit > 0) return "text-green-600";
+    if (profit === 0) return "text-yellow-600";
+    return "text-red-600";
+  }
+
+  function handleViewDetails(purchase: Buying) {
+    setSelectedPurchase(purchase);
+  }
+
+  function handleUpdate(purchase: Buying) {
+    setUpdatingPurchase(purchase);
+  }
+
+  async function handleDelete(purchase: Buying) {
+    if (
+      !confirm(
+        `Are you sure you want to delete purchase ${purchase.purchaseReference}? This action cannot be undone.`,
+      )
+    ) {
+      return;
     }
-    return `${games[0].gameTitle} + ${games.length - 1} more`;
-  }
 
-  function handleViewDetails(order: Order) {
-    setSelectedOrder(order);
-  }
+    try {
+      const response = await fetch(`/api/buying/${purchase._id}`, {
+        method: "DELETE",
+      });
 
-  function handleUpdateStatus(order: Order) {
-    setUpdatingOrder(order);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete purchase");
+      }
+
+      setToast({
+        message: "Purchase deleted successfully!",
+        type: "success",
+      });
+      onBuyingUpdated();
+    } catch (error: any) {
+      console.error("Error deleting purchase:", error);
+      setToast({
+        message: error.message || "Failed to delete purchase",
+        type: "error",
+      });
+    }
   }
 
   function handleUpdateSuccess() {
-    setUpdatingOrder(null);
+    setUpdatingPurchase(null);
     setToast({
-      message: "Order status updated successfully!",
+      message: "Purchase updated successfully!",
       type: "success",
     });
-    onOrderUpdated();
+    onBuyingUpdated();
   }
 
   function handleAddSuccess() {
     setShowAddModal(false);
     setToast({
-      message: "Order created successfully!",
+      message: "Purchase created successfully!",
       type: "success",
     });
-    onOrderUpdated();
+    onBuyingUpdated();
   }
 
   if (isLoading) {
@@ -234,14 +216,15 @@ export default function OrdersTable({
       {/* Header with Add Button */}
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          Showing {currentOrders.length} of {filteredOrders.length} orders
+          Showing {currentPurchases.length} of {filteredPurchases.length}{" "}
+          purchases
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center space-x-2 px-4 py-2 bg-funBlue text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
           <HiPlus className="w-5 h-5" />
-          <span>Add Order</span>
+          <span>Add Purchase</span>
         </button>
       </div>
 
@@ -252,7 +235,7 @@ export default function OrdersTable({
             <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search by order number, name, email, or game..."
+              placeholder="Search by reference, supplier, or game..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
@@ -281,28 +264,28 @@ export default function OrdersTable({
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Order Number
+                  Reference
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Order Date
+                  Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Customer
+                  Supplier
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Games
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Total Cost
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Expected Revenue
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Expected Profit
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Discount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Profit
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
@@ -310,104 +293,75 @@ export default function OrdersTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {currentOrders.length === 0 ? (
+              {currentPurchases.length === 0 ? (
                 <tr>
                   <td
                     colSpan={9}
                     className="px-6 py-8 text-center text-gray-500"
                   >
-                    No orders found
+                    No purchases found
                   </td>
                 </tr>
               ) : (
-                currentOrders.map((order) => (
+                currentPurchases.map((purchase) => (
                   <tr
-                    key={order._id}
+                    key={purchase._id}
                     className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleViewDetails(order)}
+                    onClick={() => handleViewDetails(purchase)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-mono text-funBlue">
-                        {order.orderNumber}
+                        {purchase.purchaseReference}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatDate(order.submittedAt)}
+                        {formatDate(purchase.purchasedAt)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {order.customerName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {order.customerEmail}
+                        {purchase.supplierName || "N/A"}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {getGamesDisplay(order.games)}
+                        {purchase.games.length} game
+                        {purchase.games.length !== 1 ? "s" : ""}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {order.games.length} game
-                        {order.games.length !== 1 ? "s" : ""}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(order.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatPrice(order.totalAmount)}
+                        {formatPrice(purchase.totalCost)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {order.discountAmount ? (
-                        <div className="text-sm text-red-600 font-medium">
-                          -{formatPrice(order.discountAmount)}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-400">—</div>
-                      )}
+                      <div className="text-sm font-medium text-gray-900">
+                        {formatPrice(purchase.totalExpectedRevenue)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {order.totalProfit !== undefined ? (
-                        <div>
-                          <div
-                            className={`text-sm font-semibold ${
-                              order.totalProfit > 0
-                                ? "text-green-600"
-                                : order.totalProfit < 0
-                                  ? "text-red-600"
-                                  : "text-yellow-600"
-                            }`}
-                          >
-                            {formatPrice(order.totalProfit)}
-                          </div>
-                          {order.profitMargin !== undefined && (
-                            <div
-                              className={`text-xs ${
-                                order.profitMargin > 0
-                                  ? "text-green-500"
-                                  : order.profitMargin < 0
-                                    ? "text-red-500"
-                                    : "text-yellow-500"
-                              }`}
-                            >
-                              {order.profitMargin.toFixed(1)}%
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-400">—</div>
-                      )}
+                      <div
+                        className={`text-sm font-semibold ${getProfitColor(
+                          purchase.totalExpectedProfit,
+                        )}`}
+                      >
+                        {purchase.totalExpectedProfit >= 0 ? "+" : ""}
+                        {formatPrice(purchase.totalExpectedProfit)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {purchase.profitMargin.toFixed(1)}% margin
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(purchase.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleViewDetails(order);
+                            handleViewDetails(purchase);
                           }}
                           className="text-funBlue hover:text-blue-600"
                         >
@@ -416,11 +370,20 @@ export default function OrdersTable({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUpdateStatus(order);
+                            handleUpdate(purchase);
                           }}
                           className="text-gray-600 hover:text-gray-900"
                         >
                           <HiPencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(purchase);
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <HiTrash className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -436,8 +399,8 @@ export default function OrdersTable({
           <div className="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Showing {startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredOrders.length)} of{" "}
-              {filteredOrders.length} results
+              {Math.min(endIndex, filteredPurchases.length)} of{" "}
+              {filteredPurchases.length} results
             </div>
             <div className="flex space-x-2">
               <button
@@ -466,27 +429,23 @@ export default function OrdersTable({
 
       {/* Modals */}
       {showAddModal && (
-        <AddOrderModal
+        <AddBuyingModal
           onClose={() => setShowAddModal(false)}
           onSuccess={handleAddSuccess}
         />
       )}
 
-      {selectedOrder && (
-        <OrderDetailsModal
-          order={selectedOrder}
-          onClose={() => setSelectedOrder(null)}
-          onStatusUpdate={() => {
-            setSelectedOrder(null);
-            onOrderUpdated();
-          }}
+      {selectedPurchase && (
+        <BuyingDetailsModal
+          purchase={selectedPurchase}
+          onClose={() => setSelectedPurchase(null)}
         />
       )}
 
-      {updatingOrder && (
-        <UpdateOrderStatusModal
-          order={updatingOrder}
-          onClose={() => setUpdatingOrder(null)}
+      {updatingPurchase && (
+        <UpdateBuyingModal
+          purchase={updatingPurchase}
+          onClose={() => setUpdatingPurchase(null)}
           onSuccess={handleUpdateSuccess}
         />
       )}
@@ -502,3 +461,4 @@ export default function OrdersTable({
     </div>
   );
 }
+
