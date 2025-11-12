@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import BuyingModel from "@/models/Buying";
 import PurchaseModel from "@/models/Purchase";
 import RentalModel from "@/models/Rental";
+import TradeModel from "@/models/Trade";
 import GameModel from "@/models/Game";
 
 export async function GET(request: NextRequest) {
@@ -14,6 +15,8 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate");
     const period = searchParams.get("period") || "all";
     const filterType = searchParams.get("filterType") || "all";
+    const operatingExpenses =
+      parseFloat(searchParams.get("operatingExpenses") || "0") || 0;
 
     // Calculate date range based on filterType
     let dateFilter: { $gte?: Date; $lte?: Date } = {};
@@ -57,11 +60,18 @@ export async function GET(request: NextRequest) {
       rentalQuery.updatedAt = dateFilter;
     }
 
+    // Build query for trades (completed trades)
+    const tradeQuery: any = { status: "completed" };
+    if (Object.keys(dateFilter).length > 0) {
+      tradeQuery.completedAt = dateFilter;
+    }
+
     // Fetch all data
-    const [buyingRecords, orders, rentals, games] = await Promise.all([
+    const [buyingRecords, orders, rentals, trades, games] = await Promise.all([
       BuyingModel.find(buyingQuery).lean(),
       PurchaseModel.find(orderQuery).lean(),
       RentalModel.find(rentalQuery).lean(),
+      TradeModel.find(tradeQuery).lean(),
       GameModel.find({}).lean(),
     ]);
 
@@ -80,20 +90,53 @@ export async function GET(request: NextRequest) {
 
     // Calculate Rental Revenue
     const rentalRevenue = rentals.reduce(
-      (sum, rental) => sum + (rental.rentalFee || 0),
+      (sum: number, rental: any) => sum + (rental.rentalFee || 0),
       0,
     );
 
-    // Total Revenue including rentals
-    const totalRevenueWithRentals = totalRevenue + rentalRevenue;
+    // Calculate Trade Revenue (cashDifference + tradeFee)
+    const tradeRevenue = trades.reduce(
+      (sum: number, trade: any) =>
+        sum + ((trade.cashDifference || 0) + (trade.tradeFee || 0)),
+      0,
+    );
 
-    // Calculate Gross Profit
-    const grossProfit = totalRevenueWithRentals - totalCosts;
+    // Calculate Trade Costs (cost of games we give away)
+    let tradeCosts = 0;
+    for (const trade of trades) {
+      for (const gameReceived of trade.gamesReceived || []) {
+        const gameDoc = games.find(
+          (g: any) => g.gameBarcode === gameReceived.gameBarcode,
+        );
+        const costPrice = gameDoc?.costPrice || 0;
+        tradeCosts += costPrice * (gameReceived.quantity || 0);
+      }
+    }
 
-    // Calculate Profit Margin
-    const profitMargin =
-      totalRevenueWithRentals > 0
-        ? (grossProfit / totalRevenueWithRentals) * 100
+    // Calculate Trade Profit
+    const tradeProfit = tradeRevenue - tradeCosts;
+
+    // Total Revenue including rentals and trades
+    const totalRevenueWithRentalsAndTrades =
+      totalRevenue + rentalRevenue + tradeRevenue;
+
+    // Calculate Gross Profit (including trade costs in total costs)
+    const totalCostsWithTrades = totalCosts + tradeCosts;
+    const grossProfit = totalRevenueWithRentalsAndTrades - totalCostsWithTrades;
+
+    // Calculate Gross Profit Margin
+    const grossProfitMargin =
+      totalRevenueWithRentalsAndTrades > 0
+        ? (grossProfit / totalRevenueWithRentalsAndTrades) * 100
+        : 0;
+
+    // Calculate Net Profit (gross profit - operating expenses)
+    const netProfit = grossProfit - operatingExpenses;
+
+    // Calculate Net Profit Margin
+    const netProfitMargin =
+      totalRevenueWithRentalsAndTrades > 0
+        ? (netProfit / totalRevenueWithRentalsAndTrades) * 100
         : 0;
 
     // Determine status
@@ -113,6 +156,7 @@ export async function GET(request: NextRequest) {
         profit: number;
         orderCount: number;
         rentalCount: number;
+        tradeCount: number;
       }
     >();
 
@@ -146,6 +190,7 @@ export async function GET(request: NextRequest) {
           profit: 0,
           orderCount: 0,
           rentalCount: 0,
+          tradeCount: 0,
         });
       }
 
@@ -184,6 +229,7 @@ export async function GET(request: NextRequest) {
           profit: 0,
           orderCount: 0,
           rentalCount: 0,
+          tradeCount: 0,
         });
       }
 
@@ -221,6 +267,7 @@ export async function GET(request: NextRequest) {
           profit: 0,
           orderCount: 0,
           rentalCount: 0,
+          tradeCount: 0,
         });
       }
 
@@ -228,6 +275,57 @@ export async function GET(request: NextRequest) {
       entry.revenue += rental.rentalFee || 0;
       entry.rentalCount += 1;
     });
+
+    // Process trades for time series
+    for (const trade of trades) {
+      if (!trade.completedAt) continue;
+      const date = new Date(trade.completedAt);
+      let key = "";
+
+      if (period === "day") {
+        key = date.toISOString().split("T")[0];
+      } else if (period === "week") {
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        key = weekStart.toISOString().split("T")[0];
+      } else if (period === "month") {
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      } else if (period === "bi-annual") {
+        const halfYear = Math.floor(date.getMonth() / 6);
+        key = `${date.getFullYear()}-H${halfYear + 1}`;
+      } else if (period === "annual") {
+        key = String(date.getFullYear());
+      } else {
+        key = "all";
+      }
+
+      if (!timeSeriesMap.has(key)) {
+        timeSeriesMap.set(key, {
+          revenue: 0,
+          costs: 0,
+          profit: 0,
+          orderCount: 0,
+          rentalCount: 0,
+          tradeCount: 0,
+        });
+      }
+
+      const entry = timeSeriesMap.get(key)!;
+      const tradeRev = (trade.cashDifference || 0) + (trade.tradeFee || 0);
+      entry.revenue += tradeRev;
+      entry.tradeCount += 1;
+
+      // Calculate trade costs for this trade
+      let tradeCost = 0;
+      for (const gameReceived of trade.gamesReceived || []) {
+        const gameDoc = games.find(
+          (g: any) => g.gameBarcode === gameReceived.gameBarcode,
+        );
+        const costPrice = gameDoc?.costPrice || 0;
+        tradeCost += costPrice * (gameReceived.quantity || 0);
+      }
+      entry.costs += tradeCost;
+    }
 
     // Calculate profit for each time period
     timeSeriesMap.forEach((value, key) => {
@@ -248,7 +346,7 @@ export async function GET(request: NextRequest) {
     const revenueBySource: Record<string, number> = {};
     let totalDiscounts = 0;
 
-    orders.forEach((order) => {
+    orders.forEach((order: any) => {
       // By status
       const status = order.status || "unknown";
       revenueByStatus[status] =
@@ -267,6 +365,9 @@ export async function GET(request: NextRequest) {
       // Discounts
       totalDiscounts += order.discountAmount || 0;
     });
+
+    // Add trades to revenue by source
+    revenueBySource["trades"] = tradeRevenue;
 
     // Cost Breakdown by Supplier
     const costBySupplier = new Map<string, number>();
@@ -448,9 +549,15 @@ export async function GET(request: NextRequest) {
           totalCosts: totalCosts,
           totalRevenue: totalRevenue,
           rentalRevenue: rentalRevenue,
-          totalRevenueWithRentals: totalRevenueWithRentals,
+          tradeRevenue: tradeRevenue,
+          tradeCosts: tradeCosts,
+          tradeProfit: tradeProfit,
+          totalRevenueWithRentalsAndTrades: totalRevenueWithRentalsAndTrades,
           grossProfit: grossProfit,
-          profitMargin: profitMargin,
+          profitMargin: grossProfitMargin,
+          operatingExpenses: operatingExpenses,
+          netProfit: netProfit,
+          netProfitMargin: netProfitMargin,
           status: status,
         },
         timeSeries: timeSeries,

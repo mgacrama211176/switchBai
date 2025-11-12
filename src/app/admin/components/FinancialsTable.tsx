@@ -19,6 +19,7 @@ import {
   getTrendIndicator,
 } from "@/lib/financial-utils";
 import Toast from "./Toast";
+import FinancialChart from "./FinancialChart";
 
 interface FinancialsTableProps {
   refreshTrigger: number;
@@ -44,10 +45,11 @@ export default function FinancialsTable({
   const [period, setPeriod] = useState<
     "day" | "week" | "month" | "bi-annual" | "annual" | "all"
   >("month");
+  const [operatingExpenses, setOperatingExpenses] = useState<number>(0);
 
   useEffect(() => {
     fetchFinancialData();
-  }, [filterType, period, refreshTrigger]);
+  }, [filterType, period, operatingExpenses, refreshTrigger]);
 
   async function fetchFinancialData() {
     setIsLoading(true);
@@ -60,6 +62,9 @@ export default function FinancialsTable({
       }
       if (period !== "all") {
         params.append("period", period);
+      }
+      if (operatingExpenses > 0) {
+        params.append("operatingExpenses", operatingExpenses.toString());
       }
 
       const response = await fetch(`/api/financials?${params.toString()}`);
@@ -180,10 +185,28 @@ export default function FinancialsTable({
             <option value="all">All</option>
           </select>
         </div>
+        <div className="sm:w-48">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Operating Expenses (₱)
+          </label>
+          <input
+            type="number"
+            min={0}
+            value={operatingExpenses}
+            onChange={(e) =>
+              setOperatingExpenses(parseFloat(e.target.value) || 0)
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+            placeholder="0"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Rent, utilities, salaries, etc.
+          </p>
+        </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Total Revenue Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-2">
@@ -191,13 +214,18 @@ export default function FinancialsTable({
             <HiTrendingUp className="w-5 h-5 text-green-500" />
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            {formatCurrency(summary.totalRevenueWithRentals)}
+            {formatCurrency(summary.totalRevenueWithRentalsAndTrades)}
           </p>
           <div className="mt-2 text-xs text-gray-500">
             Orders: {formatCurrency(summary.totalRevenue)}
             {summary.rentalRevenue > 0 && (
               <span className="ml-2">
                 • Rentals: {formatCurrency(summary.rentalRevenue)}
+              </span>
+            )}
+            {summary.tradeRevenue > 0 && (
+              <span className="ml-2">
+                • Trades: {formatCurrency(summary.tradeRevenue)}
               </span>
             )}
           </div>
@@ -210,58 +238,83 @@ export default function FinancialsTable({
             <HiTrendingDown className="w-5 h-5 text-red-500" />
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            {formatCurrency(summary.totalCosts)}
+            {formatCurrency(summary.totalCosts + summary.tradeCosts)}
           </p>
           <div className="mt-2 text-xs text-gray-500">
-            From completed purchases
+            Purchases: {formatCurrency(summary.totalCosts)}
+            {summary.tradeCosts > 0 && (
+              <span className="ml-2">
+                • Trades: {formatCurrency(summary.tradeCosts)}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Gross Profit Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-600">Gross Profit</h3>
+            {summary.grossProfit > 0 ? (
+              <HiTrendingUp className="w-5 h-5 text-green-500" />
+            ) : summary.grossProfit < 0 ? (
+              <HiTrendingDown className="w-5 h-5 text-red-500" />
+            ) : (
+              <HiMinus className="w-5 h-5 text-yellow-500" />
+            )}
+          </div>
+          <p className="text-2xl font-bold text-gray-900">
+            {formatCurrency(summary.grossProfit)}
+          </p>
+          <div className="mt-2 text-xs text-gray-500">
+            Before operating expenses
+          </div>
+        </div>
+
+        {/* Net Profit Card */}
         <div
           className={`bg-white rounded-xl shadow-sm border-2 p-6 ${
             statusColors[summary.status]
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium">Gross Profit</h3>
-            {summary.grossProfit > 0 ? (
+            <h3 className="text-sm font-medium">Net Profit</h3>
+            {summary.netProfit > 0 ? (
               <HiTrendingUp className="w-5 h-5" />
-            ) : summary.grossProfit < 0 ? (
+            ) : summary.netProfit < 0 ? (
               <HiTrendingDown className="w-5 h-5" />
             ) : (
               <HiMinus className="w-5 h-5" />
             )}
           </div>
           <p className="text-2xl font-bold">
-            {formatCurrency(summary.grossProfit)}
+            {formatCurrency(summary.netProfit)}
           </p>
           <div className="mt-2 text-xs">
             Status: {summary.status.toUpperCase()}
           </div>
         </div>
 
-        {/* Profit Margin Card */}
+        {/* Net Profit Margin Card */}
         <div
           className={`bg-white rounded-xl shadow-sm border-2 p-6 ${
             statusColors[summary.status]
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium">Profit Margin</h3>
-            {summary.profitMargin > 0 ? (
+            <h3 className="text-sm font-medium">Net Profit Margin</h3>
+            {summary.netProfitMargin > 0 ? (
               <HiTrendingUp className="w-5 h-5" />
-            ) : summary.profitMargin < 0 ? (
+            ) : summary.netProfitMargin < 0 ? (
               <HiTrendingDown className="w-5 h-5" />
             ) : (
               <HiMinus className="w-5 h-5" />
             )}
           </div>
           <p className="text-2xl font-bold">
-            {formatPercentage(summary.profitMargin)}
+            {formatPercentage(summary.netProfitMargin)}
           </p>
           <div className="mt-2 text-xs">
-            {summary.totalRevenueWithRentals > 0
+            {summary.totalRevenueWithRentalsAndTrades > 0
               ? "Of total revenue"
               : "No revenue yet"}
           </div>
@@ -538,6 +591,9 @@ export default function FinancialsTable({
         </div>
       </div>
 
+      {/* Financial Chart */}
+      {timeSeries.length > 0 && <FinancialChart data={timeSeries} />}
+
       {/* Time Series Table */}
       {timeSeries.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -596,6 +652,9 @@ export default function FinancialsTable({
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {item.rentalCount}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {item.tradeCount}
                     </td>
                   </tr>
                 ))}

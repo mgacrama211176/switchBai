@@ -65,9 +65,15 @@ export interface FinancialSummary {
   totalCosts: number;
   totalRevenue: number;
   rentalRevenue: number;
-  totalRevenueWithRentals: number;
+  tradeRevenue: number;
+  tradeCosts: number;
+  tradeProfit: number;
+  totalRevenueWithRentalsAndTrades: number;
   grossProfit: number;
-  profitMargin: number;
+  profitMargin: number; // Gross profit margin
+  operatingExpenses: number;
+  netProfit: number;
+  netProfitMargin: number;
   status: "profit" | "loss" | "break-even";
 }
 
@@ -78,6 +84,7 @@ export interface FinancialTimeSeries {
   profit: number;
   orderCount: number;
   rentalCount: number;
+  tradeCount: number;
 }
 
 export interface RevenueBreakdown {
