@@ -340,7 +340,7 @@ const GamesPageContent = () => {
         </Link>
 
         {/* Content */}
-        <div className="p-3 space-y-2">
+        <div className="p-3 sm:p-4 space-y-2">
           {/* Title - Clickable to detail page */}
           <Link href={`/games/${game.gameBarcode}`}>
             <h3 className="text-sm md:text-base font-bold text-gray-900 line-clamp-3 min-h-8 hover:text-funBlue transition-colors">
@@ -397,7 +397,7 @@ const GamesPageContent = () => {
             <button
               onClick={onAddToCart}
               disabled={game.gameAvailableStocks === 0}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 py-2.5 sm:py-2 px-3 rounded-xl text-xs font-bold transition-all ${
                 game.gameAvailableStocks === 0
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : isInCart
@@ -415,7 +415,7 @@ const GamesPageContent = () => {
             <button
               onClick={onAddToCompare}
               disabled={!isInCompare && compareItems.length >= 2}
-              className={`w-10 h-10 rounded-xl transition-all ${
+              className={`w-11 h-11 sm:w-10 sm:h-10 rounded-xl transition-all ${
                 isInCompare
                   ? "bg-funBlue text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -436,11 +436,11 @@ const GamesPageContent = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="max-w-7xl mx-auto px-8">
-          <h1 className="text-6xl font-black text-gray-900 mb-4 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-4xl lg:text-6xl font-black text-gray-900 mb-4 text-center">
             Browse All <span className="text-funBlue">Games</span>
           </h1>
-          <p className="text-xl text-gray-700 text-center mb-8">
+          <p className="text-lg lg:text-xl text-gray-700 text-center mb-8">
             Discover {totalGames}+ Nintendo Switch games for rent or purchase
           </p>
 
@@ -540,7 +540,7 @@ const GamesPageContent = () => {
 
       {/* Main Content Section */}
       <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex gap-8">
             {/* Filters Sidebar */}
             <aside
@@ -816,7 +816,7 @@ const GamesPageContent = () => {
 
               {/* Loading State */}
               {isLoading && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6">
                   {[...Array(itemsPerPage)].map((_, i) => (
                     <GameCardSkeleton key={`skeleton-${i}`} />
                   ))}
@@ -885,7 +885,7 @@ const GamesPageContent = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6">
                       {filteredAndSortedGames.map((game) => (
                         <GameCard
                           key={game.gameBarcode}

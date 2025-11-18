@@ -206,11 +206,11 @@ const Navigation: React.FC = () => {
                           openDropdown === item.name ? null : item.name,
                         )
                       }
-                      className="flex items-center space-x-2 text-gray-700 hover:text-lameRed font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-lameRed/5 group"
+                      className="flex items-center space-x-2 text-gray-800 hover:text-lameRed font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-lameRed/5 group"
                       aria-label={`Open ${item.name} menu`}
                       aria-expanded={openDropdown === item.name}
                     >
-                      <span className="text-lameRed/70 group-hover:text-lameRed transition-colors duration-300">
+                      <span className="text-lameRed group-hover:text-lameRed transition-colors duration-300">
                         {item.icon}
                       </span>
                       <span>{item.name}</span>
@@ -233,14 +233,14 @@ const Navigation: React.FC = () => {
                             onClick={() => setOpenDropdown(null)}
                             className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors duration-200 group"
                           >
-                            <div className="text-lameRed/70 group-hover:text-lameRed transition-colors duration-300 mt-0.5">
+                            <div className="text-lameRed group-hover:text-lameRed transition-colors duration-300 mt-0.5">
                               {subItem.icon}
                             </div>
                             <div className="flex-1">
                               <div className="font-semibold text-gray-900 group-hover:text-lameRed transition-colors duration-200">
                                 {subItem.name}
                               </div>
-                              <div className="text-sm text-gray-500 mt-0.5">
+                              <div className="text-sm text-gray-600 mt-0.5">
                                 {subItem.description}
                               </div>
                             </div>
@@ -253,10 +253,10 @@ const Navigation: React.FC = () => {
                   <Link
                     key={item.name}
                     href={item.href!}
-                    className="flex items-center space-x-2 text-gray-700 hover:text-red font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-red/5 group"
+                    className="flex items-center space-x-2 text-gray-800 hover:text-red font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-red/5 group"
                     aria-label={`Navigate to ${item.name}`}
                   >
-                    <span className="text-lameRed/70 group-hover:text-lameRed transition-colors duration-300">
+                    <span className="text-lameRed group-hover:text-lameRed transition-colors duration-300">
                       {item.icon}
                     </span>
                     <span>{item.name}</span>
@@ -273,7 +273,7 @@ const Navigation: React.FC = () => {
                 className="relative text-black"
               >
                 <div className="relative">
-                  <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-4 h-4" />
                   <input
                     type="text"
                     placeholder="Search games..."
@@ -290,15 +290,15 @@ const Navigation: React.FC = () => {
               <button
                 onClick={handleMobileMenuToggle}
                 onKeyDown={handleKeyDown}
-                className="p-2 rounded-lg text-gray-700 hover:text-funBlue hover:bg-funBlue/5 focus:outline-none focus:ring-2 focus:ring-funBlue/20 transition-all duration-300"
+                className="p-3 rounded-lg text-gray-700 hover:text-funBlue hover:bg-funBlue/5 active:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-funBlue/20 transition-all duration-200 min-h-14 min-w-14 flex items-center justify-center"
                 aria-expanded={isMobileMenuOpen}
                 aria-label="Toggle mobile menu"
                 tabIndex={0}
               >
                 {isMobileMenuOpen ? (
-                  <HiX className="w-6 h-6" />
+                  <HiX className="w-7 h-7" />
                 ) : (
-                  <HiMenu className="w-6 h-6" />
+                  <HiMenu className="w-7 h-7" />
                 )}
               </button>
             </div>
@@ -307,88 +307,89 @@ const Navigation: React.FC = () => {
 
         {/* Mobile Navigation Menu */}
         <div
-          className={`md:hidden transition-all duration-300 overflow-hidden ${
-            isMobileMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+          className={`md:hidden transition-all duration-200 overflow-hidden ${
+            isMobileMenuOpen
+              ? "max-h-screen opacity-100 translate-y-0"
+              : "max-h-0 opacity-0 -translate-y-2"
           }`}
         >
-          <div className="border-t border-gray-200 bg-white/95 backdrop-blur-xl">
-            <div className="px-4 pt-4 pb-6 space-y-2 overflow-y-auto max-h-[calc(100vh-80px)]">
+          <div className="border-t border-gray-300 bg-white shadow-lg">
+            <div className="px-5 pt-5 pb-6 space-y-3 overflow-y-auto max-h-[calc(100vh-80px)]">
               {/* Mobile Search */}
-              <form onSubmit={handleSearchSubmit} className="mb-4">
+              <form onSubmit={handleSearchSubmit} className="mb-2">
                 <div className="relative">
-                  <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <HiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600 w-5 h-5" />
                   <input
                     type="text"
                     placeholder="Search games..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-3 w-full border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue/20 focus:border-blue transition-all duration-300 bg-gray-50/50"
+                    className="pl-12 pr-4 py-3.5 w-full border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue/20 focus:border-blue transition-all duration-200 bg-gray-50 hover:bg-white"
                   />
                 </div>
               </form>
 
               {/* Mobile Navigation Items */}
-              {navigationItems.map((item) =>
-                item.subItems ? (
-                  <div key={item.name} className="space-y-1">
-                    {/* Parent Item */}
-                    <div className="flex items-center space-x-3 px-4 py-3 text-base font-bold text-gray-900 min-h-12">
-                      <span className="text-lameRed">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </div>
-                    {/* Sub Items */}
-                    {item.subItems.map((subItem) => (
-                      <Link
-                        key={subItem.name}
-                        href={subItem.href}
-                        className="flex items-center space-x-3 px-4 py-3 pl-12 text-sm font-medium text-gray-700 hover:text-funBlue hover:bg-funBlue/5 rounded-lg transition-all duration-300 group min-h-12"
-                        onClick={handleMobileMenuClose}
-                        aria-label={`Navigate to ${subItem.name}`}
-                      >
-                        <span className="text-funBlue/70 group-hover:text-funBlue transition-colors duration-300">
-                          {subItem.icon}
+              {navigationItems.map((item, index) => (
+                <div key={item.name}>
+                  {item.subItems ? (
+                    <div className="space-y-1">
+                      {/* Parent Item */}
+                      <div className="flex items-center space-x-3 px-5 py-4 text-base font-bold text-gray-900 min-h-14 bg-gray-50 rounded-lg">
+                        <span className="text-lameRed text-xl">
+                          {item.icon}
                         </span>
-                        <div>
-                          <div>{subItem.name}</div>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            {subItem.description}
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <Link
-                    key={item.name}
-                    href={item.href!}
-                    className="flex items-center space-x-3 px-4 py-3 text-base font-medium text-gray-700 hover:text-funBlue hover:bg-funBlue/5 rounded-lg transition-all duration-300 group min-h-12"
-                    onClick={handleMobileMenuClose}
-                    aria-label={`Navigate to ${item.name}`}
-                  >
-                    <span className="text-funBlue/70 group-hover:text-funBlue transition-colors duration-300">
-                      {item.icon}
-                    </span>
-                    <div>
-                      <div>{item.name}</div>
-                      <div className="text-sm text-gray-500 mt-0.5">
-                        {item.description}
+                        <span>{item.name}</span>
                       </div>
+                      {/* Sub Items */}
+                      {item.subItems.map((subItem) => (
+                        <Link
+                          key={subItem.name}
+                          href={subItem.href}
+                          className="flex items-center space-x-3 px-5 py-4 pl-14 text-sm font-medium text-gray-900 hover:text-funBlue hover:bg-funBlue/5 active:bg-gray-100 rounded-lg transition-all duration-200 group min-h-14"
+                          onClick={handleMobileMenuClose}
+                          aria-label={`Navigate to ${subItem.name}`}
+                        >
+                          <span className="text-funBlue group-hover:text-funBlue transition-colors duration-200 text-lg">
+                            {subItem.icon}
+                          </span>
+                          <div className="flex-1">
+                            <div className="font-semibold">{subItem.name}</div>
+                            <div className="text-xs text-gray-600 mt-0.5">
+                              {subItem.description}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
                     </div>
-                  </Link>
-                ),
-              )}
+                  ) : (
+                    <Link
+                      href={item.href!}
+                      className="flex items-center space-x-3 px-5 py-4 text-base font-medium text-gray-900 hover:text-funBlue hover:bg-funBlue/5 active:bg-gray-100 rounded-lg transition-all duration-200 group min-h-14"
+                      onClick={handleMobileMenuClose}
+                      aria-label={`Navigate to ${item.name}`}
+                    >
+                      <span className="text-funBlue group-hover:text-funBlue transition-colors duration-200 text-xl">
+                        {item.icon}
+                      </span>
+                      <div className="flex-1">
+                        <div className="font-semibold">{item.name}</div>
+                        <div className="text-sm text-gray-600 mt-0.5">
+                          {item.description}
+                        </div>
+                      </div>
+                    </Link>
+                  )}
+                  {/* Divider between sections */}
+                  {index < navigationItems.length - 1 && (
+                    <div className="my-2 border-t border-gray-300"></div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </nav>
-
-      {/* Mobile menu overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
-          onClick={handleMobileMenuClose}
-        />
-      )}
     </>
   );
 };
