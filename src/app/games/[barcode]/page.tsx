@@ -13,6 +13,7 @@ import {
   calculateSavings,
   getPlatformInfo,
   getStockUrgency,
+  isNintendoSwitchGame,
 } from "@/app/components/ui/home/game-utils";
 import { calculateRentalPrice } from "@/lib/rental-pricing";
 
@@ -38,7 +39,13 @@ const GameDetailPage: React.FC = () => {
       const response = await fetchGameByBarcode(barcode);
 
       if (response.success && response.data) {
-        setGame(response.data);
+        // Check if game is PS4/PS5 - if so, show 404
+        if (!isNintendoSwitchGame(response.data.gamePlatform)) {
+          setError("Game not found");
+          setGame(null);
+        } else {
+          setGame(response.data);
+        }
       } else {
         setError(response.error || "Game not found");
       }

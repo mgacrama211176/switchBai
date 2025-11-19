@@ -46,10 +46,13 @@ export default function FinancialsTable({
     "day" | "week" | "month" | "bi-annual" | "annual" | "all"
   >("month");
   const [operatingExpenses, setOperatingExpenses] = useState<number>(0);
+  const [platformFilter, setPlatformFilter] = useState<
+    "all" | "nintendo" | "playstation"
+  >("all");
 
   useEffect(() => {
     fetchFinancialData();
-  }, [filterType, period, operatingExpenses, refreshTrigger]);
+  }, [filterType, period, operatingExpenses, platformFilter, refreshTrigger]);
 
   async function fetchFinancialData() {
     setIsLoading(true);
@@ -65,6 +68,9 @@ export default function FinancialsTable({
       }
       if (operatingExpenses > 0) {
         params.append("operatingExpenses", operatingExpenses.toString());
+      }
+      if (platformFilter !== "all") {
+        params.append("platformFilter", platformFilter);
       }
 
       const response = await fetch(`/api/financials?${params.toString()}`);
@@ -202,6 +208,24 @@ export default function FinancialsTable({
           <p className="text-xs text-gray-500 mt-1">
             Rent, utilities, salaries, etc.
           </p>
+        </div>
+        <div className="sm:w-48">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Platform Filter
+          </label>
+          <select
+            value={platformFilter}
+            onChange={(e) =>
+              setPlatformFilter(
+                e.target.value as "all" | "nintendo" | "playstation",
+              )
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+          >
+            <option value="all">All Platforms</option>
+            <option value="nintendo">Nintendo</option>
+            <option value="playstation">PlayStation</option>
+          </select>
         </div>
       </div>
 

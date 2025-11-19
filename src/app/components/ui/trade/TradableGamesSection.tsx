@@ -11,6 +11,7 @@ import {
   getStockUrgency,
   calculateSavings,
   formatPrice,
+  filterNintendoSwitchGames,
 } from "@/app/components/ui/home/game-utils";
 
 export function TradableGamesSection() {
@@ -30,7 +31,11 @@ export function TradableGamesSection() {
         });
 
         if (response.success && response.data) {
-          setGames(response.data.games || []);
+          // Filter out PS4/PS5 games - only show Nintendo Switch games
+          const filteredGames = filterNintendoSwitchGames(
+            response.data.games || [],
+          );
+          setGames(filteredGames);
         } else {
           setError(response.error || "Failed to load tradable games");
         }

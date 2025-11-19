@@ -50,7 +50,7 @@ export default function AddOrderModal({
   >("cod");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [discountType, setDiscountType] = useState<"percentage" | "fixed" | "">(
-    ""
+    "",
   );
   const [discountValue, setDiscountValue] = useState<number | "">("");
   const [status, setStatus] = useState<
@@ -160,7 +160,7 @@ export default function AddOrderModal({
       .filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.toLowerCase().includes(searchLower)
+          game.gameBarcode.toLowerCase().includes(searchLower),
       )
       .slice(0, 10); // Limit to 10 results
   }
@@ -194,7 +194,7 @@ export default function AddOrderModal({
   useEffect(() => {
     return () => {
       Object.values(debounceTimeouts.current).forEach((timeout) =>
-        clearTimeout(timeout)
+        clearTimeout(timeout),
       );
     };
   }, []);
@@ -602,7 +602,7 @@ export default function AddOrderModal({
                                   // Clear debounce timeout
                                   if (debounceTimeouts.current[index]) {
                                     clearTimeout(
-                                      debounceTimeouts.current[index]
+                                      debounceTimeouts.current[index],
                                     );
                                   }
                                 }}
@@ -642,7 +642,7 @@ export default function AddOrderModal({
                                         <div className="text-right ml-4">
                                           {game.isOnSale && game.salePrice ? (
                                             <div>
-                                              <div className="text-sm font-medium text-gray-900 line-through text-gray-400">
+                                              <div className="text-sm font-medium line-through text-gray-400">
                                                 ₱
                                                 {game.gamePrice.toLocaleString()}
                                               </div>
@@ -729,7 +729,7 @@ export default function AddOrderModal({
                         | "cod"
                         | "bank_transfer"
                         | "gcash"
-                        | "cash"
+                        | "cash",
                     )
                   }
                   required
@@ -754,7 +754,7 @@ export default function AddOrderModal({
                         | "preparing"
                         | "shipped"
                         | "delivered"
-                        | "cancelled"
+                        | "cancelled",
                     )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
@@ -796,7 +796,7 @@ export default function AddOrderModal({
                     value={discountType}
                     onChange={(e) => {
                       setDiscountType(
-                        e.target.value as "percentage" | "fixed" | ""
+                        e.target.value as "percentage" | "fixed" | "",
                       );
                       if (e.target.value === "") {
                         setDiscountValue("");

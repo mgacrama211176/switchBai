@@ -1,4 +1,5 @@
 import { Game } from "@/app/types/games";
+import { filterNintendoSwitchGames } from "@/app/components/ui/home/game-utils";
 
 // Service for managing game search and filtering
 export class GameSearchService {
@@ -24,7 +25,11 @@ export class GameSearchService {
       const response = await fetchGames({ limit: 100, page: 1 });
 
       if (response.success && response.data) {
-        setGames(response.data.games);
+        // Filter out PS4/PS5 games - only show Nintendo Switch games
+        const filteredGames = filterNintendoSwitchGames(
+          response.data.games || [],
+        );
+        setGames(filteredGames);
       } else {
         setError("Failed to load games");
       }

@@ -15,6 +15,7 @@ import {
   calculateSavings,
   getPlatformInfo,
   getStockUrgency,
+  filterNintendoSwitchGames,
 } from "@/app/components/ui/home/game-utils";
 
 const CATEGORIES = [
@@ -30,7 +31,7 @@ const CATEGORIES = [
   "Sports",
 ];
 
-const PLATFORMS = ["Nintendo Switch", "Nintendo Switch 2"];
+const PLATFORMS = ["Nintendo Switch", "Nintendo Switch 2", "PS4", "PS5"];
 
 const PRICE_RANGES = [
   { label: "Under ₱1,000", min: 0, max: 999, value: "0-999" },
@@ -147,9 +148,12 @@ const GamesPageContent = () => {
       });
 
       if (response.success && response.data) {
-        setGames(response.data.games);
-        setTotalPages(response.data.pagination.pages);
-        setTotalGames(response.data.pagination.total);
+        // Filter out PS4/PS5 games - only show Nintendo Switch games
+        const filteredGames = filterNintendoSwitchGames(response.data.games);
+        setGames(filteredGames);
+        // Update pagination to reflect filtered count
+        setTotalPages(Math.ceil(filteredGames.length / itemsPerPage));
+        setTotalGames(filteredGames.length);
       } else {
         setError(response.error || "Failed to load games");
       }

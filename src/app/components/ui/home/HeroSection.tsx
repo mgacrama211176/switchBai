@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Game } from "@/app/types/games";
 import GameCardSkeleton from "./GameCardSkeleton";
@@ -12,6 +12,7 @@ import {
   calculateSavings,
   getPlatformInfo,
   getStockUrgency,
+  filterNintendoSwitchGames,
 } from "./game-utils";
 import { getCachedGames, setCachedGames, CACHE_KEYS } from "@/lib/cache-utils";
 import Link from "next/link";
@@ -167,6 +168,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const isInCompare = (barcode: string): boolean =>
     compareItems.includes(barcode);
 
+  // Always filter to show only Nintendo Switch games (exclude PS4/PS5)
+  const filteredGames = useMemo(() => {
+    return filterNintendoSwitchGames(latestGames);
+  }, [latestGames]);
+
   return (
     <section className="min-h-screen w-full  bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
       {/* Diagonal Background Elements */}
@@ -311,7 +317,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
             {isLoading && !error && <GameCardSkeleton count={3} />}
 
             {/* Empty State */}
-            {!isLoading && !error && latestGames.length === 0 && (
+            {!isLoading && !error && filteredGames.length === 0 && (
               <div className="flex-shrink-0 w-48 md:w-52 bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
                 <div className="text-gray-400 text-4xl mb-4">🎮</div>
                 <h3 className="text-lg font-bold text-gray-800 mb-2">
@@ -326,14 +332,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
             {/* Games List */}
             {!isLoading &&
               !error &&
-              latestGames.length > 0 &&
-              latestGames.map((game: Game, index: number) => {
+              filteredGames.length > 0 &&
+              filteredGames.map((game: Game, index: number) => {
                 const platformInfo = getPlatformInfo(game.gamePlatform);
                 const stockInfo = getStockUrgency(game.gameAvailableStocks);
                 const savings = calculateSavings(
                   game.gamePrice,
                   game.gameBarcode,
-                  game,
+                  game
                 );
 
                 return (
@@ -495,9 +501,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
           </div>
 
           {/* Enhanced Scroll Indicators */}
-          {!isLoading && !error && latestGames.length > 0 && (
+          {!isLoading && !error && filteredGames.length > 0 && (
             <div className="flex justify-center mt-8 gap-3">
-              {Array.from({ length: Math.ceil(latestGames.length / 3) }).map(
+              {Array.from({ length: Math.ceil(filteredGames.length / 3) }).map(
                 (_, index) => (
                   <button
                     key={index}
@@ -516,7 +522,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   ></button>
-                ),
+                )
               )}
             </div>
           )}
@@ -566,7 +572,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                       →
                     </span>
                     <div className="bg-funBlue w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 group-hover:scale-125 group-hover:rotate-12">
-                      {latestGames.length}+
+                      {filteredGames.length}+
                     </div>
                   </div>
                 </Link>
@@ -647,8 +653,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
 
         {/* Comparison Modal */}
         <ComparisonModal
-          games={latestGames.filter((game) =>
-            compareItems.includes(game.gameBarcode),
+          games={filteredGames.filter((game) =>
+            compareItems.includes(game.gameBarcode)
           )}
           isOpen={isComparisonModalOpen}
           onClose={() => setIsComparisonModalOpen(false)}

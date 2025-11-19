@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const filterType = searchParams.get("filterType") || "all";
     const operatingExpenses =
       parseFloat(searchParams.get("operatingExpenses") || "0") || 0;
+    const platformFilter = searchParams.get("platformFilter") || "all";
 
     // Calculate date range based on filterType
     let dateFilter: { $gte?: Date; $lte?: Date } = {};
@@ -75,27 +76,103 @@ export async function GET(request: NextRequest) {
       GameModel.find({}).lean(),
     ]);
 
+    // Helper function to check if a game matches platform filter
+    function matchesPlatformFilter(
+      gamePlatform: string | string[] | undefined,
+    ): boolean {
+      if (platformFilter === "all") return true;
+      if (!gamePlatform) return false;
+
+      const platforms = Array.isArray(gamePlatform)
+        ? gamePlatform
+        : [gamePlatform];
+
+      if (platformFilter === "nintendo") {
+        return (
+          platforms.includes("Nintendo Switch") ||
+          platforms.includes("Nintendo Switch 2")
+        );
+      } else if (platformFilter === "playstation") {
+        return platforms.includes("PS4") || platforms.includes("PS5");
+      }
+
+      return true;
+    }
+
+    // Helper function to check if any game in a list matches platform filter
+    function anyGameMatchesPlatform(
+      gameBarcodes: string[],
+      gamesMap: Map<string, any>,
+    ): boolean {
+      return gameBarcodes.some((barcode) => {
+        const game = gamesMap.get(barcode);
+        return game && matchesPlatformFilter(game.gamePlatform);
+      });
+    }
+
+    // Create a map of games by barcode for quick lookup
+    const gamesMap = new Map(games.map((g: any) => [g.gameBarcode, g]));
+
+    // Filter data by platform if needed
+    let filteredBuyingRecords = buyingRecords;
+    let filteredOrders = orders;
+    let filteredRentals = rentals;
+    let filteredTrades = trades;
+
+    if (platformFilter !== "all") {
+      // Filter buying records by platform
+      filteredBuyingRecords = buyingRecords.filter((buying: any) => {
+        const gameBarcodes = (buying.games || []).map(
+          (g: any) => g.gameBarcode,
+        );
+        return anyGameMatchesPlatform(gameBarcodes, gamesMap);
+      });
+
+      // Filter orders by platform
+      filteredOrders = orders.filter((order: any) => {
+        const gameBarcodes = (order.games || []).map(
+          (g: any) => g.gameBarcode,
+        );
+        return anyGameMatchesPlatform(gameBarcodes, gamesMap);
+      });
+
+      // Filter rentals by platform
+      filteredRentals = rentals.filter((rental: any) => {
+        const gameBarcode = rental.gameBarcode;
+        const game = gamesMap.get(gameBarcode);
+        return game && matchesPlatformFilter(game.gamePlatform);
+      });
+
+      // Filter trades by platform (check games received)
+      filteredTrades = trades.filter((trade: any) => {
+        const gameBarcodes = (trade.gamesReceived || []).map(
+          (g: any) => g.gameBarcode,
+        );
+        return anyGameMatchesPlatform(gameBarcodes, gamesMap);
+      });
+    }
+
     // Calculate Total Costs (from completed buying records)
-    const totalCosts = buyingRecords.reduce(
+    const totalCosts = filteredBuyingRecords.reduce(
       (sum, record) => sum + (record.totalCost || 0),
       0,
     );
 
     // Calculate Total Revenue (from delivered orders)
     // Revenue = totalAmount (already includes discount)
-    const totalRevenue = orders.reduce(
+    const totalRevenue = filteredOrders.reduce(
       (sum, order) => sum + (order.totalAmount || 0),
       0,
     );
 
     // Calculate Rental Revenue
-    const rentalRevenue = rentals.reduce(
+    const rentalRevenue = filteredRentals.reduce(
       (sum: number, rental: any) => sum + (rental.rentalFee || 0),
       0,
     );
 
     // Calculate Trade Revenue (cashDifference + tradeFee)
-    const tradeRevenue = trades.reduce(
+    const tradeRevenue = filteredTrades.reduce(
       (sum: number, trade: any) =>
         sum + ((trade.cashDifference || 0) + (trade.tradeFee || 0)),
       0,
@@ -103,7 +180,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate Trade Costs (cost of games we give away)
     let tradeCosts = 0;
-    for (const trade of trades) {
+    for (const trade of filteredTrades) {
       for (const gameReceived of trade.gamesReceived || []) {
         const gameDoc = games.find(
           (g: any) => g.gameBarcode === gameReceived.gameBarcode,
@@ -161,7 +238,7 @@ export async function GET(request: NextRequest) {
     >();
 
     // Process orders for time series
-    orders.forEach((order) => {
+    filteredOrders.forEach((order) => {
       if (!order.deliveredAt) return;
       const date = new Date(order.deliveredAt);
       let key = "";
@@ -200,7 +277,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Process buying records for time series
-    buyingRecords.forEach((buying) => {
+    filteredBuyingRecords.forEach((buying) => {
       if (!buying.completedAt) return;
       const date = new Date(buying.completedAt);
       let key = "";
@@ -238,7 +315,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Process rentals for time series
-    rentals.forEach((rental) => {
+    filteredRentals.forEach((rental) => {
       if (!rental.updatedAt) return;
       const date = new Date(rental.updatedAt);
       let key = "";
@@ -277,7 +354,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Process trades for time series
-    for (const trade of trades) {
+    for (const trade of filteredTrades) {
       if (!trade.completedAt) continue;
       const date = new Date(trade.completedAt);
       let key = "";
@@ -346,7 +423,7 @@ export async function GET(request: NextRequest) {
     const revenueBySource: Record<string, number> = {};
     let totalDiscounts = 0;
 
-    orders.forEach((order: any) => {
+    filteredOrders.forEach((order: any) => {
       // By status
       const status = order.status || "unknown";
       revenueByStatus[status] =
@@ -371,7 +448,7 @@ export async function GET(request: NextRequest) {
 
     // Cost Breakdown by Supplier
     const costBySupplier = new Map<string, number>();
-    buyingRecords.forEach((buying) => {
+    filteredBuyingRecords.forEach((buying) => {
       const supplier = buying.supplierName || "Unknown Supplier";
       costBySupplier.set(
         supplier,
@@ -395,7 +472,7 @@ export async function GET(request: NextRequest) {
       }
     >();
 
-    orders.forEach((order) => {
+    filteredOrders.forEach((order) => {
       order.games.forEach(
         (game: {
           gameBarcode: string;
@@ -434,11 +511,13 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 
-    // Inventory Value
+    // Inventory Value (filtered by platform if needed)
     let inventoryValue = 0;
     let potentialRevenue = 0;
 
     games.forEach((game) => {
+      if (!matchesPlatformFilter(game.gamePlatform)) return;
+
       const stock = game.gameAvailableStocks || 0;
       const costPrice = game.costPrice || 0;
       const sellingPrice =
@@ -455,7 +534,7 @@ export async function GET(request: NextRequest) {
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const recentOrders = orders.filter(
+    const recentOrders = filteredOrders.filter(
       (order) =>
         order.deliveredAt && new Date(order.deliveredAt) >= thirtyDaysAgo,
     );
@@ -484,7 +563,7 @@ export async function GET(request: NextRequest) {
     const projectedMonthlyRevenue = averageDailyRevenue * 30;
 
     // Projected Monthly Profit
-    const recentCosts = buyingRecords
+    const recentCosts = filteredBuyingRecords
       .filter(
         (buying) =>
           buying.completedAt && new Date(buying.completedAt) >= thirtyDaysAgo,
@@ -497,7 +576,7 @@ export async function GET(request: NextRequest) {
       projectedMonthlyRevenue - projectedMonthlyCost;
 
     // Inventory Turnover (how many times inventory is sold per year)
-    const totalGamesSoldAllTime = orders.reduce(
+    const totalGamesSoldAllTime = filteredOrders.reduce(
       (sum: number, order: any) =>
         sum +
         order.games.reduce(
@@ -508,10 +587,9 @@ export async function GET(request: NextRequest) {
       0,
     );
 
-    const currentInventory = games.reduce(
-      (sum: number, game: any) => sum + (game.gameAvailableStocks || 0),
-      0,
-    );
+    const currentInventory = games
+      .filter((game: any) => matchesPlatformFilter(game.gamePlatform))
+      .reduce((sum: number, game: any) => sum + (game.gameAvailableStocks || 0), 0);
 
     const inventoryTurnover =
       currentInventory > 0 ? totalGamesSoldAllTime / currentInventory : 0;
@@ -521,14 +599,14 @@ export async function GET(request: NextRequest) {
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
 
-    const currentMonthRevenue = orders
+    const currentMonthRevenue = filteredOrders
       .filter(
         (order: any) =>
           order.deliveredAt && new Date(order.deliveredAt) >= currentMonth,
       )
       .reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
 
-    const lastMonthRevenue = orders
+    const lastMonthRevenue = filteredOrders
       .filter(
         (order: any) =>
           order.deliveredAt &&

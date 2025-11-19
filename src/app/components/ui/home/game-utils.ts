@@ -92,3 +92,39 @@ export function getStockUrgency(stock: number) {
     };
   }
 }
+
+/**
+ * Filters games to show only Nintendo Switch games (excludes PS4/PS5)
+ * Used across the client-facing app to hide PlayStation games
+ */
+export function filterNintendoSwitchGames<T extends { gamePlatform: string | string[] }>(
+  games: T[],
+): T[] {
+  return games.filter((game) => {
+    const platforms = Array.isArray(game.gamePlatform)
+      ? game.gamePlatform
+      : [game.gamePlatform];
+    // Must have Nintendo Switch AND not have PS4/PS5
+    const hasNintendo =
+      platforms.includes("Nintendo Switch") ||
+      platforms.includes("Nintendo Switch 2");
+    const hasPlayStation = platforms.includes("PS4") || platforms.includes("PS5");
+    return hasNintendo && !hasPlayStation;
+  });
+}
+
+/**
+ * Checks if a game is a Nintendo Switch game (excludes PS4/PS5)
+ */
+export function isNintendoSwitchGame(
+  gamePlatform: string | string[],
+): boolean {
+  const platforms = Array.isArray(gamePlatform)
+    ? gamePlatform
+    : [gamePlatform];
+  const hasNintendo =
+    platforms.includes("Nintendo Switch") ||
+    platforms.includes("Nintendo Switch 2");
+  const hasPlayStation = platforms.includes("PS4") || platforms.includes("PS5");
+  return hasNintendo && !hasPlayStation;
+}
