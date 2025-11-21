@@ -13,10 +13,16 @@ import {
 
 interface DashboardStatsProps {
   refreshTrigger: number;
+  onTotalGamesClick?: () => void;
+  onLowStockClick?: () => void;
+  onRentalClick?: () => void;
 }
 
 export default function DashboardStats({
   refreshTrigger,
+  onTotalGamesClick,
+  onLowStockClick,
+  onRentalClick,
 }: DashboardStatsProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +30,7 @@ export default function DashboardStats({
   useEffect(() => {
     async function fetchGames() {
       try {
-        const response = await fetch("/api/games");
+        const response = await fetch("/api/games?limit=1000");
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -64,7 +70,17 @@ export default function DashboardStats({
       ? g.gamePlatform.includes("Nintendo Switch 2")
       : g.gamePlatform === "Nintendo Switch 2",
   ).length;
-  const lowStockGames = games.filter((g) => g.gameAvailableStocks < 5).length;
+  const ps4Games = games.filter((g) =>
+    Array.isArray(g.gamePlatform)
+      ? g.gamePlatform.includes("PS4")
+      : g.gamePlatform === "PS4",
+  ).length;
+  const ps5Games = games.filter((g) =>
+    Array.isArray(g.gamePlatform)
+      ? g.gamePlatform.includes("PS5")
+      : g.gamePlatform === "PS5",
+  ).length;
+  const lowStockGames = games.filter((g) => g.gameAvailableStocks === 0).length;
   const totalValue = games.reduce(
     (sum, game) => sum + game.gamePrice * game.gameAvailableStocks,
     0,
@@ -80,7 +96,8 @@ export default function DashboardStats({
       value: totalGames,
       icon: HiCube,
       color: "from-funBlue to-blue-500",
-      subtext: `Switch: ${switchGames} | Switch 2: ${switch2Games}`,
+      subtext: `Switch: ${switchGames} | Switch 2: ${switch2Games} | PS4: ${ps4Games} | PS5: ${ps5Games}`,
+      onClick: onTotalGamesClick,
     },
     {
       label: "Inventory Value",
@@ -88,13 +105,15 @@ export default function DashboardStats({
       icon: HiCash,
       color: "from-green-500 to-emerald-500",
       subtext: `Across ${games.reduce((sum, g) => sum + g.gameAvailableStocks, 0)} units`,
+      onClick: undefined,
     },
     {
       label: "Low Stock Alert",
       value: lowStockGames,
       icon: HiExclamation,
       color: "from-lameRed to-red-600",
-      subtext: "Games with < 5 units",
+      subtext: "Games with 0 units",
+      onClick: onLowStockClick,
     },
     {
       label: "Rental Available",
@@ -102,6 +121,7 @@ export default function DashboardStats({
       icon: HiDeviceTablet,
       color: "from-purple-500 to-pink-500",
       subtext: `${((rentalGames / totalGames) * 100).toFixed(0)}% of catalog`,
+      onClick: onRentalClick,
     },
   ];
 
@@ -112,7 +132,12 @@ export default function DashboardStats({
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300"
+            onClick={stat.onClick}
+            className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-200 transition-all duration-300 ${
+              stat.onClick
+                ? "cursor-pointer hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                : "hover:shadow-lg"
+            }`}
           >
             <div className="flex items-center justify-between mb-4">
               <div

@@ -339,7 +339,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                 const savings = calculateSavings(
                   game.gamePrice,
                   game.gameBarcode,
-                  game
+                  game,
                 );
 
                 return (
@@ -522,7 +522,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   ></button>
-                )
+                ),
               )}
             </div>
           )}
@@ -654,7 +654,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
         {/* Comparison Modal */}
         <ComparisonModal
           games={filteredGames.filter((game) =>
-            compareItems.includes(game.gameBarcode)
+            compareItems.includes(game.gameBarcode),
           )}
           isOpen={isComparisonModalOpen}
           onClose={() => setIsComparisonModalOpen(false)}

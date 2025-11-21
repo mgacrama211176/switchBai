@@ -32,6 +32,9 @@ type TabType =
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabType>("games");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeFilter, setActiveFilter] = useState<
+    "inStock" | "outOfStock" | "rental" | null
+  >(null);
 
   function handleGameAdded() {
     setRefreshTrigger((prev) => prev + 1);
@@ -66,6 +69,28 @@ export default function AdminPage() {
     setRefreshTrigger((prev) => prev + 1);
   }
 
+  function handleTotalGamesClick() {
+    setActiveFilter("inStock");
+    setActiveTab("games");
+  }
+
+  function handleLowStockClick() {
+    setActiveFilter("outOfStock");
+    setActiveTab("games");
+  }
+
+  function handleRentalClick() {
+    setActiveFilter("rental");
+    setActiveTab("games");
+  }
+
+  function handleTabChange(tab: TabType) {
+    setActiveTab(tab);
+    if (tab !== "games") {
+      setActiveFilter(null);
+    }
+  }
+
   return (
     <ProtectedRoute>
       <div className="space-y-8">
@@ -78,14 +103,19 @@ export default function AdminPage() {
         </div>
 
         {/* Stats Section */}
-        <DashboardStats refreshTrigger={refreshTrigger} />
+        <DashboardStats
+          refreshTrigger={refreshTrigger}
+          onTotalGamesClick={handleTotalGamesClick}
+          onLowStockClick={handleLowStockClick}
+          onRentalClick={handleRentalClick}
+        />
 
         {/* Tabs Navigation */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden text-black">
           <div className="border-b border-gray-200">
             <div className="flex">
               <button
-                onClick={() => setActiveTab("games")}
+                onClick={() => handleTabChange("games")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "games"
                     ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
@@ -96,7 +126,7 @@ export default function AdminPage() {
                 <span>Games</span>
               </button>
               <button
-                onClick={() => setActiveTab("rentals")}
+                onClick={() => handleTabChange("rentals")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "rentals"
                     ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
@@ -107,7 +137,7 @@ export default function AdminPage() {
                 <span>Rentals</span>
               </button>
               <button
-                onClick={() => setActiveTab("orders")}
+                onClick={() => handleTabChange("orders")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "orders"
                     ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
@@ -118,7 +148,7 @@ export default function AdminPage() {
                 <span>Orders</span>
               </button>
               <button
-                onClick={() => setActiveTab("trades")}
+                onClick={() => handleTabChange("trades")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "trades"
                     ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
@@ -129,7 +159,7 @@ export default function AdminPage() {
                 <span>Trades</span>
               </button>
               <button
-                onClick={() => setActiveTab("buying")}
+                onClick={() => handleTabChange("buying")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "buying"
                     ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
@@ -140,7 +170,7 @@ export default function AdminPage() {
                 <span>Buying</span>
               </button>
               <button
-                onClick={() => setActiveTab("financials")}
+                onClick={() => handleTabChange("financials")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "financials"
                     ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
@@ -151,7 +181,7 @@ export default function AdminPage() {
                 <span>Financials</span>
               </button>
               <button
-                onClick={() => setActiveTab("add-game")}
+                onClick={() => handleTabChange("add-game")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "add-game"
                     ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
@@ -171,6 +201,8 @@ export default function AdminPage() {
                 refreshTrigger={refreshTrigger}
                 onGameUpdated={handleGameUpdated}
                 onGameDeleted={handleGameDeleted}
+                activeFilter={activeFilter}
+                onFilterClear={() => setActiveFilter(null)}
               />
             )}
             {activeTab === "rentals" && (

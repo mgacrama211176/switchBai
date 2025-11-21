@@ -19,12 +19,16 @@ interface GamesTableProps {
   refreshTrigger: number;
   onGameUpdated: () => void;
   onGameDeleted: () => void;
+  activeFilter?: "inStock" | "outOfStock" | "rental" | null;
+  onFilterClear?: () => void;
 }
 
 export default function GamesTable({
   refreshTrigger,
   onGameUpdated,
   onGameDeleted,
+  activeFilter,
+  onFilterClear,
 }: GamesTableProps) {
   const [games, setGames] = useState<Game[]>([]);
   const [filteredGames, setFilteredGames] = useState<Game[]>([]);
@@ -47,7 +51,7 @@ export default function GamesTable({
     async function fetchGames() {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/games");
+        const response = await fetch("/api/games?limit=1000");
         const data = await response.json();
         setGames(data.games || []);
         setFilteredGames(data.games || []);
@@ -65,13 +69,22 @@ export default function GamesTable({
   useEffect(() => {
     let filtered = [...games];
 
+    // Active filter from dashboard cards
+    if (activeFilter === "inStock") {
+      filtered = filtered.filter((game) => game.gameAvailableStocks > 0);
+    } else if (activeFilter === "outOfStock") {
+      filtered = filtered.filter((game) => game.gameAvailableStocks === 0);
+    } else if (activeFilter === "rental") {
+      filtered = filtered.filter((game) => game.rentalAvailable === true);
+    }
+
     // Search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.includes(searchLower),
+          game.gameBarcode.includes(searchLower)
       );
     }
 
@@ -88,7 +101,7 @@ export default function GamesTable({
     // Category filter
     if (categoryFilter) {
       filtered = filtered.filter(
-        (game) => game.gameCategory === categoryFilter,
+        (game) => game.gameCategory === categoryFilter
       );
     }
 
@@ -105,7 +118,14 @@ export default function GamesTable({
 
     setFilteredGames(filtered);
     setCurrentPage(1);
-  }, [searchTerm, platformFilter, categoryFilter, stockSort, games]);
+  }, [
+    searchTerm,
+    platformFilter,
+    categoryFilter,
+    stockSort,
+    games,
+    activeFilter,
+  ]);
 
   const totalPages = Math.ceil(filteredGames.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -173,7 +193,10 @@ export default function GamesTable({
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              onFilterClear?.();
+            }}
             placeholder="Search by title or barcode..."
             className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300"
           />
@@ -182,7 +205,10 @@ export default function GamesTable({
         {/* Platform Filter */}
         <select
           value={platformFilter}
-          onChange={(e) => setPlatformFilter(e.target.value)}
+          onChange={(e) => {
+            setPlatformFilter(e.target.value);
+            onFilterClear?.();
+          }}
           className="px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300"
         >
           <option value="">All Platforms</option>
@@ -193,7 +219,10 @@ export default function GamesTable({
         {/* Category Filter */}
         <select
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
+          onChange={(e) => {
+            setCategoryFilter(e.target.value);
+            onFilterClear?.();
+          }}
           className="px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300"
         >
           <option value="">All Categories</option>
@@ -207,11 +236,12 @@ export default function GamesTable({
         {/* Stock Sort */}
         <select
           value={stockSort || ""}
-          onChange={(e) =>
+          onChange={(e) => {
             setStockSort(
-              e.target.value === "" ? null : (e.target.value as "asc" | "desc"),
-            )
-          }
+              e.target.value === "" ? null : (e.target.value as "asc" | "desc")
+            );
+            onFilterClear?.();
+          }}
           className="px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300"
         >
           <option value="">No Sort</option>
@@ -226,13 +256,18 @@ export default function GamesTable({
           Showing {startIndex + 1}-{Math.min(endIndex, filteredGames.length)} of{" "}
           {filteredGames.length} games
         </p>
-        {(searchTerm || platformFilter || categoryFilter || stockSort) && (
+        {(searchTerm ||
+          platformFilter ||
+          categoryFilter ||
+          stockSort ||
+          activeFilter) && (
           <button
             onClick={() => {
               setSearchTerm("");
               setPlatformFilter("");
               setCategoryFilter("");
               setStockSort(null);
+              onFilterClear?.();
             }}
             className="text-sm text-funBlue hover:text-funBlue/80 font-medium"
           >

@@ -130,9 +130,7 @@ export async function GET(request: NextRequest) {
 
       // Filter orders by platform
       filteredOrders = orders.filter((order: any) => {
-        const gameBarcodes = (order.games || []).map(
-          (g: any) => g.gameBarcode,
-        );
+        const gameBarcodes = (order.games || []).map((g: any) => g.gameBarcode);
         return anyGameMatchesPlatform(gameBarcodes, gamesMap);
       });
 
@@ -589,7 +587,10 @@ export async function GET(request: NextRequest) {
 
     const currentInventory = games
       .filter((game: any) => matchesPlatformFilter(game.gamePlatform))
-      .reduce((sum: number, game: any) => sum + (game.gameAvailableStocks || 0), 0);
+      .reduce(
+        (sum: number, game: any) => sum + (game.gameAvailableStocks || 0),
+        0,
+      );
 
     const inventoryTurnover =
       currentInventory > 0 ? totalGamesSoldAllTime / currentInventory : 0;

@@ -69,12 +69,12 @@ export default function GameForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(
-    initialData?.gameImageURL || ""
+    initialData?.gameImageURL || "",
   );
   const [uploadingImage, setUploadingImage] = useState(false);
   // Set initial optimized file size for existing images
   const [optimizedFileSize, setOptimizedFileSize] = useState<string>(
-    initialData?.gameImageURL ? "Existing image" : ""
+    initialData?.gameImageURL ? "Existing image" : "",
   );
   // Store selected file for upload on form submission
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -94,7 +94,7 @@ export default function GameForm({
   }, [imagePreviewUrl]);
 
   function handleInputChange(
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) {
     const { name, value, type } = e.target;
 
@@ -197,7 +197,7 @@ export default function GameForm({
       // Get optimized file size
       const optimizedSize = formatFileSize(optimizedFile.size);
       const reduction = Math.round(
-        ((file.size - optimizedFile.size) / file.size) * 100
+        ((file.size - optimizedFile.size) / file.size) * 100,
       );
 
       // Set optimized file size for display
@@ -341,7 +341,7 @@ export default function GameForm({
                         setImagePreview(initialData?.gameImageURL || "");
                         setImagePreviewUrl("");
                         setOptimizedFileSize(
-                          initialData?.gameImageURL ? "Existing image" : ""
+                          initialData?.gameImageURL ? "Existing image" : "",
                         );
                         setFormData((prev) => ({
                           ...prev,
@@ -430,7 +430,7 @@ export default function GameForm({
                 <input
                   type="checkbox"
                   checked={(formData.gamePlatform as string[]).includes(
-                    platform
+                    platform,
                   )}
                   onChange={() => handlePlatformChange(platform)}
                   className="w-5 h-5 text-funBlue rounded focus:ring-2 focus:ring-funBlue/20 "
@@ -720,7 +720,7 @@ export default function GameForm({
                     {Math.round(
                       ((formData.gamePrice - formData.salePrice) /
                         formData.gamePrice) *
-                        100
+                        100,
                     )}
                     % off)
                   </p>
