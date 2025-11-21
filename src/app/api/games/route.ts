@@ -14,16 +14,18 @@ export async function GET(request: NextRequest) {
     // Build query object
     const query: any = {};
 
-    // Filter by platform
+    // Filter by platform (handle multiple comma-separated values)
     const platform = searchParams.get("platform");
     if (platform) {
-      query.gamePlatform = { $in: [platform] };
+      const platforms = platform.split(",").map((p) => p.trim()).filter(Boolean);
+      query.gamePlatform = { $in: platforms };
     }
 
-    // Filter by category
+    // Filter by category (handle multiple comma-separated values)
     const category = searchParams.get("category");
     if (category) {
-      query.gameCategory = category;
+      const categories = category.split(",").map((c) => c.trim()).filter(Boolean);
+      query.gameCategory = { $in: categories };
     }
 
     // Search by title or barcode
@@ -47,20 +49,53 @@ export async function GET(request: NextRequest) {
       query.tradable = true;
     }
 
+    // Check if we need to apply Nintendo Switch filter (for client-facing pages)
+    const nintendoOnly = searchParams.get("nintendoOnly") === "true";
+
     // Pagination
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
     const skip = (page - 1) * limit;
 
-    // Execute query with pagination
-    const games = await GameModel.find(query)
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    let games: any[];
+    let total: number;
 
-    // Get total count for pagination
-    const total = await GameModel.countDocuments(query);
+    if (nintendoOnly) {
+      // For Nintendo-only filter, we need to fetch all, filter, then paginate
+      // This is because MongoDB can't easily filter "has Nintendo AND not PS4/PS5"
+      let allGames = await GameModel.find(query)
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      // Apply Nintendo Switch filter (exclude PS4/PS5 games)
+      allGames = allGames.filter((game) => {
+        const platforms = Array.isArray(game.gamePlatform)
+          ? game.gamePlatform
+          : [game.gamePlatform];
+        // Must have Nintendo Switch AND not have PS4/PS5
+        const hasNintendo =
+          platforms.includes("Nintendo Switch") ||
+          platforms.includes("Nintendo Switch 2");
+        const hasPlayStation = platforms.includes("PS4") || platforms.includes("PS5");
+        return hasNintendo && !hasPlayStation;
+      });
+
+      // Calculate total after all filters
+      total = allGames.length;
+
+      // Apply pagination to filtered results
+      games = allGames.slice(skip, skip + limit);
+    } else {
+      // For normal queries, use efficient MongoDB pagination
+      games = await GameModel.find(query)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      // Get total count for pagination
+      total = await GameModel.countDocuments(query);
+    }
 
     // Convert MongoDB documents to Game interface
     const formattedGames: Game[] = games.map((game) => ({

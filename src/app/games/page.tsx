@@ -15,7 +15,6 @@ import {
   calculateSavings,
   getPlatformInfo,
   getStockUrgency,
-  filterNintendoSwitchGames,
 } from "@/app/components/ui/home/game-utils";
 
 const CATEGORIES = [
@@ -53,10 +52,10 @@ const GamesPageContent = () => {
 
   // Pagination state (from URL or defaults)
   const [currentPage, setCurrentPage] = useState(
-    () => Number(searchParams.get("page")) || 1,
+    () => Number(searchParams.get("page")) || 1
   );
   const [itemsPerPage, setItemsPerPage] = useState(
-    () => Number(searchParams.get("limit")) || 24,
+    () => Number(searchParams.get("limit")) || 24
   );
   const [totalPages, setTotalPages] = useState(1);
   const [totalGames, setTotalGames] = useState(0);
@@ -145,15 +144,14 @@ const GamesPageContent = () => {
         platform: filters.platforms.join(","),
         category: filters.categories.join(","),
         search: filters.search, // API searches only titles
+        nintendoOnly: true, // Filter out PS4/PS5 games on server-side
       });
 
       if (response.success && response.data) {
-        // Filter out PS4/PS5 games - only show Nintendo Switch games
-        const filteredGames = filterNintendoSwitchGames(response.data.games);
-        setGames(filteredGames);
-        // Update pagination to reflect filtered count
-        setTotalPages(Math.ceil(filteredGames.length / itemsPerPage));
-        setTotalGames(filteredGames.length);
+        setGames(response.data.games);
+        // Use API pagination data
+        setTotalPages(response.data.pagination.pages);
+        setTotalGames(response.data.pagination.total);
       } else {
         setError(response.error || "Failed to load games");
       }
@@ -173,7 +171,7 @@ const GamesPageContent = () => {
     if (filters.priceRange) {
       const [min, max] = filters.priceRange.split("-").map(Number);
       filtered = filtered.filter(
-        (g) => g.gamePrice >= min && g.gamePrice <= max,
+        (g) => g.gamePrice >= min && g.gamePrice <= max
       );
     }
 
@@ -207,7 +205,7 @@ const GamesPageContent = () => {
       default:
         filtered.sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         break;
     }
@@ -247,7 +245,7 @@ const GamesPageContent = () => {
   };
 
   const handleAvailabilityChange = (
-    availability: "all" | "inStock" | "outOfStock" | "onSale",
+    availability: "all" | "inStock" | "outOfStock" | "onSale"
   ) => {
     setFilters((prev) => ({ ...prev, availability }));
     setCurrentPage(1);
@@ -315,7 +313,7 @@ const GamesPageContent = () => {
     const savings = calculateSavings(displayPrice, game.gameBarcode, game);
 
     return (
-      <article className="bg-white rounded-2xl overflow-hidden shadow-lg border hover:shadow-xl transition-all duration-300 group">
+      <article className="bg-white rounded-2xl overflow-hidden shadow-lg border hover:shadow-xl transition-all duration-300 group ">
         {/* Game Image - Clickable to detail page */}
         <Link href={`/games/${game.gameBarcode}`} className="block">
           <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
@@ -809,7 +807,7 @@ const GamesPageContent = () => {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue"
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue text-black"
                   >
                     <option value={12}>12 per page</option>
                     <option value={24}>24 per page</option>
@@ -961,7 +959,7 @@ const GamesPageContent = () => {
                         <button
                           onClick={() =>
                             setCurrentPage(
-                              Math.min(totalPages, currentPage + 1),
+                              Math.min(totalPages, currentPage + 1)
                             )
                           }
                           disabled={currentPage === totalPages}

@@ -123,6 +123,7 @@ export async function fetchGames(params: {
   search?: string;
   tradable?: boolean;
   inStock?: boolean;
+  nintendoOnly?: boolean;
 }): Promise<ApiResponse<GamesApiResponse>> {
   const searchParams = new URLSearchParams();
 
@@ -133,6 +134,7 @@ export async function fetchGames(params: {
   if (params.search) searchParams.set("search", params.search);
   if (params.tradable) searchParams.set("tradable", "true");
   if (params.inStock) searchParams.set("inStock", "true");
+  if (params.nintendoOnly) searchParams.set("nintendoOnly", "true");
 
   const url = `/api/games?${searchParams.toString()}`;
   return apiRequest<GamesApiResponse>(url);

@@ -84,7 +84,7 @@ export default function GamesTable({
       filtered = filtered.filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.includes(searchLower)
+          game.gameBarcode.includes(searchLower),
       );
     }
 
@@ -101,7 +101,7 @@ export default function GamesTable({
     // Category filter
     if (categoryFilter) {
       filtered = filtered.filter(
-        (game) => game.gameCategory === categoryFilter
+        (game) => game.gameCategory === categoryFilter,
       );
     }
 
@@ -238,7 +238,7 @@ export default function GamesTable({
           value={stockSort || ""}
           onChange={(e) => {
             setStockSort(
-              e.target.value === "" ? null : (e.target.value as "asc" | "desc")
+              e.target.value === "" ? null : (e.target.value as "asc" | "desc"),
             );
             onFilterClear?.();
           }}
