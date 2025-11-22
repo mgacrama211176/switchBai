@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import RentalModel from "@/models/Rental";
 import { generateReferenceNumber } from "@/lib/rental-form-utils";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,6 +84,32 @@ export async function POST(request: NextRequest) {
     });
 
     await rental.save();
+
+    // Send Telegram notification (non-blocking)
+    sendTelegramNotification({
+      orderType: "rental",
+      orderNumber: rental.referenceNumber,
+      customerName: rental.customerName,
+      customerPhone: rental.customerPhone,
+      items: [
+        {
+          gameTitle: rental.gameTitle,
+          gamePrice: rental.gamePrice,
+          quantity: 1,
+        },
+      ],
+      subtotal: rental.rentalFee + rental.deposit,
+      totalAmount: rental.totalDue,
+      paymentMethod: "Rental",
+      status: rental.status,
+      rentalDates: {
+        startDate: rental.startDate,
+        endDate: rental.endDate,
+        rentalDays: rental.rentalDays,
+      },
+    }).catch((error) => {
+      console.error("Failed to send Telegram notification:", error);
+    });
 
     return NextResponse.json({
       success: true,

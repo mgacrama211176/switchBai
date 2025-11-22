@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import PurchaseModel from "@/models/Purchase";
 import GameModel from "@/models/Game";
 import { generateOrderNumber } from "@/lib/purchase-form-utils";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function POST(request: NextRequest) {
   try {
@@ -207,6 +208,26 @@ export async function POST(request: NextRequest) {
     });
 
     await purchase.save();
+
+    // Send Telegram notification (non-blocking)
+    sendTelegramNotification({
+      orderType: "purchase",
+      orderNumber: purchase.orderNumber,
+      customerName: purchase.customerName,
+      customerPhone: purchase.customerPhone,
+      items: purchase.games.map((game: any) => ({
+        gameTitle: game.gameTitle,
+        gamePrice: game.gamePrice,
+        quantity: game.quantity,
+      })),
+      subtotal: purchase.subtotal,
+      deliveryFee: purchase.deliveryFee,
+      totalAmount: purchase.totalAmount,
+      paymentMethod: purchase.paymentMethod,
+      status: purchase.status,
+    }).catch((error) => {
+      console.error("Failed to send Telegram notification:", error);
+    });
 
     return NextResponse.json({
       success: true,

@@ -105,10 +105,10 @@ export default function NegotiationChat({
 
           // Clean content if it was a leak
           const cleanContent = content.replace(toolCallRegex, "").trim();
-          
+
           // If there's clean content, show it first
           if (cleanContent) {
-             setMessages((prev) => [
+            setMessages((prev) => [
               ...prev,
               { role: "assistant", content: cleanContent },
             ]);
@@ -126,12 +126,12 @@ export default function NegotiationChat({
           setTimeout(() => {
             onClose();
           }, 3000);
-          
+
           setIsLoading(false);
           return;
         }
-      } 
-      
+      }
+
       if (data.message) {
         setMessages((prev) => [
           ...prev,

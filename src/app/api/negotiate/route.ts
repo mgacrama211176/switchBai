@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     // Save user message
     const userMessage = messages[messages.length - 1];
-    
+
     let negotiation;
     if (negotiationId) {
       negotiation = await Negotiation.findOne({ negotiationId });
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
           messages: [],
         });
       }
-      
+
       // Add user message
       negotiation.messages.push({
         role: userMessage.role,
@@ -73,6 +73,29 @@ export async function POST(request: Request) {
       })
       .join("\n    ");
 
+    // Fetch analytics for pattern-based learning
+    let analyticsInsights = "";
+    try {
+      const analyticsResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/analytics`,
+      );
+      if (analyticsResponse.ok) {
+        const analyticsData = await analyticsResponse.json();
+        if (analyticsData.success && analyticsData.analytics) {
+          const { analytics } = analyticsData;
+          analyticsInsights = `
+    Success Rate: ${analytics.successRate}%
+    Average Discount Given: ₱${analytics.averageDiscount}
+    First Offer Acceptance: ${analytics.firstOfferAcceptanceRate}%
+    
+    Key Insights:
+    ${analytics.insights.map((i: any) => `- ${i.message}`).join("\n    ")}`;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+    }
+
     const systemPrompt = `You are a friendly but shrewd shopkeeper at SwitchBai, a Nintendo Switch game store in Cebu.
     You are negotiating with a customer who wants a discount on their purchase.
     
@@ -87,6 +110,8 @@ export async function POST(request: Request) {
 
     Past Successful Deals (Use these as a reference for what is acceptable):
     ${pastDeals || "None yet."}
+
+    Learning from Past Patterns:${analyticsInsights || "\n    Not enough data yet."}
     
     Your Goal: Protect the profit margin. Give as little discount as possible while keeping the customer happy.
     
@@ -149,7 +174,7 @@ export async function POST(request: Request) {
 
     const responseMessage = completion.choices[0].message;
     let toolCalls = responseMessage.tool_calls;
-    
+
     // Save assistant message
     if (negotiation) {
       negotiation.messages.push({
@@ -157,16 +182,16 @@ export async function POST(request: Request) {
         content: responseMessage.content || (toolCalls ? "Tool Call" : ""),
         timestamp: new Date(),
       });
-      
+
       if (toolCalls) {
-         const toolCall = toolCalls[0];
-         if (toolCall.function.name === "apply_discount") {
-            const args = JSON.parse(toolCall.function.arguments);
-            negotiation.finalDiscount = args.amount;
-            negotiation.status = "success";
-         }
+        const toolCall = toolCalls[0];
+        if (toolCall.function.name === "apply_discount") {
+          const args = JSON.parse(toolCall.function.arguments);
+          negotiation.finalDiscount = args.amount;
+          negotiation.status = "success";
+        }
       }
-      
+
       await negotiation.save();
     }
 

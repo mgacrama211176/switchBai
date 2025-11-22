@@ -211,7 +211,8 @@ function CartContent() {
           totalAmount: purchaseSummary.totalAmount,
           orderSource: "website",
           discountType: negotiatedDiscount > 0 ? "fixed" : undefined,
-          discountValue: negotiatedDiscount > 0 ? negotiatedDiscount : undefined,
+          discountValue:
+            negotiatedDiscount > 0 ? negotiatedDiscount : undefined,
         };
 
         const response = await fetch("/api/purchases", {
