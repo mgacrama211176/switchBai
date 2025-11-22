@@ -40,7 +40,7 @@ export default function NegotiationChat({
     if (isOpen) {
       // Disable body scroll when modal is open
       document.body.style.overflow = "hidden";
-      
+
       if (messages.length === 0) {
         setMessages([
           {
@@ -56,7 +56,7 @@ export default function NegotiationChat({
       // Re-enable body scroll when modal is closed
       document.body.style.overflow = "unset";
     }
-    
+
     // Cleanup on unmount
     return () => {
       document.body.style.overflow = "unset";
@@ -178,7 +178,7 @@ export default function NegotiationChat({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center md:p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white w-full h-full md:h-[600px] md:max-w-md md:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-funBlue to-blue-600 p-4 md:p-4 flex items-center justify-between text-white">
@@ -186,7 +186,9 @@ export default function NegotiationChat({
             <HiSparkles className="w-6 h-6 md:w-6 md:h-6 text-yellow-300" />
             <div>
               <h3 className="font-bold text-lg md:text-lg">Negotiate Price</h3>
-              <p className="text-xs md:text-xs opacity-90">Talk to our AI Shopkeeper</p>
+              <p className="text-xs md:text-xs opacity-90">
+                Talk to our AI Shopkeeper
+              </p>
             </div>
           </div>
           <button
@@ -213,24 +215,35 @@ export default function NegotiationChat({
                     : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-none"
                 }`}
               >
-                <p className="text-base md:text-sm leading-relaxed">{msg.content}</p>
+                <p className="text-base md:text-sm leading-relaxed">
+                  {msg.content}
+                </p>
               </div>
             </div>
           ))}
-          
+
           {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start animate-fadeIn">
               <div className="bg-white text-gray-800 shadow-sm border border-gray-100 rounded-2xl rounded-bl-none p-3 md:p-3">
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  ></div>
                 </div>
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
 

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
     // Loyalty bonus will be determined by AI asking for customer name
     let loyaltyBonus = 0;
-    
+
     // Check if loyalty was already verified in this negotiation
     if (negotiation && negotiation.customerName) {
       try {
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
           customerName: { $regex: new RegExp(negotiation.customerName, "i") },
           status: { $in: ["pending", "confirmed", "completed"] },
         }).limit(1);
-        
+
         if (previousPurchase) {
           loyaltyBonus = 50;
         }
@@ -85,7 +85,10 @@ export async function POST(request: Request) {
     // For 1 game: base * 0.5 (stricter) * time multiplier
     // For 2+ games: base * 1.0 * time multiplier + bundle bonus (if 3+) + loyalty bonus (if verified)
     const baseDiscount = eligibleGamesCount * 100;
-    const maxDiscount = Math.floor(baseDiscount * timeMultiplier * singleItemPenalty) + bundleBonus + loyaltyBonus;
+    const maxDiscount =
+      Math.floor(baseDiscount * timeMultiplier * singleItemPenalty) +
+      bundleBonus +
+      loyaltyBonus;
 
     // Response variety
     const greetings = [
@@ -94,7 +97,7 @@ export async function POST(request: Request) {
       "Uy boss! Naa kay gusto?",
       "Maayong adlaw boss! Unsa akong matabang?",
     ];
-    
+
     const rejections = [
       "Dili kaya ang {price} boss, pero makahatag kog {offer} discount.",
       "Aguy boss, dili na jud kaya ang {price}. Pero {offer} discount, pwede pa.",
@@ -178,7 +181,9 @@ export async function POST(request: Request) {
             messages: params.messages,
             temperature: params.temperature ?? 0.7,
             max_tokens: params.max_tokens ?? 1024,
-            ...(params.response_format ? { response_format: params.response_format } : {}),
+            ...(params.response_format
+              ? { response_format: params.response_format }
+              : {}),
           });
           console.log(`✅ Model succeeded: ${model}`);
           return { completion, model };
@@ -312,9 +317,13 @@ Return ONLY valid JSON:
         // All models failed – return a polite retry message
         return NextResponse.json(
           {
-            message: { role: "assistant", content: "Sorry boss, I’m a bit busy right now. Please try again in a few minutes." },
+            message: {
+              role: "assistant",
+              content:
+                "Sorry boss, I’m a bit busy right now. Please try again in a few minutes.",
+            },
           },
-          { status: 429 }
+          { status: 429 },
         );
       }
 
@@ -338,11 +347,12 @@ Return ONLY valid JSON:
 
     // CONVERSATION AGENT: Generate natural response based on strategy decision
     let conversationInstruction = "";
-    
+
     if (strategyDecision.action === "apply_discount") {
       // Customer accepted - apply the discount
-      const lastOffer = strategyDecision.discountAmount || Math.floor(maxDiscount * 0.5);
-      
+      const lastOffer =
+        strategyDecision.discountAmount || Math.floor(maxDiscount * 0.5);
+
       if (negotiation) {
         negotiation.finalDiscount = lastOffer;
         negotiation.status = "success";
@@ -353,35 +363,35 @@ Return ONLY valid JSON:
         });
         await negotiation.save();
       }
-      
+
       return NextResponse.json({
         message: {
           role: "assistant",
           content: `Sige boss, deal! ₱${lastOffer} discount para nimo!`,
         },
-        toolCalls: [{
-          type: "function",
-          function: {
-            name: "apply_discount",
-            arguments: JSON.stringify({ amount: lastOffer }),
+        toolCalls: [
+          {
+            type: "function",
+            function: {
+              name: "apply_discount",
+              arguments: JSON.stringify({ amount: lastOffer }),
+            },
           },
-        }],
+        ],
       });
-      
     } else if (strategyDecision.action === "offer_discount") {
       conversationInstruction = `Offer exactly ₱${strategyDecision.discountAmount} discount. Be friendly but firm. Explain this is a good deal.`;
-      
     } else if (strategyDecision.action === "upsell") {
       conversationInstruction = `Customer rejected your offers. Suggest adding more games (3+) to get extra ₱50 bundle discount. Ask: "Boss, kung magdugang ka ug games (3 or more), makahatag kog extra ₱50 discount! Naa kay gusto idugang?"`;
-      
     } else if (strategyDecision.action === "check_loyalty") {
       conversationInstruction = `Ask for customer's name to check if they have previous purchases: "Unsa imong ngalan boss? Macheck nako sa sistema kung naa kay previous purchase para mahatagan tika ug extra discount."`;
-      
     } else {
       conversationInstruction = `Hold firm at your last offer. Explain you cannot go lower without losing money.`;
     }
 
-    const finalSystemPrompt = systemPrompt + `\n\nSTRATEGY INSTRUCTION: ${conversationInstruction}\n\nIMPORTANT: Follow the strategy instruction above. Do NOT decide discount amounts yourself.`;
+    const finalSystemPrompt =
+      systemPrompt +
+      `\n\nSTRATEGY INSTRUCTION: ${conversationInstruction}\n\nIMPORTANT: Follow the strategy instruction above. Do NOT decide discount amounts yourself.`;
 
     const finalResult = await getCompletion({
       messages: [{ role: "system", content: finalSystemPrompt }, ...messages],
@@ -412,13 +422,15 @@ Return ONLY valid JSON:
                 type: "function",
                 function: {
                   name: "check_loyalty",
-                  description: "Check if a customer has purchased from us before by their full name",
+                  description:
+                    "Check if a customer has purchased from us before by their full name",
                   parameters: {
                     type: "object",
                     properties: {
                       customerName: {
                         type: "string",
-                        description: "The customer's full name to check in our purchase records",
+                        description:
+                          "The customer's full name to check in our purchase records",
                       },
                     },
                     required: ["customerName"],
@@ -434,9 +446,13 @@ Return ONLY valid JSON:
     if (!finalResult) {
       return NextResponse.json(
         {
-          message: { role: "assistant", content: "Sorry boss, I’m a bit overloaded. Please try again shortly." },
+          message: {
+            role: "assistant",
+            content:
+              "Sorry boss, I’m a bit overloaded. Please try again shortly.",
+          },
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -462,7 +478,7 @@ Return ONLY valid JSON:
         } else if (toolCall.function.name === "check_loyalty") {
           const args = JSON.parse(toolCall.function.arguments);
           negotiation.customerName = args.customerName;
-          
+
           // Check if customer exists in Purchase database
           try {
             const PurchaseModel = (await import("@/models/Purchase")).default;
@@ -470,12 +486,12 @@ Return ONLY valid JSON:
               customerName: { $regex: new RegExp(args.customerName, "i") },
               status: { $in: ["pending", "confirmed", "completed"] },
             }).limit(1);
-            
+
             // Add loyalty status to messages for AI context
             const loyaltyMessage = previousPurchase
               ? `SYSTEM: Customer "${args.customerName}" is a RETURNING CUSTOMER! They have purchased from us before. You can now offer up to ₱50 extra loyalty discount. Thank them for coming back and offer the extra discount!`
               : `SYSTEM: Customer "${args.customerName}" is a NEW CUSTOMER. No previous purchases found. Apologize and explain you checked but they don't have previous purchases in the system.`;
-            
+
             // Add system message to conversation
             if (negotiation) {
               negotiation.messages.push({
@@ -485,7 +501,7 @@ Return ONLY valid JSON:
               });
               await negotiation.save();
             }
-            
+
             // Continue conversation with loyalty context
             const followUpCompletion = await groq.chat.completions.create({
               messages: [
@@ -497,9 +513,9 @@ Return ONLY valid JSON:
               temperature: 0.7,
               max_tokens: 1024,
             });
-            
+
             const followUpMessage = followUpCompletion.choices[0].message;
-            
+
             if (negotiation) {
               negotiation.messages.push({
                 role: "assistant",
@@ -508,7 +524,7 @@ Return ONLY valid JSON:
               });
               await negotiation.save();
             }
-            
+
             return NextResponse.json({
               message: followUpMessage,
             });
