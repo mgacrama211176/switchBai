@@ -70,10 +70,7 @@ function TrackOrderContent() {
 
     try {
       // Convert to uppercase and remove spaces
-      const cleanOrderNumber = orderNum
-        .toUpperCase()
-        .trim()
-        .replace(/\s/g, "");
+      const cleanOrderNumber = orderNum.toUpperCase().trim().replace(/\s/g, "");
 
       const response = await fetch(
         `/api/purchases/order/${encodeURIComponent(cleanOrderNumber)}`,
@@ -114,13 +111,13 @@ function TrackOrderContent() {
   // Auto-fetch order from query parameter on mount
   useEffect(() => {
     const orderNumberParam = searchParams.get("ordernumber");
-    
+
     if (orderNumberParam && !hasAutoSearched) {
       const cleanOrderNumber = orderNumberParam
         .toUpperCase()
         .trim()
         .replace(/\s/g, "");
-      
+
       setOrderNumber(cleanOrderNumber);
       setHasAutoSearched(true);
       fetchOrder(cleanOrderNumber);

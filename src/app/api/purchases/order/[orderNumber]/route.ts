@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import PurchaseModel from "@/models/Purchase";
+import PurchaseModel, { IPurchase } from "@/models/Purchase";
 
 export async function GET(
   request: NextRequest,
@@ -23,7 +23,7 @@ export async function GET(
     // Find purchase by order number
     const purchase = await PurchaseModel.findOne({
       orderNumber: upperOrderNumber,
-    }).lean();
+    }).lean() as IPurchase | null;
 
     if (!purchase) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
