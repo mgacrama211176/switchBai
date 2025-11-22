@@ -291,6 +291,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => {
     setCart({ items: [], type: null });
+    setNegotiatedDiscount(0);
   }, []);
 
   const getCartItemCount = useCallback(() => {

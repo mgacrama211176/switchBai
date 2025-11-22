@@ -210,6 +210,8 @@ function CartContent() {
           subtotal: purchaseSummary.subtotal,
           totalAmount: purchaseSummary.totalAmount,
           orderSource: "website",
+          discountType: negotiatedDiscount > 0 ? "fixed" : undefined,
+          discountValue: negotiatedDiscount > 0 ? negotiatedDiscount : undefined,
         };
 
         const response = await fetch("/api/purchases", {
