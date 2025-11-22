@@ -31,7 +31,7 @@ const NegotiationSchema = new Schema<INegotiation>(
   {
     negotiationId: { type: String, required: true, unique: true },
     messages: [MessageSchema],
-    cartItems: { type: [Schema.Types.Mixed], default: [] },
+    cartItems: [Schema.Types.Mixed],
     totalAmount: { type: Number, required: true },
     finalDiscount: { type: Number, default: 0 },
     status: {
