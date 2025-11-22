@@ -24,7 +24,9 @@ export default function NegotiationChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [negotiationId, setNegotiationId] = useState<string>("");
 
@@ -36,6 +38,9 @@ export default function NegotiationChat({
   // Initial greeting & ID generation
   useEffect(() => {
     if (isOpen) {
+      // Disable body scroll when modal is open
+      document.body.style.overflow = "hidden";
+      
       if (messages.length === 0) {
         setMessages([
           {
@@ -47,7 +52,15 @@ export default function NegotiationChat({
       if (!negotiationId) {
         setNegotiationId(crypto.randomUUID());
       }
+    } else {
+      // Re-enable body scroll when modal is closed
+      document.body.style.overflow = "unset";
     }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen, messages.length, negotiationId]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -58,6 +71,7 @@ export default function NegotiationChat({
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setIsTyping(true);
 
     try {
       const response = await fetch("/api/negotiate", {
@@ -89,6 +103,12 @@ export default function NegotiationChat({
           if (toolCall.function.name === "apply_discount") {
             const args = JSON.parse(toolCall.function.arguments);
             amount = args.amount;
+          } else if (toolCall.function.name === "check_loyalty") {
+            // Loyalty check is handled server-side, just wait for the response
+            // The server will automatically send the AI's follow-up message
+            setIsLoading(false);
+            setIsTyping(false);
+            return;
           }
         } else if (match) {
           // Handle leaked tool call
@@ -139,32 +159,34 @@ export default function NegotiationChat({
         ]);
       }
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.error("Negotiation error:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "Sorry, I'm having a bit of trouble hearing you. Can we try again?",
+          content: "Sorry boss, may problema. Try again?",
         },
       ]);
     } finally {
       setIsLoading(false);
+      setIsTyping(false);
+      // Focus input after response
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[600px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white w-full h-full md:h-[600px] md:max-w-md md:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-funBlue to-blue-600 p-4 flex items-center justify-between text-white">
+        <div className="bg-gradient-to-r from-funBlue to-blue-600 p-4 md:p-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
-            <HiSparkles className="w-6 h-6 text-yellow-300" />
+            <HiSparkles className="w-6 h-6 md:w-6 md:h-6 text-yellow-300" />
             <div>
-              <h3 className="font-bold text-lg">Negotiate Price</h3>
-              <p className="text-xs opacity-90">Talk to our AI Shopkeeper</p>
+              <h3 className="font-bold text-lg md:text-lg">Negotiate Price</h3>
+              <p className="text-xs md:text-xs opacity-90">Talk to our AI Shopkeeper</p>
             </div>
           </div>
           <button
@@ -176,36 +198,39 @@ export default function NegotiationChat({
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-4 md:p-4 space-y-4 bg-gray-50">
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex ${
+              className={`flex animate-fadeIn ${
                 msg.role === "user" ? "justify-end" : "justify-start"
               }`}
             >
               <div
-                className={`max-w-[80%] p-3 rounded-2xl ${
+                className={`max-w-[85%] md:max-w-[80%] p-3 md:p-3 rounded-2xl ${
                   msg.role === "user"
                     ? "bg-funBlue text-white rounded-br-none"
                     : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-none"
                 }`}
               >
-                <p className="text-sm">{msg.content}</p>
+                <p className="text-base md:text-sm leading-relaxed">{msg.content}</p>
               </div>
             </div>
           ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-white p-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150" />
+          
+          {/* Typing Indicator */}
+          {isTyping && (
+            <div className="flex justify-start animate-fadeIn">
+              <div className="bg-white text-gray-800 shadow-sm border border-gray-100 rounded-2xl rounded-bl-none p-3 md:p-3">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
               </div>
             </div>
           )}
+          
           <div ref={messagesEndRef} />
         </div>
 
@@ -213,6 +238,7 @@ export default function NegotiationChat({
         <form onSubmit={handleSendMessage} className="p-4 bg-white border-t">
           <div className="flex gap-2">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}

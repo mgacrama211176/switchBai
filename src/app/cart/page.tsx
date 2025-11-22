@@ -402,8 +402,8 @@ function CartContent() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items & Form */}
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-8">
+            {/* Cart Items & Form - Shows ABOVE on mobile, LEFT on desktop */}
             <div className="lg:col-span-2 space-y-6">
               {/* Cart Items */}
               <div className="bg-white rounded-2xl p-6 shadow-lg">

@@ -12,6 +12,8 @@ export interface INegotiation extends Document {
   cartItems: any[]; // Store snapshot of items being negotiated
   totalAmount: number;
   finalDiscount: number;
+  customerName?: string; // For loyalty verification
+  rejectionCount: number; // Number of times customer expressed displeasure
   status: "ongoing" | "success" | "failed" | "abandoned";
   createdAt: Date;
   updatedAt: Date;
@@ -34,6 +36,8 @@ const NegotiationSchema = new Schema<INegotiation>(
     cartItems: [Schema.Types.Mixed],
     totalAmount: { type: Number, required: true },
     finalDiscount: { type: Number, default: 0 },
+    customerName: { type: String }, // For loyalty verification
+    rejectionCount: { type: Number, default: 0 }, // Track unhappy pushes
     status: {
       type: String,
       enum: ["ongoing", "success", "failed", "abandoned"],
