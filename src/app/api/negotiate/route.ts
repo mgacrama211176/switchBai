@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import connectDB from "@/lib/mongodb";
+import Negotiation from "@/models/Negotiation";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -7,7 +9,8 @@ const groq = new Groq({
 
 export async function POST(request: Request) {
   try {
-    const { messages, cartContext } = await request.json();
+    await connectDB();
+    const { messages, cartContext, negotiationId } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -16,16 +19,59 @@ export async function POST(request: Request) {
       );
     }
 
+    // Save user message
+    const userMessage = messages[messages.length - 1];
+    
+    let negotiation;
+    if (negotiationId) {
+      negotiation = await Negotiation.findOne({ negotiationId });
+      if (!negotiation) {
+        negotiation = new Negotiation({
+          negotiationId,
+          cartItems: cartContext.items,
+          totalAmount: cartContext.totalAmount,
+          messages: [],
+        });
+      }
+      
+      // Add user message
+      negotiation.messages.push({
+        role: userMessage.role,
+        content: userMessage.content,
+        timestamp: new Date(),
+      });
+    }
+
     // Calculate max discount: 100 pesos per game, BUT only for games NOT on sale
     const eligibleItems = cartContext.items.filter(
       (item: any) => !item.isOnSale,
     );
-    const eligibleGamesCount = eligibleItems.reduce(
-      (sum: number, item: any) => sum + item.quantity,
-      0,
-    );
-    const maxDiscount = eligibleGamesCount * 100;
+    const eligibleGamesCount = eligibleItems.length;
+
     const currentTotal = cartContext.totalAmount;
+    const maxDiscount = eligibleGamesCount * 100; // Max 100 per eligible game
+
+    // Generate item details string
+    const itemsList = cartContext.items
+      .map((item: any) => {
+        const priceInfo = item.isOnSale
+          ? `₱${item.salePrice} (ON SALE - Original: ₱${item.gamePrice})`
+          : `₱${item.gamePrice} (Regular Price)`;
+        return `- ${item.gameTitle}: ${priceInfo}`;
+      })
+      .join("\n    ");
+
+    // Fetch past successful negotiations (RAG - Memory)
+    const successfulNegotiations = await Negotiation.find({ status: "success" })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean();
+
+    const pastDeals = successfulNegotiations
+      .map((neg, index) => {
+        return `Deal ${index + 1}: Sold for ₱${neg.totalAmount - neg.finalDiscount} (Discount: ₱${neg.finalDiscount})`;
+      })
+      .join("\n    ");
 
     const systemPrompt = `You are a friendly but shrewd shopkeeper at SwitchBai, a Nintendo Switch game store in Cebu.
     You are negotiating with a customer who wants a discount on their purchase.
@@ -35,6 +81,12 @@ export async function POST(request: Request) {
     - Items Eligible for Discount (Not on Sale): ${eligibleGamesCount}
     - Current Total: ₱${currentTotal}
     - Max Allowed Discount Budget: ₱${maxDiscount} (This is your ABSOLUTE HARD LIMIT)
+    
+    Items in Cart:
+    ${itemsList}
+
+    Past Successful Deals (Use these as a reference for what is acceptable):
+    ${pastDeals || "None yet."}
     
     Your Goal: Protect the profit margin. Give as little discount as possible while keeping the customer happy.
     
@@ -46,29 +98,26 @@ export async function POST(request: Request) {
     
     Rules:
     1. **IMPORTANT**: Games already on sale are NOT eligible for further discounts. 
-       - If the customer asks for a discount on an ON-SALE item, explain: "Naka-sale na na siya boss. From [Original Price] nahimo na lang [Sale Price]. Di na madala ug less." (It's already on sale. From X it became Y. Can't lower it anymore).
+       - Check the "Items in Cart" list. If the customer asks for a discount on an item marked "ON SALE", explain: "Naka-sale na na siya boss. From [Original Price] nahimo na lang [Sale Price]. Di na madala ug less."
     2. **"Nalang" Logic**: If the user says "500 nalang" (make it 500), they mean they want the **Total Price** to be 500. Calculate the discount needed (Current Total - 500).
-    3. **No Misleading "Deals"**: Do NOT say "Deal" or "Sige" unless you are agreeing to the User's EXACT terms.
-    4. **Counter-Offers**: If you cannot meet their price, explicitly say: "Dili kaya ang [User's Price] boss, pero makahatag kog [Your Offer] discount." (Can't do [User's Price], but I can give [Your Offer] discount).
-    5. **Zero Discount**: If you can't give a discount (e.g., item is on sale), NEVER mention the number "0" or say "0 discount". Just say "Wala na koy mahatag nga discount" (I can't give any discount) or "Fixed price na jud na boss".
-    6. Treat the "Max Allowed Discount Budget" as a hard ceiling.
-    7. If the customer pushes hard, you can inch up, but NEVER exceed ₱${maxDiscount}.
-    8. If the customer asks for more than ₱${maxDiscount}, say "Dili na jud kaya boss" (Can't do it boss) or "Lugi na mi ana" (We'll lose money).
-    9. If you agree on a price, you MUST include the specific tool call to apply the discount.
+    3. **Agreement Detection**: If the user says "Ge", "Cge", "Sige", "Oks", "K", "Deal", "Go", or "Payts", they are ACCEPTING your last offer.
+       - **ACTION**: Immediately call 'apply_discount' with the agreed amount. Do NOT offer more discount. Do NOT ask "Sure ka?". Just do it.
+    4. **No Misleading "Deals"**: Do NOT say "Deal" or "Sige" unless you are agreeing to the User's EXACT terms.
+    5. **Counter-Offers**: If you cannot meet their price, explicitly say: "Dili kaya ang [User's Price] boss, pero makahatag kog [Your Offer] discount." (Can't do [User's Price], but I can give [Your Offer] discount).
+    6. **Zero Discount**: If you can't give a discount (e.g., item is on sale), NEVER mention the number "0" or say "0 discount". Just say "Wala na koy mahatag nga discount" (I can't give any discount) or "Fixed price na jud na boss".
+    7. Treat the "Max Allowed Discount Budget" as a hard ceiling.
+    8. If the customer pushes hard, you can inch up, but NEVER exceed ₱${maxDiscount}.
+    9. If the customer asks for more than ₱${maxDiscount}, say "Dili na jud kaya boss" (Can't do it boss) or "Lugi na mi ana" (We'll lose money).
+    10. **Tool Usage**: NEVER write <function=...> in your text response. Use the actual tool call feature provided by the API.
     
     Example 1 (On Sale Item - Rejection):
     Customer: "500 nalang ni boss?"
     You: "Aguy boss, naka-sale na baya na siya. Barato na kaayo na sa ₱${currentTotal}. Di na jud madala ug less, lugi na mi."
     
-    Example 2 (Regular Item - Lowballer):
-    Customer: "500 nalang ni boss?" (Total is 1000)
-    You: "Aguy boss, lugi na mi ana! 500 man ang discount ana. ₱50 ra ako mahatag nimo."
-    
-    Example 3 (Reasonable):
-    Customer: "Last price?"
-    You: "Para nimo boss, minusan nato ug ₱50."
-    Customer: "Make it 100?"
-    You: "Sige na lang, deal! ₱100 off." (Call apply_discount amount=100)
+    Example 2 (Agreement):
+    You: "Makahatag kog ₱50 discount."
+    Customer: "Ge"
+    You: "Sige boss, deal!" (Call apply_discount amount=50)
     `;
 
     const completion = await groq.chat.completions.create({
@@ -99,7 +148,27 @@ export async function POST(request: Request) {
     });
 
     const responseMessage = completion.choices[0].message;
-    const toolCalls = responseMessage.tool_calls;
+    let toolCalls = responseMessage.tool_calls;
+    
+    // Save assistant message
+    if (negotiation) {
+      negotiation.messages.push({
+        role: "assistant",
+        content: responseMessage.content || (toolCalls ? "Tool Call" : ""),
+        timestamp: new Date(),
+      });
+      
+      if (toolCalls) {
+         const toolCall = toolCalls[0];
+         if (toolCall.function.name === "apply_discount") {
+            const args = JSON.parse(toolCall.function.arguments);
+            negotiation.finalDiscount = args.amount;
+            negotiation.status = "success";
+         }
+      }
+      
+      await negotiation.save();
+    }
 
     if (toolCalls) {
       // If tool call exists, return it specifically
@@ -115,7 +184,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error in negotiation API:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Failed to process negotiation" },
       { status: 500 },
     );
   }

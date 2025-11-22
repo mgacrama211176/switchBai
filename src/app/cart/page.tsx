@@ -27,6 +27,7 @@ function CartContent() {
     setCartType,
     clearCart,
     negotiatedDiscount,
+    isHydrated,
   } = useCart();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -999,7 +1000,7 @@ function CartContent() {
                       </div>
 
                       {/* Negotiated Discount Display */}
-                      {negotiatedDiscount > 0 && (
+                      {isHydrated && negotiatedDiscount > 0 && (
                         <div className="flex justify-between text-sm text-green-600 font-semibold">
                           <span>Negotiated Discount:</span>
                           <span>-{formatPrice(negotiatedDiscount)}</span>
@@ -1121,11 +1122,13 @@ function CartContent() {
       <Footer />
 
       {/* Negotiation Chat Modal */}
-      <NegotiationChat
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        totalAmount={purchaseSummary.subtotal}
-      />
+      {isHydrated && (
+        <NegotiationChat
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          totalAmount={purchaseSummary.subtotal}
+        />
+      )}
     </main>
   );
 }

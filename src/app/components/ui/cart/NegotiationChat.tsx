@@ -26,23 +26,29 @@ export default function NegotiationChat({
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [negotiationId, setNegotiationId] = useState<string>("");
+
   // Scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Initial greeting
+  // Initial greeting & ID generation
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setMessages([
-        {
-          role: "assistant",
-          content:
-            "Hi boss! Unsay atoa run?",
-        },
-      ]);
+    if (isOpen) {
+      if (messages.length === 0) {
+        setMessages([
+          {
+            role: "assistant",
+            content: "Hi boss! Unsay atoa run?",
+          },
+        ]);
+      }
+      if (!negotiationId) {
+        setNegotiationId(crypto.randomUUID());
+      }
     }
-  }, [isOpen, messages.length]);
+  }, [isOpen, messages.length, negotiationId]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,23 +69,56 @@ export default function NegotiationChat({
             items: cart.items,
             totalAmount: totalAmount,
           },
+          negotiationId,
         }),
       });
 
       const data = await response.json();
 
-      if (data.toolCalls) {
-        // Handle tool call (discount applied)
-        const toolCall = data.toolCalls[0];
-        if (toolCall.function.name === "apply_discount") {
-          const args = JSON.parse(toolCall.function.arguments);
-          applyDiscount(args.amount);
+      // Check for leaked tool calls in content (fallback)
+      const content = data.message?.content || "";
+      const toolCallRegex = /<function=apply_discount>(.*?)<\/function>/;
+      const match = content.match(toolCallRegex);
+
+      if (data.toolCalls || match) {
+        let amount = 0;
+
+        if (data.toolCalls) {
+          // Handle structured tool call
+          const toolCall = data.toolCalls[0];
+          if (toolCall.function.name === "apply_discount") {
+            const args = JSON.parse(toolCall.function.arguments);
+            amount = args.amount;
+          }
+        } else if (match) {
+          // Handle leaked tool call
+          try {
+            const args = JSON.parse(match[1]);
+            amount = args.amount;
+          } catch (e) {
+            console.error("Failed to parse leaked tool call:", e);
+          }
+        }
+
+        if (amount > 0) {
+          applyDiscount(amount);
+
+          // Clean content if it was a leak
+          const cleanContent = content.replace(toolCallRegex, "").trim();
+          
+          // If there's clean content, show it first
+          if (cleanContent) {
+             setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: cleanContent },
+            ]);
+          }
 
           setMessages((prev) => [
             ...prev,
             {
               role: "assistant",
-              content: `Deal! I've applied a ₱${args.amount} discount for you. Enjoy your games!`,
+              content: `Deal! I've applied a ₱${amount} discount for you. Enjoy your games!`,
             },
           ]);
 
@@ -87,8 +126,13 @@ export default function NegotiationChat({
           setTimeout(() => {
             onClose();
           }, 3000);
+          
+          setIsLoading(false);
+          return;
         }
-      } else if (data.message) {
+      } 
+      
+      if (data.message) {
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: data.message.content },

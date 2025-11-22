@@ -42,6 +42,7 @@ interface CartContextType {
   getCartItem: (barcode: string) => CartItem | undefined;
   negotiatedDiscount: number;
   applyDiscount: (amount: number) => void;
+  isHydrated: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -324,6 +325,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         getCartItem,
         negotiatedDiscount,
         applyDiscount,
+        isHydrated,
       }}
     >
       {children}
