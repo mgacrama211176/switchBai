@@ -90,13 +90,18 @@ export default function DashboardStats({
     .filter((g) => g.numberOfSold)
     .sort((a, b) => (b.numberOfSold || 0) - (a.numberOfSold || 0))[0];
 
+  const totalUnits = games.reduce(
+    (sum, game) => sum + game.gameAvailableStocks,
+    0,
+  );
+
   const stats = [
     {
       label: "Total Games",
       value: totalGames,
       icon: HiCube,
       color: "from-funBlue to-blue-500",
-      subtext: `Switch: ${switchGames} | Switch 2: ${switch2Games} | PS4: ${ps4Games} | PS5: ${ps5Games}`,
+      subtext: `On Hand: ${totalUnits} | Switch: ${switchGames} | Switch 2: ${switch2Games} | PS4: ${ps4Games} | PS5: ${ps5Games}`,
       onClick: onTotalGamesClick,
     },
     {
@@ -104,7 +109,7 @@ export default function DashboardStats({
       value: formatPrice(totalValue),
       icon: HiCash,
       color: "from-green-500 to-emerald-500",
-      subtext: `Across ${games.reduce((sum, g) => sum + g.gameAvailableStocks, 0)} units`,
+      subtext: `Across ${totalUnits} units`,
       onClick: undefined,
     },
     {

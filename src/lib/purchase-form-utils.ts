@@ -64,10 +64,8 @@ export function validatePurchaseData(data: PurchaseFormData): ValidationErrors {
     }
   }
 
-  // Email validation
-  if (!data.customerEmail.trim()) {
-    errors.customerEmail = "Email address is required";
-  } else {
+  // Email validation (optional)
+  if (data.customerEmail.trim()) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.customerEmail.trim())) {
       errors.customerEmail = "Please enter a valid email address";

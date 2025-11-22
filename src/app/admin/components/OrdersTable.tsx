@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   HiSearch,
-  HiChevronLeft,
-  HiChevronRight,
   HiEye,
   HiPencil,
   HiPlus,
+  HiTrash,
 } from "react-icons/hi";
 import OrderDetailsModal from "./OrderDetailsModal";
 import UpdateOrderStatusModal from "./UpdateOrderStatusModal";
@@ -68,11 +67,13 @@ export default function OrdersTable({
   onOrderUpdated,
 }: OrdersTableProps) {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingOrder, setUpdatingOrder] = useState<Order | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -81,60 +82,74 @@ export default function OrdersTable({
     type: "success" | "error";
   } | null>(null);
 
-  const itemsPerPage = 20;
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastOrderElementRef = useCallback(
+    (node: HTMLTableRowElement | null) => {
+      if (isLoading || isLoadingMore) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage((prevPage) => prevPage + 1);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isLoading, isLoadingMore, hasMore],
+  );
 
-  useEffect(() => {
-    async function fetchOrders() {
-      setIsLoading(true);
+  const fetchOrders = useCallback(
+    async (pageNum: number, isNewSearch: boolean = false) => {
+      if (isNewSearch) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+
       try {
-        const response = await fetch("/api/purchases");
+        const params = new URLSearchParams({
+          page: pageNum.toString(),
+          limit: "10",
+          search: searchTerm,
+          status: statusFilter,
+        });
+
+        const response = await fetch(`/api/purchases?${params.toString()}`);
         const data = await response.json();
-        setOrders(data.purchases || []);
-        setFilteredOrders(data.purchases || []);
+
+        if (data.success) {
+          setOrders((prev) => {
+            if (isNewSearch) return data.purchases;
+            // Filter out duplicates just in case
+            const newOrders = data.purchases.filter(
+              (newOrder: Order) => !prev.some((o) => o._id === newOrder._id)
+            );
+            return [...prev, ...newOrders];
+          });
+          setHasMore(data.purchases.length === 10);
+        }
       } catch (error) {
         console.error("Error fetching orders:", error);
         setToast({ message: "Failed to fetch orders", type: "error" });
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
       }
-    }
+    },
+    [searchTerm, statusFilter]
+  );
 
-    fetchOrders();
-  }, [refreshTrigger]);
-
+  // Initial fetch and refresh trigger
   useEffect(() => {
-    let filtered = [...orders];
+    setPage(1);
+    fetchOrders(1, true);
+  }, [refreshTrigger, fetchOrders]);
 
-    // Search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (order) =>
-          order.orderNumber.toLowerCase().includes(searchLower) ||
-          order.customerName.toLowerCase().includes(searchLower) ||
-          (order.customerEmail &&
-            order.customerEmail.toLowerCase().includes(searchLower)) ||
-          order.games.some(
-            (game) =>
-              game.gameTitle.toLowerCase().includes(searchLower) ||
-              game.gameBarcode.toLowerCase().includes(searchLower),
-          ),
-      );
+  // Fetch on page change (infinite scroll)
+  useEffect(() => {
+    if (page > 1) {
+      fetchOrders(page, false);
     }
-
-    // Status filter
-    if (statusFilter) {
-      filtered = filtered.filter((order) => order.status === statusFilter);
-    }
-
-    setFilteredOrders(filtered);
-    setCurrentPage(1);
-  }, [orders, searchTerm, statusFilter]);
-
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentOrders = filteredOrders.slice(startIndex, endIndex);
+  }, [page, fetchOrders]);
 
   const statusOptions = [
     { value: "", label: "All Statuses" },
@@ -198,13 +213,59 @@ export default function OrdersTable({
     setUpdatingOrder(order);
   }
 
+  async function handleDeleteOrder(order: Order) {
+    if (
+      !confirm(
+        `Are you sure you want to delete order ${order.orderNumber}? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    // Optimistic update: Remove immediately from UI
+    const previousOrders = [...orders];
+
+    setOrders((prev) => prev.filter((o) => o._id !== order._id));
+
+    try {
+      const response = await fetch(`/api/purchases/${order._id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setToast({
+          message: "Order deleted successfully",
+          type: "success",
+        });
+        // Do NOT call onOrderUpdated() to avoid table refresh/loading state
+      } else {
+        // Revert on failure
+        setOrders(previousOrders);
+        setToast({
+          message: data.error || "Failed to delete order",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      // Revert on error
+      setOrders(previousOrders);
+      setToast({
+        message: "An error occurred while deleting the order",
+        type: "error",
+      });
+    }
+  }
+
   function handleUpdateSuccess() {
     setUpdatingOrder(null);
     setToast({
       message: "Order status updated successfully!",
       type: "success",
     });
-    onOrderUpdated();
+    // Update local state instead of full refresh
+    onOrderUpdated(); // Keep this to trigger stats update if needed, but we might want to refactor to avoid full reload
   }
 
   function handleAddSuccess() {
@@ -216,25 +277,12 @@ export default function OrdersTable({
     onOrderUpdated();
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="h-20 bg-gray-100 rounded-xl animate-pulse"
-          ></div>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header with Add Button */}
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          Showing {currentOrders.length} of {filteredOrders.length} orders
+          {orders.length > 0 ? `Showing ${orders.length} orders` : "No orders found"}
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -310,7 +358,7 @@ export default function OrdersTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {currentOrders.length === 0 ? (
+              {orders.length === 0 && !isLoading ? (
                 <tr>
                   <td
                     colSpan={9}
@@ -320,146 +368,137 @@ export default function OrdersTable({
                   </td>
                 </tr>
               ) : (
-                currentOrders.map((order) => (
-                  <tr
-                    key={order._id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleViewDetails(order)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-mono text-funBlue">
-                        {order.orderNumber}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatDate(order.submittedAt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {order.customerName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {order.customerEmail}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {getGamesDisplay(order.games)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {order.games.length} game
-                        {order.games.length !== 1 ? "s" : ""}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(order.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {formatPrice(order.totalAmount)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {order.discountAmount ? (
-                        <div className="text-sm text-red-600 font-medium">
-                          -{formatPrice(order.discountAmount)}
+                orders.map((order, index) => {
+                  const isLastElement = index === orders.length - 1;
+                  return (
+                    <tr
+                      key={order._id}
+                      ref={isLastElement ? lastOrderElementRef : null}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleViewDetails(order)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-mono text-funBlue">
+                          {order.orderNumber}
                         </div>
-                      ) : (
-                        <div className="text-sm text-gray-400">—</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {order.totalProfit !== undefined ? (
-                        <div>
-                          <div
-                            className={`text-sm font-semibold ${
-                              order.totalProfit > 0
-                                ? "text-green-600"
-                                : order.totalProfit < 0
-                                  ? "text-red-600"
-                                  : "text-yellow-600"
-                            }`}
-                          >
-                            {formatPrice(order.totalProfit)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {formatDate(order.submittedAt)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {order.customerName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {order.customerEmail}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {getGamesDisplay(order.games)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {order.games.length} game
+                          {order.games.length !== 1 ? "s" : ""}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(order.status)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatPrice(order.totalAmount)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {order.discountAmount ? (
+                          <div className="text-sm text-red-600 font-medium">
+                            -{formatPrice(order.discountAmount)}
                           </div>
-                          {order.profitMargin !== undefined && (
+                        ) : (
+                          <div className="text-sm text-gray-400">—</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {order.totalProfit !== undefined ? (
+                          <div>
                             <div
-                              className={`text-xs ${
-                                order.profitMargin > 0
-                                  ? "text-green-500"
-                                  : order.profitMargin < 0
-                                    ? "text-red-500"
-                                    : "text-yellow-500"
+                              className={`text-sm font-semibold ${
+                                order.totalProfit > 0
+                                  ? "text-green-600"
+                                  : order.totalProfit < 0
+                                    ? "text-red-600"
+                                    : "text-yellow-600"
                               }`}
                             >
-                              {order.profitMargin.toFixed(1)}%
+                              {formatPrice(order.totalProfit)}
                             </div>
-                          )}
+                            {order.profitMargin !== undefined && (
+                              <div
+                                className={`text-xs ${
+                                  order.profitMargin > 0
+                                    ? "text-green-500"
+                                    : order.profitMargin < 0
+                                      ? "text-red-500"
+                                      : "text-yellow-500"
+                                }`}
+                              >
+                                {order.profitMargin.toFixed(1)}%
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400">—</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetails(order);
+                            }}
+                            className="text-funBlue hover:text-blue-600"
+                            title="View Details"
+                          >
+                            <HiEye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(order);
+                            }}
+                            className="text-gray-600 hover:text-gray-900"
+                            title="Update Status"
+                          >
+                            <HiPencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteOrder(order);
+                            }}
+                            className="text-red-400 hover:text-red-600"
+                            title="Delete Order"
+                          >
+                            <HiTrash className="w-4 h-4" />
+                          </button>
                         </div>
-                      ) : (
-                        <div className="text-sm text-gray-400">—</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewDetails(order);
-                          }}
-                          className="text-funBlue hover:text-blue-600"
-                        >
-                          <HiEye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateStatus(order);
-                          }}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          <HiPencil className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Showing {startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredOrders.length)} of{" "}
-              {filteredOrders.length} results
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <HiChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="px-3 py-1 text-sm text-gray-700">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <HiChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+        
+        {/* Loading Indicator */}
+        {(isLoading || isLoadingMore) && (
+          <div className="p-4 flex justify-center">
+             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-funBlue"></div>
           </div>
         )}
       </div>

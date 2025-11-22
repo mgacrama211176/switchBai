@@ -43,10 +43,21 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Filter by stock availability (only games with stock > 0)
+    // Filter by stock availability
     const inStockOnly = searchParams.get("inStock") === "true";
     if (inStockOnly) {
       query.gameAvailableStocks = { $gt: 0 };
+    }
+
+    const outOfStockOnly = searchParams.get("outOfStock") === "true";
+    if (outOfStockOnly) {
+      query.gameAvailableStocks = 0;
+    }
+
+    // Filter by rental availability
+    const rentalOnly = searchParams.get("rental") === "true";
+    if (rentalOnly) {
+      query.rentalAvailable = true;
     }
 
     // Filter by tradable games
@@ -57,6 +68,11 @@ export async function GET(request: NextRequest) {
 
     // Check if we need to apply Nintendo Switch filter (for client-facing pages)
     const nintendoOnly = searchParams.get("nintendoOnly") === "true";
+
+    // Sorting
+    const sortField = searchParams.get("sort") || "updatedAt";
+    const sortOrder = searchParams.get("order") === "asc" ? 1 : -1;
+    const sortOptions: any = { [sortField]: sortOrder };
 
     // Pagination
     const page = parseInt(searchParams.get("page") || "1");
@@ -69,7 +85,7 @@ export async function GET(request: NextRequest) {
     if (nintendoOnly) {
       // For Nintendo-only filter, we need to fetch all, filter, then paginate
       // This is because MongoDB can't easily filter "has Nintendo AND not PS4/PS5"
-      let allGames = await GameModel.find(query).sort({ updatedAt: -1 }).lean();
+      let allGames = await GameModel.find(query).sort(sortOptions).lean();
 
       // Apply Nintendo Switch filter (exclude PS4/PS5 games)
       allGames = allGames.filter((game) => {
@@ -93,7 +109,7 @@ export async function GET(request: NextRequest) {
     } else {
       // For normal queries, use efficient MongoDB pagination
       games = await GameModel.find(query)
-        .sort({ updatedAt: -1 })
+        .sort(sortOptions)
         .skip(skip)
         .limit(limit)
         .lean();

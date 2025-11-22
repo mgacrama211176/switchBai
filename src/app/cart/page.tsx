@@ -405,127 +405,7 @@ function CartContent() {
           <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-8">
             {/* Cart Items & Form - Shows ABOVE on mobile, LEFT on desktop */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Cart Items */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">
-                  Cart Items
-                </h2>
-                <div className="space-y-4">
-                  {cart.items.map((item) => {
-                    const displayPrice =
-                      item.isOnSale && item.salePrice
-                        ? item.salePrice
-                        : item.gamePrice;
-                    const savings = calculateSavings(
-                      displayPrice,
-                      item.gameBarcode,
-                      {
-                        isOnSale: item.isOnSale,
-                        salePrice: item.salePrice,
-                        gamePrice: item.gamePrice,
-                      },
-                    );
-                    return (
-                      <div
-                        key={item.gameBarcode}
-                        className="flex gap-4 p-4 border border-gray-200 rounded-lg"
-                      >
-                        <div className="relative w-20 h-28 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                          <Image
-                            src={item.gameImageURL}
-                            alt={item.gameTitle}
-                            fill
-                            className="object-cover"
-                            sizes="80px"
-                          />
-                          {/* Sale Badge */}
-                          {item.isOnSale && savings.percentage > 0 && (
-                            <div className="absolute top-1 left-1 bg-gradient-to-r from-red-500 to-pink-500 text-white px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg z-10">
-                              🏷️ Sale
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
-                            {item.gameTitle}
-                          </h3>
-                          <p className="text-xs text-gray-500 mb-2 font-mono">
-                            {item.gameBarcode}
-                          </p>
-                          {/* Price Display with Sale Info */}
-                          <div className="mb-3">
-                            {item.isOnSale && item.salePrice ? (
-                              <div>
-                                <div className="flex items-baseline gap-2">
-                                  <p className="text-sm font-semibold text-red-600">
-                                    {formatPrice(item.salePrice)} each
-                                  </p>
-                                  <p className="text-xs text-gray-500 line-through">
-                                    {formatPrice(item.gamePrice)}
-                                  </p>
-                                </div>
-                                <p className="text-xs font-semibold text-green-600 mt-0.5">
-                                  Save ₱{savings.savings.toLocaleString()} (
-                                  {savings.percentage}% off)
-                                </p>
-                              </div>
-                            ) : (
-                              <p className="text-sm font-semibold text-funBlue">
-                                {formatPrice(displayPrice)} each
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Quantity Controls */}
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() =>
-                                  updateQuantity(
-                                    item.gameBarcode,
-                                    item.quantity - 1,
-                                  )
-                                }
-                                disabled={item.quantity <= 1}
-                                className="w-8 h-8 rounded border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <HiMinus className="w-4 h-4" />
-                              </button>
-                              <span className="w-12 text-center font-semibold">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  updateQuantity(
-                                    item.gameBarcode,
-                                    item.quantity + 1,
-                                  )
-                                }
-                                disabled={item.quantity >= item.maxStock}
-                                className="w-8 h-8 rounded border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <HiPlus className="w-4 h-4" />
-                              </button>
-                            </div>
-                            <button
-                              onClick={() => removeFromCart(item.gameBarcode)}
-                              className="text-red-600 hover:text-red-700 p-2"
-                              title="Remove item"
-                            >
-                              <HiTrash className="w-5 h-5" />
-                            </button>
-                          </div>
-                          {item.quantity >= item.maxStock && (
-                            <p className="text-xs text-red-600 mt-2">
-                              Maximum stock reached
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Cart Items Removed - Merged into Order Summary */}
 
               {/* Rental Date Selection */}
               {cart.type === "rental" && (
@@ -648,7 +528,7 @@ function CartContent() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address *
+                        Email Address (Optional)
                       </label>
                       <input
                         type="email"
@@ -662,7 +542,6 @@ function CartContent() {
                         } text-gray-900 bg-white`}
                         placeholder="your@email.com"
                         maxLength={100}
-                        required
                       />
                       {errors.customerEmail && (
                         <p className="mt-1 text-sm text-red-600">
@@ -910,7 +789,7 @@ function CartContent() {
                       return (
                         <div
                           key={item.gameBarcode}
-                          className="flex items-start gap-3"
+                          className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0"
                         >
                           <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                             <Image
@@ -928,54 +807,84 @@ function CartContent() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">
-                              {item.gameTitle}
-                            </h3>
-                            <p className="text-[10px] text-gray-400 mb-1.5 font-mono">
+                            <div className="flex justify-between items-start">
+                              <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1 pr-2">
+                                {item.gameTitle}
+                              </h3>
+                              <button
+                                onClick={() => removeFromCart(item.gameBarcode)}
+                                className="text-gray-400 hover:text-red-600 transition-colors p-1 -mr-1"
+                                title="Remove item"
+                              >
+                                <HiTrash className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            <p className="text-[10px] text-gray-400 mb-2 font-mono">
                               {item.gameBarcode}
                             </p>
-                            {item.isOnSale && item.salePrice ? (
-                              <div className="text-xs mb-1.5 space-y-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-gray-600">Qty:</span>
-                                  <span className="font-semibold text-gray-900">
-                                    {item.quantity}
-                                  </span>
-                                  <span className="text-gray-400">×</span>
-                                  <span className="text-red-600 font-semibold">
-                                    {formatPrice(item.salePrice)}
-                                  </span>
-                                </div>
-                                <p className="text-gray-400 line-through">
-                                  Was: {formatPrice(item.gamePrice)} each
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-600 mb-1.5">
-                                <span>Qty: </span>
-                                <span className="font-semibold">
+
+                            <div className="flex items-end justify-between">
+                              {/* Quantity Controls */}
+                              <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+                                <button
+                                  onClick={() =>
+                                    updateQuantity(
+                                      item.gameBarcode,
+                                      item.quantity - 1,
+                                    )
+                                  }
+                                  disabled={item.quantity <= 1}
+                                  className="w-6 h-6 rounded bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
+                                >
+                                  <HiMinus className="w-3 h-3" />
+                                </button>
+                                <span className="w-6 text-center text-xs font-semibold text-gray-900">
                                   {item.quantity}
                                 </span>
-                                <span> × </span>
-                                <span className="font-semibold">
-                                  {formatPrice(price)}
-                                </span>
-                                <span> each</span>
+                                <button
+                                  onClick={() =>
+                                    updateQuantity(
+                                      item.gameBarcode,
+                                      item.quantity + 1,
+                                    )
+                                  }
+                                  disabled={item.quantity >= item.maxStock}
+                                  className="w-6 h-6 rounded bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600"
+                                >
+                                  <HiPlus className="w-3 h-3" />
+                                </button>
                               </div>
-                            )}
-                            <div className="flex items-baseline gap-2">
-                              <p className="text-sm font-semibold text-funBlue">
-                                {formatPrice(price * item.quantity)}
-                              </p>
-                              {item.isOnSale && savings.percentage > 0 && (
-                                <p className="text-[10px] font-semibold text-green-600">
-                                  Save ₱
-                                  {(
-                                    savings.savings * item.quantity
-                                  ).toLocaleString()}
-                                </p>
-                              )}
+
+                              {/* Price */}
+                              <div className="text-right">
+                                {item.isOnSale && item.salePrice ? (
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-xs text-gray-400 line-through">
+                                      {formatPrice(
+                                        item.gamePrice * item.quantity,
+                                      )}
+                                    </span>
+                                    <span className="text-sm font-semibold text-funBlue">
+                                      {formatPrice(price * item.quantity)}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm font-semibold text-funBlue">
+                                    {formatPrice(price * item.quantity)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
+
+                            {item.isOnSale && savings.percentage > 0 && (
+                              <p className="text-[10px] font-semibold text-green-600 text-right mt-1">
+                                Save ₱
+                                {(
+                                  savings.savings * item.quantity
+                                ).toLocaleString()}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );

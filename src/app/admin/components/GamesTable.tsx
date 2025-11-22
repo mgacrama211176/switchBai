@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Game } from "@/app/types/games";
 import { formatPrice } from "@/lib/game-utils";
 import Image from "next/image";
@@ -8,12 +6,11 @@ import {
   HiPencil,
   HiTrash,
   HiSearch,
-  HiChevronLeft,
-  HiChevronRight,
 } from "react-icons/hi";
 import EditGameModal from "./EditGameModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import Toast from "./Toast";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 interface GamesTableProps {
   refreshTrigger: number;
@@ -31,13 +28,15 @@ export default function GamesTable({
   onFilterClear,
 }: GamesTableProps) {
   const [games, setGames] = useState<Game[]>([]);
-  const [filteredGames, setFilteredGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [platformFilter, setPlatformFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [stockSort, setStockSort] = useState<"asc" | "desc" | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [deletingGame, setDeletingGame] = useState<Game | null>(null);
   const [toast, setToast] = useState<{
@@ -45,94 +44,80 @@ export default function GamesTable({
     type: "success" | "error";
   } | null>(null);
 
-  const itemsPerPage = 20;
+  const fetchGames = useCallback(
+    async (pageNum: number, isNewSearch: boolean = false) => {
+      if (isNewSearch) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
 
-  useEffect(() => {
-    async function fetchGames() {
-      setIsLoading(true);
       try {
-        const response = await fetch("/api/games?limit=1000");
+        const params = new URLSearchParams({
+          page: pageNum.toString(),
+          limit: "10", // Batch size of 10
+          search: searchTerm,
+          platform: platformFilter,
+          category: categoryFilter,
+        });
+
+        if (activeFilter === "inStock") params.append("inStock", "true");
+        if (activeFilter === "outOfStock") params.append("outOfStock", "true");
+        if (activeFilter === "rental") params.append("rental", "true");
+
+        if (stockSort) {
+          params.append("sort", "gameAvailableStocks");
+          params.append("order", stockSort);
+        }
+
+        const response = await fetch(`/api/games?${params.toString()}`);
         const data = await response.json();
-        setGames(data.games || []);
-        setFilteredGames(data.games || []);
+
+        if (data.games) {
+          setGames((prev) => {
+            if (isNewSearch) return data.games;
+            // Filter out duplicates
+            const newGames = data.games.filter(
+              (newGame: Game) => !prev.some((g) => g._id === newGame._id)
+            );
+            return [...prev, ...newGames];
+          });
+          setHasMore(data.games.length === 10);
+        }
       } catch (error) {
         console.error("Error fetching games:", error);
         setToast({ message: "Failed to fetch games", type: "error" });
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
       }
-    }
+    },
+    [searchTerm, platformFilter, categoryFilter, stockSort, activeFilter]
+  );
 
-    fetchGames();
-  }, [refreshTrigger]);
-
+  // Initial fetch and refresh
   useEffect(() => {
-    let filtered = [...games];
+    setPage(1);
+    fetchGames(1, true);
+  }, [refreshTrigger, fetchGames]);
 
-    // Active filter from dashboard cards
-    if (activeFilter === "inStock") {
-      filtered = filtered.filter((game) => game.gameAvailableStocks > 0);
-    } else if (activeFilter === "outOfStock") {
-      filtered = filtered.filter((game) => game.gameAvailableStocks === 0);
-    } else if (activeFilter === "rental") {
-      filtered = filtered.filter((game) => game.rentalAvailable === true);
-    }
+  // Infinite scroll handler
+  const handleLoadMore = useCallback(() => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchGames(nextPage, false);
+  }, [page, fetchGames]);
 
-    // Search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (game) =>
-          game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.includes(searchLower),
-      );
-    }
+  const lastGameRef = useInfiniteScroll({
+    isLoading: isLoading || isLoadingMore,
+    hasMore,
+    onLoadMore: handleLoadMore,
+  });
 
-    // Platform filter
-    if (platformFilter) {
-      filtered = filtered.filter((game) => {
-        if (Array.isArray(game.gamePlatform)) {
-          return game.gamePlatform.includes(platformFilter);
-        }
-        return game.gamePlatform === platformFilter;
-      });
-    }
-
-    // Category filter
-    if (categoryFilter) {
-      filtered = filtered.filter(
-        (game) => game.gameCategory === categoryFilter,
-      );
-    }
-
-    // Stock sorting
-    if (stockSort) {
-      filtered.sort((a, b) => {
-        if (stockSort === "asc") {
-          return a.gameAvailableStocks - b.gameAvailableStocks;
-        } else {
-          return b.gameAvailableStocks - a.gameAvailableStocks;
-        }
-      });
-    }
-
-    setFilteredGames(filtered);
-    setCurrentPage(1);
-  }, [
-    searchTerm,
-    platformFilter,
-    categoryFilter,
-    stockSort,
-    games,
-    activeFilter,
-  ]);
-
-  const totalPages = Math.ceil(filteredGames.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentGames = filteredGames.slice(startIndex, endIndex);
-
-  const categories = Array.from(new Set(games.map((g) => g.gameCategory)));
+  // Hardcoded categories for filter (since we don't fetch all games at once anymore)
+  const categories = [
+    "Action", "Adventure", "RPG", "Strategy", "Sports", "Racing", "Fighting", "Shooter", "Puzzle", "Simulation", "Family", "Music"
+  ];
 
   function handleEditSuccess() {
     setEditingGame(null);
@@ -144,19 +129,6 @@ export default function GamesTable({
     setDeletingGame(null);
     setToast({ message: "Game deleted successfully!", type: "success" });
     onGameDeleted();
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="h-20 bg-gray-100 rounded-xl animate-pulse"
-          ></div>
-        ))}
-      </div>
-    );
   }
 
   return (
@@ -253,8 +225,7 @@ export default function GamesTable({
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          Showing {startIndex + 1}-{Math.min(endIndex, filteredGames.length)} of{" "}
-          {filteredGames.length} games
+          {games.length > 0 ? `Showing ${games.length} games` : "No games found"}
         </p>
         {(searchTerm ||
           platformFilter ||
@@ -277,189 +248,177 @@ export default function GamesTable({
       </div>
 
       {/* Table */}
-      {currentGames.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No games found</p>
-          <p className="text-gray-400 text-sm mt-2">
-            Try adjusting your filters or search term
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border-2 border-gray-200">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b-2 border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Image
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Stock
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Platform
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Tradable
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Actions
-                </th>
+      <div className="overflow-x-auto rounded-xl border-2 border-gray-200">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Image
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Title
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Price
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Stock
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Category
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Platform
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Tradable
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {games.length === 0 && !isLoading ? (
+               <tr>
+                <td colSpan={8} className="text-center py-12">
+                  <p className="text-gray-500 text-lg">No games found</p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Try adjusting your filters or search term
+                  </p>
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentGames.map((game) => (
-                <tr
-                  key={game.gameBarcode}
-                  className="hover:bg-gray-50 transition-colors duration-200"
-                >
-                  <td className="px-4 py-3">
-                    <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
-                      <Image
-                        src={game.gameImageURL}
-                        alt={game.gameTitle}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-gray-900">
-                          {game.gameTitle}
+            ) : (
+              games.map((game, index) => {
+                const isLastElement = index === games.length - 1;
+                return (
+                  <tr
+                    key={game.gameBarcode}
+                    ref={isLastElement ? lastGameRef : null}
+                    className="hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                        <Image
+                          src={game.gameImageURL}
+                          alt={game.gameTitle}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900">
+                            {game.gameTitle}
+                          </p>
+                          {game.isOnSale && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white">
+                              🏷️ Sale
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {game.gameBarcode}
                         </p>
-                        {game.isOnSale && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white">
-                            🏷️ Sale
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        {game.isOnSale && game.salePrice ? (
+                          <>
+                            <p className="font-semibold text-red-600">
+                              {formatPrice(game.salePrice)}
+                            </p>
+                            <p className="text-xs text-gray-500 line-through">
+                              {formatPrice(game.gamePrice)}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="font-semibold text-gray-900">
+                            {formatPrice(game.gamePrice)}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          game.gameAvailableStocks === 0
+                            ? "bg-red-100 text-red-700"
+                            : game.gameAvailableStocks < 5
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {game.gameAvailableStocks}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-gray-700">
+                        {game.gameCategory}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col space-y-1">
+                        {Array.isArray(game.gamePlatform) ? (
+                          game.gamePlatform.map((platform) => (
+                            <span
+                              key={platform}
+                              className="text-xs px-2 py-1 bg-funBlue/10 text-funBlue rounded"
+                            >
+                              {platform.replace("Nintendo ", "")}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs px-2 py-1 bg-funBlue/10 text-funBlue rounded">
+                            {game.gamePlatform.replace("Nintendo ", "")}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500">
-                        {game.gameBarcode}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>
-                      {game.isOnSale && game.salePrice ? (
-                        <>
-                          <p className="font-semibold text-red-600">
-                            {formatPrice(game.salePrice)}
-                          </p>
-                          <p className="text-xs text-gray-500 line-through">
-                            {formatPrice(game.gamePrice)}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="font-semibold text-gray-900">
-                          {formatPrice(game.gamePrice)}
-                        </p>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        game.gameAvailableStocks === 0
-                          ? "bg-red-100 text-red-700"
-                          : game.gameAvailableStocks < 5
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {game.gameAvailableStocks}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-700">
-                      {game.gameCategory}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col space-y-1">
-                      {Array.isArray(game.gamePlatform) ? (
-                        game.gamePlatform.map((platform) => (
-                          <span
-                            key={platform}
-                            className="text-xs px-2 py-1 bg-funBlue/10 text-funBlue rounded"
-                          >
-                            {platform.replace("Nintendo ", "")}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs px-2 py-1 bg-funBlue/10 text-funBlue rounded">
-                          {game.gamePlatform.replace("Nintendo ", "")}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        game.tradable
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {game.tradable ? "Yes" : "No"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => setEditingGame(game)}
-                        className="p-2 rounded-lg text-funBlue hover:bg-funBlue/10 transition-colors duration-300"
-                        title="Edit"
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          game.tradable
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
                       >
-                        <HiPencil className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setDeletingGame(game)}
-                        className="p-2 rounded-lg text-lameRed hover:bg-lameRed/10 transition-colors duration-300"
-                        title="Delete"
-                      >
-                        <HiTrash className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                        {game.tradable ? "Yes" : "No"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => setEditingGame(game)}
+                          className="p-2 rounded-lg text-funBlue hover:bg-funBlue/10 transition-colors duration-300"
+                          title="Edit"
+                        >
+                          <HiPencil className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingGame(game)}
+                          className="p-2 rounded-lg text-lameRed hover:bg-lameRed/10 transition-colors duration-300"
+                          title="Delete"
+                        >
+                          <HiTrash className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
-          >
-            <HiChevronLeft className="w-5 h-5" />
-          </button>
-          <span className="px-4 py-2 text-sm font-medium text-gray-700">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-            }
-            disabled={currentPage === totalPages}
-            className="p-2 rounded-lg border-2 border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
-          >
-            <HiChevronRight className="w-5 h-5" />
-          </button>
+      {/* Loading Indicator */}
+      {(isLoading || isLoadingMore) && (
+        <div className="p-4 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-funBlue"></div>
         </div>
       )}
     </div>

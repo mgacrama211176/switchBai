@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import AdminHeader from "./AdminHeader";
+
 
 export default function ProtectedRoute({
   children,
@@ -34,10 +34,5 @@ export default function ProtectedRoute({
     return null;
   }
 
-  return (
-    <>
-      <AdminHeader userEmail={session?.user?.email || ""} />
-      <main className="container mx-auto px-4 py-8">{children}</main>
-    </>
-  );
+  return <>{children}</>;
 }

@@ -368,3 +368,37 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await connectDB();
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Purchase ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const deletedOrder = await PurchaseModel.findByIdAndDelete(id);
+
+    if (!deletedOrder) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Order deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    return NextResponse.json(
+      { error: "Failed to delete order" },
+      { status: 500 },
+    );
+  }
+}
