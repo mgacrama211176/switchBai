@@ -123,7 +123,9 @@ export function PricingCalculator() {
           <p className="text-base sm:text-lg text-gray-700 mb-2 px-4 sm:px-0">
             {pricingCalculator.subtitle}
           </p>
-          <p className="text-xs sm:text-sm text-gray-600 px-4 sm:px-0">{pricingCalculator.note}</p>
+          <p className="text-xs sm:text-sm text-gray-600 px-4 sm:px-0">
+            {pricingCalculator.note}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -189,7 +191,9 @@ export function PricingCalculator() {
 
                 {/* Calculated Duration Display */}
                 <div className="bg-funBlue text-white rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
-                  <div className="text-xs sm:text-sm font-semibold mb-1">Duration</div>
+                  <div className="text-xs sm:text-sm font-semibold mb-1">
+                    Duration
+                  </div>
                   <div className="text-xl sm:text-2xl font-black">
                     {rentalDays} {rentalDays === 1 ? "Day" : "Days"}
                   </div>
@@ -220,11 +224,15 @@ export function PricingCalculator() {
             {/* Current Selection Summary */}
             <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-gray-200">
               <div className="text-center">
-                <p className="text-xs sm:text-sm text-gray-700 mb-1">Selected Game</p>
+                <p className="text-xs sm:text-sm text-gray-700 mb-1">
+                  Selected Game
+                </p>
                 <p className="text-base sm:text-lg font-bold text-neutral">
                   {formatRentalPrice(selectedGamePrice)} Value
                 </p>
-                <p className="text-xs sm:text-sm text-gray-700 mt-2">Rental Period</p>
+                <p className="text-xs sm:text-sm text-gray-700 mt-2">
+                  Rental Period
+                </p>
                 <p className="text-xs sm:text-sm text-gray-600">
                   {new Date(startDate).toLocaleDateString()} -{" "}
                   {new Date(endDate).toLocaleDateString()}
@@ -235,13 +243,17 @@ export function PricingCalculator() {
 
           {/* Results Section */}
           <div className="bg-gradient-to-br from-funBlue to-blue-500 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl text-white transform -rotate-1 hover:rotate-0 transition-all duration-300">
-            <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Rental Breakdown</h3>
+            <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
+              Rental Breakdown
+            </h3>
 
             {calculation ? (
               <div className="space-y-6">
                 {/* Applied Plan */}
                 <div className="bg-white/20 rounded-lg sm:rounded-xl p-3 sm:p-4 backdrop-blur-sm">
-                  <div className="text-xs sm:text-sm text-white mb-1">Applied Plan</div>
+                  <div className="text-xs sm:text-sm text-white mb-1">
+                    Applied Plan
+                  </div>
                   <div className="text-lg sm:text-xl font-bold">
                     {calculation.appliedPlan}
                   </div>
@@ -251,7 +263,9 @@ export function PricingCalculator() {
                 <div className="bg-white/20 rounded-lg sm:rounded-xl p-3 sm:p-4 backdrop-blur-sm">
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="text-xs sm:text-sm text-white mb-1">Rental Fee</div>
+                      <div className="text-xs sm:text-sm text-white mb-1">
+                        Rental Fee
+                      </div>
                       <div className="text-[10px] sm:text-xs text-blue-100">
                         {rentalDays} {rentalDays === 1 ? "day" : "days"} rental
                       </div>

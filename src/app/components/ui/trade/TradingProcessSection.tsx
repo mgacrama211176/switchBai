@@ -45,40 +45,40 @@ const processDetails = [
 export function TradingProcessSection() {
   return (
     <SectionWrapper variant="dark">
-      <div className="w-full px-8 lg:px-12 xl:px-16 max-w-7xl mx-auto">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4 transform rotate-2">
+        <div className="text-center mb-8 sm:mb-12 md:mb-16">
+          <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold mb-3 sm:mb-4 transform rotate-2">
             🔄 Trading Process
           </div>
-          <h2 className="text-5xl font-black text-white mb-6 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-4 sm:mb-6 tracking-tight">
             Detailed Trading Process
           </h2>
-          <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto px-4 sm:px-0">
             Everything you need to know about how we handle game trades from
             start to finish
           </p>
         </div>
 
         {/* Process Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {processDetails.map((item, index) => (
             <div
               key={index}
-              className={`bg-white/10 backdrop-blur-lg rounded-2xl p-6 border-2 border-white/20 hover:border-green-400 transition-all duration-300 transform ${
+              className={`bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-white/20 hover:border-green-400 transition-all duration-300 transform ${
                 index % 2 === 0 ? "rotate-1" : "-rotate-1"
               } hover:rotate-0 hover:-translate-y-2`}
             >
               {/* Icon */}
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mb-4 mx-auto transform hover:rotate-12 transition-transform duration-300">
-                <span className="text-3xl">{item.icon}</span>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mb-3 sm:mb-4 mx-auto transform hover:rotate-12 transition-transform duration-300">
+                <span className="text-2xl sm:text-3xl">{item.icon}</span>
               </div>
 
               {/* Content */}
-              <h3 className="text-xl font-bold text-white mb-3 text-center">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3 text-center">
                 {item.title}
               </h3>
-              <p className="text-gray-300 text-sm leading-relaxed text-center">
+              <p className="text-gray-300 text-xs sm:text-sm leading-relaxed text-center">
                 {item.description}
               </p>
             </div>
@@ -86,26 +86,32 @@ export function TradingProcessSection() {
         </div>
 
         {/* Additional Info */}
-        <div className="mt-16 bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-white/20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+        <div className="mt-8 sm:mt-12 md:mt-16 bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border-2 border-white/20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-center">
             <div>
-              <div className="text-4xl mb-3">⏱️</div>
-              <h4 className="font-bold text-white mb-2">Quick Process</h4>
-              <p className="text-gray-300 text-sm">
+              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">⏱️</div>
+              <h4 className="font-bold text-white mb-2 text-sm sm:text-base">
+                Quick Process
+              </h4>
+              <p className="text-gray-300 text-xs sm:text-sm">
                 Most trades completed within 1-3 business days
               </p>
             </div>
             <div>
-              <div className="text-4xl mb-3">💳</div>
-              <h4 className="font-bold text-white mb-2">Flexible Payment</h4>
-              <p className="text-gray-300 text-sm">
+              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">💳</div>
+              <h4 className="font-bold text-white mb-2 text-sm sm:text-base">
+                Flexible Payment
+              </h4>
+              <p className="text-gray-300 text-xs sm:text-sm">
                 Cash, GCash, Maya, or Bank Transfer accepted
               </p>
             </div>
             <div>
-              <div className="text-4xl mb-3">📍</div>
-              <h4 className="font-bold text-white mb-2">Convenient Location</h4>
-              <p className="text-gray-300 text-sm">
+              <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">📍</div>
+              <h4 className="font-bold text-white mb-2 text-sm sm:text-base">
+                Convenient Location
+              </h4>
+              <p className="text-gray-300 text-xs sm:text-sm">
                 Meet-up or delivery options available
               </p>
             </div>

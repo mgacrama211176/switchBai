@@ -16,6 +16,7 @@ import {
   getPlatformInfo,
   getStockUrgency,
 } from "@/app/components/ui/home/game-utils";
+import { useCart } from "@/contexts/CartContext";
 
 const CATEGORIES = [
   "RPG",
@@ -76,9 +77,13 @@ const GamesPageContent = () => {
 
   // UI state
   const [showFilters, setShowFilters] = useState(false); // Mobile filter drawer
-  const [cartItems, setCartItems] = useState<string[]>([]);
   const [compareItems, setCompareItems] = useState<string[]>([]);
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
+  const [showCartTypeModal, setShowCartTypeModal] = useState(false);
+  const [pendingGame, setPendingGame] = useState<Game | null>(null);
+
+  // Cart context
+  const { addToCart, isInCart, cart } = useCart();
 
   // Load URL params on mount (for shared links)
   useEffect(() => {
@@ -181,7 +186,9 @@ const GamesPageContent = () => {
     } else if (filters.availability === "outOfStock") {
       filtered = filtered.filter((g) => g.gameAvailableStocks === 0);
     } else if (filters.availability === "onSale") {
-      filtered = filtered.filter((g) => g.isOnSale === true);
+      filtered = filtered.filter(
+        (g) => g.isOnSale === true && g.gameAvailableStocks > 0,
+      );
     }
 
     // Sort (client-side)
@@ -212,6 +219,26 @@ const GamesPageContent = () => {
 
     return filtered;
   }, [games, filters.priceRange, filters.availability, filters.sortBy]);
+
+  // Calculate client-side pagination based on filtered results
+  const clientTotalPages = Math.ceil(
+    filteredAndSortedGames.length / itemsPerPage,
+  );
+  const clientTotalGames = filteredAndSortedGames.length;
+
+  // Slice games for current page
+  const paginatedGames = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedGames.slice(startIndex, endIndex);
+  }, [filteredAndSortedGames, currentPage, itemsPerPage]);
+
+  // Reset to page 1 if current page exceeds total pages after filtering
+  useEffect(() => {
+    if (currentPage > clientTotalPages && clientTotalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, clientTotalPages]);
 
   // Filter Handlers (Real-time, automatic)
   const handleSearchChange = (value: string) => {
@@ -267,16 +294,29 @@ const GamesPageContent = () => {
     setCurrentPage(1);
   };
 
-  // Cart & Compare Handlers (No localStorage)
+  // Cart & Compare Handlers
   const handleAddToCart = (game: Game) => {
     if (game.gameAvailableStocks === 0) return;
 
-    setCartItems((prev) => {
-      if (prev.includes(game.gameBarcode)) {
-        return prev; // Already in cart
-      }
-      return [...prev, game.gameBarcode];
-    });
+    // If cart is empty, show type selection modal
+    if (cart.items.length === 0 || !cart.type) {
+      setPendingGame(game);
+      setShowCartTypeModal(true);
+      return;
+    }
+
+    // If cart has items, check if type matches
+    if (cart.type) {
+      addToCart(game, 1, cart.type);
+    }
+  };
+
+  const handleCartTypeSelection = (type: "purchase" | "rental") => {
+    if (pendingGame) {
+      addToCart(pendingGame, 1, type);
+      setPendingGame(null);
+      setShowCartTypeModal(false);
+    }
   };
 
   const handleAddToCompare = (game: Game) => {
@@ -294,9 +334,49 @@ const GamesPageContent = () => {
     });
   };
 
-  const isInCart = (barcode: string): boolean => cartItems.includes(barcode);
   const isInCompare = (barcode: string): boolean =>
     compareItems.includes(barcode);
+
+  // Cart Type Selection Modal Component
+  const CartTypeModal = () => {
+    if (!showCartTypeModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Select Cart Type
+          </h2>
+          <p className="text-gray-700 mb-6">
+            Would you like to purchase or rent this game?
+          </p>
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => handleCartTypeSelection("purchase")}
+              className="bg-gradient-to-r from-funBlue to-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              Purchase
+            </button>
+            <button
+              onClick={() => handleCartTypeSelection("rental")}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              Rent
+            </button>
+            <button
+              onClick={() => {
+                setShowCartTypeModal(false);
+                setPendingGame(null);
+              }}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 font-semibold"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Game Card Component (inline for now)
   const GameCard: React.FC<{
@@ -443,7 +523,8 @@ const GamesPageContent = () => {
             Browse All <span className="text-funBlue">Games</span>
           </h1>
           <p className="text-lg lg:text-xl text-gray-700 text-center mb-8">
-            Discover {totalGames}+ Nintendo Switch games for rent or purchase
+            Discover {clientTotalGames}+ Nintendo Switch games for rent or
+            purchase
           </p>
 
           {/* Search Bar */}
@@ -750,7 +831,7 @@ const GamesPageContent = () => {
                     <select
                       value={filters.sortBy}
                       onChange={(e) => handleSortChange(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent text-black"
                     >
                       <option value="newest">Newest First</option>
                       <option value="priceLow">Price: Low to High</option>
@@ -771,10 +852,12 @@ const GamesPageContent = () => {
                 <p className="text-gray-700">
                   Showing{" "}
                   <span className="font-bold text-gray-900">
-                    {filteredAndSortedGames.length}
+                    {paginatedGames.length}
                   </span>{" "}
                   of{" "}
-                  <span className="font-bold text-gray-900">{totalGames}</span>{" "}
+                  <span className="font-bold text-gray-900">
+                    {clientTotalGames}
+                  </span>{" "}
                   games
                 </p>
 
@@ -856,7 +939,7 @@ const GamesPageContent = () => {
               {/* Games Grid */}
               {!isLoading && !error && (
                 <>
-                  {filteredAndSortedGames.length === 0 ? (
+                  {paginatedGames.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
                         <svg
@@ -888,7 +971,7 @@ const GamesPageContent = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6">
-                      {filteredAndSortedGames.map((game) => (
+                      {paginatedGames.map((game) => (
                         <GameCard
                           key={game.gameBarcode}
                           game={game}
@@ -902,7 +985,7 @@ const GamesPageContent = () => {
                   )}
 
                   {/* Pagination */}
-                  {filteredAndSortedGames.length > 0 && totalPages > 1 && (
+                  {clientTotalGames > 0 && clientTotalPages > 1 && (
                     <div className="mt-12 flex flex-col items-center gap-4 text-black">
                       <div className="flex items-center gap-2 flex-wrap justify-center">
                         <button
@@ -917,12 +1000,12 @@ const GamesPageContent = () => {
 
                         {/* Page Numbers */}
                         <div className="flex gap-1">
-                          {[...Array(totalPages)].map((_, i) => {
+                          {[...Array(clientTotalPages)].map((_, i) => {
                             const pageNum = i + 1;
                             // Show first, last, current, and neighbors
                             if (
                               pageNum === 1 ||
-                              pageNum === totalPages ||
+                              pageNum === clientTotalPages ||
                               (pageNum >= currentPage - 1 &&
                                 pageNum <= currentPage + 1)
                             ) {
@@ -959,10 +1042,10 @@ const GamesPageContent = () => {
                         <button
                           onClick={() =>
                             setCurrentPage(
-                              Math.min(totalPages, currentPage + 1),
+                              Math.min(clientTotalPages, currentPage + 1),
                             )
                           }
-                          disabled={currentPage === totalPages}
+                          disabled={currentPage === clientTotalPages}
                           className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
                         >
                           Next
@@ -976,11 +1059,11 @@ const GamesPageContent = () => {
                         </span>{" "}
                         of{" "}
                         <span className="font-bold text-gray-900">
-                          {totalPages}
+                          {clientTotalPages}
                         </span>{" "}
                         (
                         <span className="font-bold text-gray-900">
-                          {totalGames}
+                          {clientTotalGames}
                         </span>{" "}
                         total games)
                       </p>
@@ -1027,8 +1110,11 @@ const GamesPageContent = () => {
         isOpen={isComparisonModalOpen}
         onClose={() => setIsComparisonModalOpen(false)}
         onAddToCart={handleAddToCart}
-        cartItems={cartItems}
+        cartItems={cart.items.map((item) => item.gameBarcode)}
       />
+
+      {/* Cart Type Selection Modal */}
+      <CartTypeModal />
 
       <Footer />
     </main>

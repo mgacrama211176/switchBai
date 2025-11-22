@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
+import { CartProvider } from "@/contexts/CartContext";
+import FloatingCartButton from "@/app/components/ui/globalUI/FloatingCartButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -79,7 +81,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} pt-24`}>{children}</body>
+      <body className={`${inter.className} pt-24`}>
+        <CartProvider>
+          {children}
+          <FloatingCartButton />
+        </CartProvider>
+      </body>
     </html>
   );
 }

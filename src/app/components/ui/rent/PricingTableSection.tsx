@@ -14,8 +14,12 @@ export function PricingTableSection() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-3 sm:mb-4">
             {pricingTable.title}
           </h2>
-          <p className="text-base sm:text-lg text-gray-700 mb-2 px-4 sm:px-0">{pricingTable.subtitle}</p>
-          <p className="text-xs sm:text-sm text-gray-600 px-4 sm:px-0">{pricingTable.note}</p>
+          <p className="text-base sm:text-lg text-gray-700 mb-2 px-4 sm:px-0">
+            {pricingTable.subtitle}
+          </p>
+          <p className="text-xs sm:text-sm text-gray-600 px-4 sm:px-0">
+            {pricingTable.note}
+          </p>
         </div>
 
         {/* Mobile Card Layout */}

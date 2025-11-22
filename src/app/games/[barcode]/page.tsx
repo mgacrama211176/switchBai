@@ -16,6 +16,7 @@ import {
   isNintendoSwitchGame,
 } from "@/app/components/ui/home/game-utils";
 import { calculateRentalPrice } from "@/lib/rental-pricing";
+import { useCart } from "@/contexts/CartContext";
 
 const GameDetailPage: React.FC = () => {
   const params = useParams();
@@ -26,6 +27,9 @@ const GameDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [showCartTypeModal, setShowCartTypeModal] = useState(false);
+
+  const { addToCart, cart } = useCart();
 
   useEffect(() => {
     loadGame();
@@ -282,11 +286,17 @@ const GameDetailPage: React.FC = () => {
 
               <div className="flex gap-2 sm:gap-3 text-black">
                 <button
-                  onClick={() =>
-                    router.push(
-                      `/purchase-form?game=${game.gameBarcode}&qty=${quantity}`,
-                    )
-                  }
+                  onClick={() => {
+                    if (cart.items.length === 0 || !cart.type) {
+                      setShowCartTypeModal(true);
+                    } else if (cart.type === "purchase") {
+                      addToCart(game, quantity, "purchase");
+                      router.push("/cart");
+                    } else {
+                      addToCart(game, quantity, "rental");
+                      router.push("/cart");
+                    }
+                  }}
                   disabled={game.gameAvailableStocks === 0}
                   className={`flex-1 min-h-[44px] py-3 px-4 sm:py-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg transition-all ${
                     game.gameAvailableStocks === 0
@@ -294,7 +304,9 @@ const GameDetailPage: React.FC = () => {
                       : "bg-gradient-to-r from-funBlue to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 shadow-lg hover:shadow-xl"
                   }`}
                 >
-                  {game.gameAvailableStocks === 0 ? "Out of Stock" : "Buy Now"}
+                  {game.gameAvailableStocks === 0
+                    ? "Out of Stock"
+                    : "Add to Cart"}
                 </button>
 
                 <button
@@ -384,12 +396,27 @@ const GameDetailPage: React.FC = () => {
 
                   {/* CTA Button */}
                   <button
-                    onClick={() =>
-                      router.push(`/rental-form?game=${game.gameBarcode}`)
-                    }
+                    onClick={() => {
+                      if (cart.items.length === 0 || !cart.type) {
+                        addToCart(game, 1, "rental");
+                      } else if (cart.type === "rental") {
+                        addToCart(game, 1, "rental");
+                      } else {
+                        if (
+                          confirm(
+                            "Your cart contains purchase items. Switch to rental? This will clear your cart.",
+                          )
+                        ) {
+                          addToCart(game, 1, "rental");
+                        } else {
+                          return;
+                        }
+                      }
+                      router.push("/cart");
+                    }}
                     className="w-full min-h-[44px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-2.5 sm:py-3 md:py-4 px-3 sm:px-4 md:px-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 text-sm sm:text-base"
                   >
-                    Fill Out Rental Details →
+                    Add to Rental Cart →
                   </button>
 
                   {/* Secondary Link */}
@@ -429,12 +456,27 @@ const GameDetailPage: React.FC = () => {
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-2.5 sm:p-3 md:hidden z-50 shadow-lg">
           <div className="flex gap-1.5 sm:gap-2 max-w-7xl mx-auto px-2 sm:px-3">
             <button
-              onClick={() =>
-                router.push(`/rental-form?game=${game.gameBarcode}`)
-              }
+              onClick={() => {
+                if (cart.items.length === 0 || !cart.type) {
+                  addToCart(game, 1, "rental");
+                } else if (cart.type === "rental") {
+                  addToCart(game, 1, "rental");
+                } else {
+                  if (
+                    confirm(
+                      "Your cart contains purchase items. Switch to rental? This will clear your cart.",
+                    )
+                  ) {
+                    addToCart(game, 1, "rental");
+                  } else {
+                    return;
+                  }
+                }
+                router.push("/cart");
+              }}
               className="flex-1 min-h-[44px] bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2.5 sm:py-3 px-2.5 sm:px-3 rounded-lg sm:rounded-xl font-bold shadow-lg active:scale-95 transition-transform text-xs sm:text-sm"
             >
-              Rent This Game
+              Add to Rental Cart
               <div className="text-[10px] sm:text-xs opacity-90 mt-0.5">
                 From ₱60/day
               </div>
@@ -445,6 +487,48 @@ const GameDetailPage: React.FC = () => {
 
       {/* Add padding to prevent content being hidden by sticky bar */}
       <div className="h-20 md:hidden"></div>
+
+      {/* Cart Type Selection Modal */}
+      {showCartTypeModal && game && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Select Cart Type
+            </h2>
+            <p className="text-gray-700 mb-6">
+              Would you like to purchase or rent this game?
+            </p>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={() => {
+                  addToCart(game, quantity, "purchase");
+                  setShowCartTypeModal(false);
+                  router.push("/cart");
+                }}
+                className="bg-gradient-to-r from-funBlue to-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
+              >
+                Purchase
+              </button>
+              <button
+                onClick={() => {
+                  addToCart(game, quantity, "rental");
+                  setShowCartTypeModal(false);
+                  router.push("/cart");
+                }}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
+              >
+                Rent
+              </button>
+              <button
+                onClick={() => setShowCartTypeModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </main>

@@ -30,7 +30,9 @@ export function RentalHeroSection() {
           {/* Trust Badge */}
           <div className="inline-flex items-center gap-2 bg-funBlue text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg border mb-4 sm:mb-6 transform -rotate-1 hover:rotate-0 transition-transform duration-300">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-xs sm:text-sm font-semibold">🎮 {hero.badge}</span>
+            <span className="text-xs sm:text-sm font-semibold">
+              🎮 {hero.badge}
+            </span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-4 sm:mb-6 tracking-tight relative leading-tight">
@@ -40,7 +42,9 @@ export function RentalHeroSection() {
               <span className="text-sm sm:text-base lg:text-lg">💰</span>
             </div>
             <div className="absolute -bottom-2 sm:-bottom-4 left-0 lg:left-8 w-8 h-8 sm:w-10 sm:h-10 bg-lameRed rounded-full flex items-center justify-center transform -rotate-12 shadow-lg opacity-80">
-              <span className="text-white font-bold text-[10px] sm:text-xs">RENT</span>
+              <span className="text-white font-bold text-[10px] sm:text-xs">
+                RENT
+              </span>
             </div>
           </h1>
 
@@ -101,7 +105,9 @@ export function RentalHeroSection() {
                   <p className="font-bold text-xs sm:text-sm text-gray-900">
                     {badge.text}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-gray-600">{badge.description}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-600">
+                    {badge.description}
+                  </p>
                 </div>
               </div>
             ))}

@@ -14,12 +14,39 @@ import {
   formatPrice,
   METRO_MANILA_CITIES,
 } from "@/lib/purchase-form-utils";
+import { useCart } from "@/contexts/CartContext";
 
 function PurchaseFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { addToCart, cart } = useCart();
   const gameBarcode = searchParams.get("game");
   const initialQuantity = parseInt(searchParams.get("qty") || "1");
+
+  // Redirect to cart if game is provided (backward compatibility)
+  useEffect(() => {
+    if (gameBarcode) {
+      // Add game to cart and redirect
+      const loadAndAddToCart = async () => {
+        try {
+          const response = await fetchGameByBarcode(gameBarcode);
+          if (response.success && response.data) {
+            const game = response.data;
+            // Set cart type to purchase if empty
+            if (cart.items.length === 0 || !cart.type) {
+              addToCart(game, initialQuantity, "purchase");
+            } else if (cart.type === "purchase") {
+              addToCart(game, initialQuantity, "purchase");
+            }
+            router.push("/cart");
+          }
+        } catch (error) {
+          console.error("Error loading game:", error);
+        }
+      };
+      loadAndAddToCart();
+    }
+  }, [gameBarcode, initialQuantity, addToCart, cart, router]);
 
   const [game, setGame] = useState<Game | null>(null);
   const [isLoading, setIsLoading] = useState(true);

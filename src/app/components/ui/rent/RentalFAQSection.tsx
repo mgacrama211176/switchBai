@@ -21,8 +21,12 @@ export function RentalFAQSection() {
           <div className="inline-block bg-success text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold mb-3 sm:mb-4 transform -rotate-2">
             ❓ FAQ
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-3 sm:mb-4">{faq.title}</h2>
-          <p className="text-base sm:text-lg text-gray-700 px-4 sm:px-0">{faq.subtitle}</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-3 sm:mb-4">
+            {faq.title}
+          </h2>
+          <p className="text-base sm:text-lg text-gray-700 px-4 sm:px-0">
+            {faq.subtitle}
+          </p>
         </div>
 
         {/* FAQ Accordion */}
@@ -81,7 +85,9 @@ export function RentalFAQSection() {
                 }`}
               >
                 <div className="px-4 sm:px-6 pb-4 sm:pb-6 pl-16 sm:pl-20 bg-gradient-to-b from-gray-50 to-white">
-                  <p className="text-gray-800 leading-relaxed text-sm sm:text-base">{item.answer}</p>
+                  <p className="text-gray-800 leading-relaxed text-sm sm:text-base">
+                    {item.answer}
+                  </p>
                 </div>
               </div>
             </div>

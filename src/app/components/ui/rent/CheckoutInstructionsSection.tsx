@@ -16,7 +16,9 @@ export function CheckoutInstructionsSection() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-3 sm:mb-4">
             {checkout.title}
           </h2>
-          <p className="text-base sm:text-lg text-gray-700 px-4 sm:px-0">{checkout.subtitle}</p>
+          <p className="text-base sm:text-lg text-gray-700 px-4 sm:px-0">
+            {checkout.subtitle}
+          </p>
         </div>
 
         {/* Steps */}
@@ -58,7 +60,9 @@ export function CheckoutInstructionsSection() {
                 } hover:rotate-0 hover:-translate-y-1`}
               >
                 <span className="text-xl sm:text-2xl">{method.icon}</span>
-                <span className="font-bold text-gray-900 text-sm sm:text-base">{method.name}</span>
+                <span className="font-bold text-gray-900 text-sm sm:text-base">
+                  {method.name}
+                </span>
               </div>
             ))}
           </div>
@@ -70,7 +74,9 @@ export function CheckoutInstructionsSection() {
             <h3 className="text-xl sm:text-2xl font-black text-neutral mb-2">
               {checkout.example.title}
             </h3>
-            <p className="text-sm sm:text-base text-gray-700">{checkout.example.subtitle}</p>
+            <p className="text-sm sm:text-base text-gray-700">
+              {checkout.example.subtitle}
+            </p>
           </div>
 
           <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6">
@@ -93,7 +99,9 @@ export function CheckoutInstructionsSection() {
                   <div className="w-7 h-7 sm:w-8 sm:h-8 bg-funBlue text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                     {index + 1}
                   </div>
-                  <span className="text-gray-800 font-medium text-xs sm:text-sm md:text-base">{step}</span>
+                  <span className="text-gray-800 font-medium text-xs sm:text-sm md:text-base">
+                    {step}
+                  </span>
                 </div>
               ))}
             </div>

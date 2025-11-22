@@ -17,6 +17,7 @@ import {
 import { getCachedGames, setCachedGames, CACHE_KEYS } from "@/lib/cache-utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 
 interface HeroSectionProps {
   initialGames: Game[];
@@ -24,7 +25,7 @@ interface HeroSectionProps {
 
 const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const router = useRouter();
-  const [cartItems, setCartItems] = useState<string[]>([]);
+  const { addToCart, isInCart, cart } = useCart();
   const [compareItems, setCompareItems] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
@@ -33,6 +34,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [error, setError] = useState<string | Error | null>(null);
   const [fallbackGames, setFallbackGames] = useState<Game[] | null>(null);
+  const [showCartTypeModal, setShowCartTypeModal] = useState(false);
+  const [pendingGame, setPendingGame] = useState<Game | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
   // Load games function with caching and error handling
@@ -99,14 +102,25 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const handleAddToCart = (game: Game) => {
     if (game.gameAvailableStocks === 0) return;
 
-    setCartItems((prev) => {
-      if (prev.includes(game.gameBarcode)) {
-        return prev;
-      }
-      return [...prev, game.gameBarcode];
-    });
+    // If cart is empty, show type selection modal
+    if (cart.items.length === 0 || !cart.type) {
+      setPendingGame(game);
+      setShowCartTypeModal(true);
+      return;
+    }
 
-    console.log("Added to cart:", game.gameTitle);
+    // If cart has items, check if type matches
+    if (cart.type) {
+      addToCart(game, 1, cart.type);
+    }
+  };
+
+  const handleCartTypeSelection = (type: "purchase" | "rental") => {
+    if (pendingGame) {
+      addToCart(pendingGame, 1, type);
+      setPendingGame(null);
+      setShowCartTypeModal(false);
+    }
   };
 
   const handleAddToCompare = (game: Game) => {
@@ -164,7 +178,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
     console.log("Navigate to /games/latest");
   };
 
-  const isInCart = (barcode: string): boolean => cartItems.includes(barcode);
   const isInCompare = (barcode: string): boolean =>
     compareItems.includes(barcode);
 
@@ -659,8 +672,45 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
           isOpen={isComparisonModalOpen}
           onClose={() => setIsComparisonModalOpen(false)}
           onAddToCart={handleAddToCart}
-          cartItems={cartItems}
+          cartItems={cart.items.map((item) => item.gameBarcode)}
         />
+
+        {/* Cart Type Selection Modal */}
+        {showCartTypeModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Select Cart Type
+              </h2>
+              <p className="text-gray-700 mb-6">
+                Would you like to purchase or rent this game?
+              </p>
+              <div className="flex flex-col gap-4">
+                <button
+                  onClick={() => handleCartTypeSelection("purchase")}
+                  className="bg-gradient-to-r from-funBlue to-blue-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Purchase
+                </button>
+                <button
+                  onClick={() => handleCartTypeSelection("rental")}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Rent
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCartTypeModal(false);
+                    setPendingGame(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-semibold"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -52,16 +52,16 @@ export function TradableGamesSection() {
 
   return (
     <SectionWrapper variant="light" id="tradable-games">
-      <div className="w-full px-8 lg:px-12 xl:px-16 max-w-7xl mx-auto">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4 transform rotate-2">
+        <div className="text-center mb-8 sm:mb-10 md:mb-12">
+          <div className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold mb-3 sm:mb-4 transform rotate-2">
             🎮 Games Open for Trade
           </div>
-          <h2 className="text-4xl font-black text-gray-900 mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 mb-3 sm:mb-4">
             Available Games for Trading
           </h2>
-          <p className="text-lg text-gray-700">
+          <p className="text-base sm:text-lg text-gray-700 px-4 sm:px-0">
             Browse our collection of games available for trade. Only games
             marked as tradable are shown here.
           </p>
@@ -158,10 +158,10 @@ export function TradableGamesSection() {
                     </Link>
 
                     {/* Card Content */}
-                    <div className="p-3 space-y-2">
+                    <div className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">
                       {/* Game Title */}
                       <div className="min-h-10 flex items-start">
-                        <h3 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-green-600 transition-colors duration-300 leading-tight">
+                        <h3 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-green-600 transition-colors duration-300 leading-tight">
                           {game.gameTitle}
                         </h3>
                       </div>
@@ -169,7 +169,7 @@ export function TradableGamesSection() {
                       {/* Platform Display */}
                       <div className="flex justify-center">
                         <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${platformInfo.color}`}
+                          className={`text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1 ${platformInfo.color}`}
                         >
                           <span>{platformInfo.icon}</span>
                           <span>{platformInfo.display}</span>
@@ -177,14 +177,14 @@ export function TradableGamesSection() {
                       </div>
 
                       {/* Pricing Section */}
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2 border border-green-100">
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-1.5 sm:p-2 border border-green-100">
                         <div className="space-y-1">
                           {game.isOnSale && game.salePrice ? (
                             <>
-                              <div className="text-base font-black text-red-600">
+                              <div className="text-sm sm:text-base font-black text-red-600">
                                 {formatPrice(game.salePrice)}
                               </div>
-                              <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center justify-between text-[10px] sm:text-xs">
                                 <div className="text-gray-500 line-through">
                                   {formatPrice(game.gamePrice)}
                                 </div>
@@ -195,11 +195,11 @@ export function TradableGamesSection() {
                             </>
                           ) : (
                             <>
-                              <div className="text-base font-black text-gray-900">
+                              <div className="text-sm sm:text-base font-black text-gray-900">
                                 {formatPrice(game.gamePrice)}
                               </div>
                               {savings.percentage > 0 && (
-                                <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center justify-between text-[10px] sm:text-xs">
                                   <div className="text-gray-500 line-through">
                                     {formatPrice(savings.original)}
                                   </div>
@@ -216,7 +216,7 @@ export function TradableGamesSection() {
                       {/* Stock Info */}
                       <div className="text-center">
                         <span
-                          className={`text-xs font-semibold px-2 py-1 rounded-full ${stockInfo.bgColor} ${stockInfo.color}`}
+                          className={`text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${stockInfo.bgColor} ${stockInfo.color}`}
                         >
                           {game.gameAvailableStocks} in stock
                         </span>
@@ -228,18 +228,18 @@ export function TradableGamesSection() {
             </div>
 
             {/* Call to Action */}
-            <div className="mt-12 text-center">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-200 max-w-2xl mx-auto">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="mt-8 sm:mt-10 md:mt-12 text-center">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-green-200 max-w-2xl mx-auto">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                   Interested in Trading?
                 </h3>
-                <p className="text-gray-700 mb-4">
+                <p className="text-sm sm:text-base text-gray-700 mb-4 px-4 sm:px-0">
                   Contact us to start your trade! We'll evaluate your games and
                   provide a fair trade quote.
                 </p>
                 <a
                   href="/contact"
-                  className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
+                  className="inline-block bg-gradient-to-r from-green-500 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 text-sm sm:text-base min-h-[44px] flex items-center justify-center"
                 >
                   Contact Us to Trade
                 </a>

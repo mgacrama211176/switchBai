@@ -3,9 +3,19 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Navigation from "@/app/components/ui/globalUI/Navigation";
 import Footer from "@/app/components/ui/globalUI/Footer";
 import { formatPrice, formatDate } from "@/lib/purchase-form-utils";
+import { fetchGameByBarcode } from "@/lib/api-client";
+import { Game } from "@/app/types/games";
+
+interface GameItem {
+  gameBarcode: string;
+  gameTitle: string;
+  gamePrice: number;
+  quantity: number;
+}
 
 interface PurchaseData {
   _id: string;
@@ -14,18 +24,18 @@ interface PurchaseData {
   customerPhone: string;
   customerEmail: string;
   customerFacebookUrl?: string;
-  gameTitle: string;
-  gameBarcode: string;
-  gamePrice: number;
-  quantity: number;
-  deliveryAddress: string;
-  deliveryCity: string;
-  deliveryLandmark: string;
+  games: GameItem[];
+  deliveryAddress?: string;
+  deliveryCity?: string;
+  deliveryLandmark?: string;
   deliveryNotes?: string;
   paymentMethod: string;
   subtotal: number;
   deliveryFee: number;
   totalAmount: number;
+  discountType?: "percentage" | "fixed";
+  discountValue?: number;
+  discountAmount?: number;
   status: string;
   orderSource: string;
   submittedAt: string;
@@ -37,6 +47,7 @@ function PurchaseConfirmationContent() {
   const [purchase, setPurchase] = useState<PurchaseData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [gameImages, setGameImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (purchaseId) {
@@ -66,6 +77,32 @@ function PurchaseConfirmationContent() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (purchase?.games && purchase.games.length > 0) {
+      const fetchGameImages = async () => {
+        const imageMap: Record<string, string> = {};
+        const promises = purchase.games.map(async (gameItem) => {
+          try {
+            const response = await fetchGameByBarcode(gameItem.gameBarcode);
+            if (response.success && response.data?.gameImageURL) {
+              imageMap[gameItem.gameBarcode] = response.data.gameImageURL;
+            }
+          } catch (err) {
+            console.error(
+              `Error fetching image for game ${gameItem.gameBarcode}:`,
+              err,
+            );
+          }
+        });
+
+        await Promise.all(promises);
+        setGameImages(imageMap);
+      };
+
+      fetchGameImages();
+    }
+  }, [purchase?.games]);
 
   const getPaymentMethodLabel = (method: string) => {
     switch (method) {
@@ -198,22 +235,64 @@ function PurchaseConfirmationContent() {
             </h2>
 
             <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-700">Game:</span>
-                <span className="font-semibold text-gray-900">
-                  {purchase.gameTitle}
-                </span>
+              {/* Games List */}
+              <div className="space-y-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  Games ({purchase.games.length} item
+                  {purchase.games.length !== 1 ? "s" : ""})
+                </h3>
+                {purchase.games.map((gameItem, index) => {
+                  const gameImage = gameImages[gameItem.gameBarcode];
+                  const lineTotal = gameItem.gamePrice * gameItem.quantity;
+
+                  return (
+                    <div
+                      key={`${gameItem.gameBarcode}-${index}`}
+                      className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <div className="relative w-20 h-28 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                        {gameImage ? (
+                          <Image
+                            src={gameImage}
+                            alt={gameItem.gameTitle}
+                            fill
+                            className="object-cover"
+                            sizes="80px"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
+                            <span className="text-gray-400 text-xs">
+                              No Image
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2">
+                          {gameItem.gameTitle}
+                        </h4>
+                        <p className="text-xs text-gray-500 mb-2 font-mono">
+                          {gameItem.gameBarcode}
+                        </p>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">
+                            Qty: {gameItem.quantity} ×{" "}
+                            {formatPrice(gameItem.gamePrice)}
+                          </span>
+                          <span className="font-bold text-funBlue">
+                            {formatPrice(lineTotal)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+
               <div className="flex justify-between">
-                <span className="text-gray-700">Quantity:</span>
+                <span className="text-gray-700">Total Quantity:</span>
                 <span className="font-semibold text-gray-900">
-                  {purchase.quantity}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Unit Price:</span>
-                <span className="font-semibold text-gray-900">
-                  {formatPrice(purchase.gamePrice)}
+                  {purchase.games.reduce((sum, g) => sum + g.quantity, 0)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -228,13 +307,40 @@ function PurchaseConfirmationContent() {
               </div>
 
               <div className="border-t-2 border-gray-200 pt-4 mt-4">
-                <div className="flex justify-between mb-2">
+                <div className="flex justify-between mb-2 text-black">
                   <span>Subtotal:</span>
                   <span className="font-bold">
                     {formatPrice(purchase.subtotal)}
                   </span>
                 </div>
-                <div className="flex justify-between mb-2">
+                {purchase.discountAmount && purchase.discountAmount > 0 && (
+                  <>
+                    <div className="flex justify-between mb-2 text-green-600 ">
+                      <span>
+                        Discount
+                        {purchase.discountType === "percentage" &&
+                          purchase.discountValue &&
+                          ` (${purchase.discountValue}%)`}
+                        {purchase.discountType === "fixed" &&
+                          purchase.discountValue &&
+                          ` (${formatPrice(purchase.discountValue)})`}
+                        :
+                      </span>
+                      <span className="font-bold">
+                        -{formatPrice(purchase.discountAmount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between mb-2 text-gray-600">
+                      <span>Subtotal after discount:</span>
+                      <span className="font-bold">
+                        {formatPrice(
+                          purchase.subtotal - purchase.discountAmount,
+                        )}
+                      </span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between mb-2 text-black">
                   <span>Delivery Fee:</span>
                   <span className="font-bold">
                     {formatPrice(purchase.deliveryFee)}
@@ -254,28 +360,44 @@ function PurchaseConfirmationContent() {
               Delivery Information
             </h2>
             <div className="space-y-2">
-              <p>
-                <span className="font-semibold text-gray-700">Address:</span>{" "}
-                <span className="text-gray-900">
-                  {purchase.deliveryAddress}
-                </span>
-              </p>
-              <p>
-                <span className="font-semibold text-gray-700">City:</span>{" "}
-                <span className="text-gray-900">{purchase.deliveryCity}</span>
-              </p>
-              <p>
-                <span className="font-semibold text-gray-700">Landmark:</span>{" "}
-                <span className="text-gray-900">
-                  {purchase.deliveryLandmark}
-                </span>
-              </p>
-              {purchase.deliveryNotes && (
-                <p>
-                  <span className="font-semibold text-gray-700">Notes:</span>{" "}
-                  <span className="text-gray-900">
-                    {purchase.deliveryNotes}
-                  </span>
+              {purchase.deliveryAddress ? (
+                <>
+                  <p>
+                    <span className="font-semibold text-gray-700">
+                      Address:
+                    </span>{" "}
+                    <span className="text-gray-900">
+                      {purchase.deliveryAddress}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-semibold text-gray-700">City:</span>{" "}
+                    <span className="text-gray-900">
+                      {purchase.deliveryCity}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-semibold text-gray-700">
+                      Landmark:
+                    </span>{" "}
+                    <span className="text-gray-900">
+                      {purchase.deliveryLandmark}
+                    </span>
+                  </p>
+                  {purchase.deliveryNotes && (
+                    <p>
+                      <span className="font-semibold text-gray-700">
+                        Notes:
+                      </span>{" "}
+                      <span className="text-gray-900">
+                        {purchase.deliveryNotes}
+                      </span>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-gray-600 italic">
+                  No delivery address provided
                 </p>
               )}
             </div>
@@ -326,13 +448,22 @@ function PurchaseConfirmationContent() {
                   <span className="text-xs font-bold text-blue-700">1</span>
                 </div>
                 <p>
+                  <strong>Someone from our team will contact you</strong> via
+                  phone or email to process your order and confirm the details.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-blue-700">2</span>
+                </div>
+                <p>
                   We will send you a <strong>text message</strong> and{" "}
                   <strong>email</strong> to confirm your order within 24 hours.
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-blue-700">2</span>
+                  <span className="text-xs font-bold text-blue-700">3</span>
                 </div>
                 <p>
                   Once confirmed, we'll prepare your order and arrange delivery
@@ -341,7 +472,7 @@ function PurchaseConfirmationContent() {
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-blue-700">3</span>
+                  <span className="text-xs font-bold text-blue-700">4</span>
                 </div>
                 <p>
                   You'll receive tracking information when your order ships.

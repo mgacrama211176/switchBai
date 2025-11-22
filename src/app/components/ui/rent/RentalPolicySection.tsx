@@ -25,7 +25,9 @@ export function RentalPolicySection() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-3 sm:mb-4">
             {policies.title}
           </h2>
-          <p className="text-base sm:text-lg text-gray-700 px-4 sm:px-0">{policies.subtitle}</p>
+          <p className="text-base sm:text-lg text-gray-700 px-4 sm:px-0">
+            {policies.subtitle}
+          </p>
         </div>
 
         {/* Accordion */}
@@ -90,8 +92,12 @@ export function RentalPolicySection() {
                         key={idx}
                         className="flex items-start gap-2 sm:gap-3 text-gray-800"
                       >
-                        <span className="text-funBlue font-bold mt-1 flex-shrink-0">•</span>
-                        <span className="flex-1 leading-relaxed text-sm sm:text-base">{item}</span>
+                        <span className="text-funBlue font-bold mt-1 flex-shrink-0">
+                          •
+                        </span>
+                        <span className="flex-1 leading-relaxed text-sm sm:text-base">
+                          {item}
+                        </span>
                       </li>
                     ))}
                   </ul>
