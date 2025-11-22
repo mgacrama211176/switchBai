@@ -10,12 +10,12 @@ export function PricingTableSection() {
     <SectionWrapper variant="white">
       <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-black text-neutral mb-4">
+        <div className="text-center mb-8 sm:mb-10 md:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-3 sm:mb-4">
             {pricingTable.title}
           </h2>
-          <p className="text-lg text-gray-700 mb-2">{pricingTable.subtitle}</p>
-          <p className="text-sm text-gray-600">{pricingTable.note}</p>
+          <p className="text-base sm:text-lg text-gray-700 mb-2 px-4 sm:px-0">{pricingTable.subtitle}</p>
+          <p className="text-xs sm:text-sm text-gray-600 px-4 sm:px-0">{pricingTable.note}</p>
         </div>
 
         {/* Mobile Card Layout */}
@@ -35,53 +35,53 @@ export function PricingTableSection() {
               )}
 
               {/* Card Header */}
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
+              <div className="text-center mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
                   {row.tier}
                 </h3>
-                <p className="text-sm text-gray-700">
+                <p className="text-xs sm:text-sm text-gray-700">
                   {formatPrice(row.gameValue)} value
                 </p>
               </div>
 
               {/* Rates Grid */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {/* Daily Rate */}
-                <div className="text-center p-4 bg-blue-50 rounded-xl">
-                  <div className="text-2xl font-black text-funBlue mb-1">
+                <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-lg sm:rounded-xl">
+                  <div className="text-xl sm:text-2xl font-black text-funBlue mb-1">
                     {formatPrice(row.dailyRate)}
                   </div>
-                  <div className="text-xs text-gray-700 font-semibold">
+                  <div className="text-[10px] sm:text-xs text-gray-700 font-semibold">
                     Daily
                   </div>
                 </div>
 
                 {/* Weekly Rate */}
-                <div className="text-center p-4 bg-green-50 rounded-xl">
-                  <div className="text-2xl font-black text-green-600 mb-1">
+                <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg sm:rounded-xl">
+                  <div className="text-xl sm:text-2xl font-black text-green-600 mb-1">
                     {formatPrice(row.weeklyRate)}
                   </div>
-                  <div className="text-xs text-gray-700 font-semibold">
+                  <div className="text-[10px] sm:text-xs text-gray-700 font-semibold">
                     Weekly
                   </div>
                 </div>
 
                 {/* Bi-Weekly Rate */}
-                <div className="text-center p-4 bg-red-50 rounded-xl">
-                  <div className="text-2xl font-black text-lameRed mb-1">
+                <div className="text-center p-3 sm:p-4 bg-red-50 rounded-lg sm:rounded-xl">
+                  <div className="text-xl sm:text-2xl font-black text-lameRed mb-1">
                     {formatPrice(row.biWeeklyRate)}
                   </div>
-                  <div className="text-xs text-gray-700 font-semibold">
+                  <div className="text-[10px] sm:text-xs text-gray-700 font-semibold">
                     Bi-Weekly
                   </div>
                 </div>
 
                 {/* Monthly Rate */}
-                <div className="text-center p-4 bg-purple-50 rounded-xl">
-                  <div className="text-2xl font-black text-purple-600 mb-1">
+                <div className="text-center p-3 sm:p-4 bg-purple-50 rounded-lg sm:rounded-xl">
+                  <div className="text-xl sm:text-2xl font-black text-purple-600 mb-1">
                     {formatPrice(row.monthlyRate)}
                   </div>
-                  <div className="text-xs text-gray-700 font-semibold">
+                  <div className="text-[10px] sm:text-xs text-gray-700 font-semibold">
                     Monthly
                   </div>
                 </div>
@@ -157,9 +157,9 @@ export function PricingTableSection() {
         </div>
 
         {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-12">
-          <div className="bg-gradient-to-r from-funBlue/10 to-blue-100 rounded-xl p-4 md:p-6 border border-funBlue transform rotate-1 hover:rotate-0 transition-all duration-300">
-            <div className="text-2xl md:text-3xl mb-3">💰</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 sm:mt-8 md:mt-12">
+          <div className="bg-gradient-to-r from-funBlue/10 to-blue-100 rounded-lg sm:rounded-xl p-4 md:p-6 border border-funBlue transform rotate-1 hover:rotate-0 transition-all duration-300">
+            <div className="text-2xl md:text-3xl mb-2 sm:mb-3">💰</div>
             <h3 className="font-bold text-neutral mb-2 text-sm md:text-base">
               Pay Upfront
             </h3>
@@ -168,8 +168,8 @@ export function PricingTableSection() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl p-4 md:p-6 border border-success transform -rotate-1 hover:rotate-0 transition-all duration-300">
-            <div className="text-2xl md:text-3xl mb-3">✅</div>
+          <div className="bg-gradient-to-r from-green-50 to-emerald-100 rounded-lg sm:rounded-xl p-4 md:p-6 border border-success transform -rotate-1 hover:rotate-0 transition-all duration-300">
+            <div className="text-2xl md:text-3xl mb-2 sm:mb-3">✅</div>
             <h3 className="font-bold text-neutral mb-2 text-sm md:text-base">
               Full Refund
             </h3>
@@ -178,8 +178,8 @@ export function PricingTableSection() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-100 rounded-xl p-4 md:p-6 border border-orange-300 transform rotate-2 hover:rotate-0 transition-all duration-300">
-            <div className="text-2xl md:text-3xl mb-3">🔄</div>
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-100 rounded-lg sm:rounded-xl p-4 md:p-6 border border-orange-300 transform rotate-2 hover:rotate-0 transition-all duration-300">
+            <div className="text-2xl md:text-3xl mb-2 sm:mb-3">🔄</div>
             <h3 className="font-bold text-neutral mb-2 text-sm md:text-base">
               Best Rate Applied
             </h3>

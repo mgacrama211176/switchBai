@@ -21,9 +21,9 @@ export async function GET(
     const upperOrderNumber = orderNumber.toUpperCase().trim();
 
     // Find purchase by order number
-    const purchase = await PurchaseModel.findOne({
+    const purchase = (await PurchaseModel.findOne({
       orderNumber: upperOrderNumber,
-    }).lean() as IPurchase | null;
+    }).lean()) as IPurchase | null;
 
     if (!purchase) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });

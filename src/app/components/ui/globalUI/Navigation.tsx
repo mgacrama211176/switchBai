@@ -8,7 +8,6 @@ import {
   HiX,
   HiInformationCircle,
   HiMail,
-  HiSearch,
   HiSwitchHorizontal,
   HiChevronDown,
   HiClipboardList,
@@ -34,7 +33,6 @@ interface NavigationItem {
 const Navigation: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [prevScrollPos, setPrevScrollPos] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -125,16 +123,16 @@ const Navigation: React.FC = () => {
       ],
     },
     {
-      name: "Track Order",
-      href: "/track-order",
-      icon: <HiClipboardList className="w-6 h-6" />,
-      description: "Track your order status",
-    },
-    {
       name: "About SwitchBai",
       href: "/about",
       icon: <HiInformationCircle className="w-6 h-6" />,
       description: "Learn more about us",
+    },
+    {
+      name: "Track Order",
+      href: "/track-order",
+      icon: <HiClipboardList className="w-6 h-6" />,
+      description: "Track your order status",
     },
     {
       name: "Contact Us",
@@ -156,14 +154,6 @@ const Navigation: React.FC = () => {
 
   const handleMobileMenuClose = () => {
     setIsMobileMenuOpen(false);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Handle search functionality here
-      console.log("Searching for:", searchQuery);
-    }
   };
 
   return (
@@ -197,7 +187,7 @@ const Navigation: React.FC = () => {
               </div>
             </Link>
 
-            {/* Desktop Navigation with Search - Centered */}
+            {/* Desktop Navigation - Centered */}
             <div className="hidden md:flex items-center space-x-4 absolute left-1/2 transform -translate-x-1/2">
               {/* Navigation Items */}
               {navigationItems.map((item) =>
@@ -273,23 +263,6 @@ const Navigation: React.FC = () => {
                   </Link>
                 ),
               )}
-
-              {/* Search Bar */}
-              <form
-                onSubmit={handleSearchSubmit}
-                className="relative text-black"
-              >
-                <div className="relative">
-                  <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search games..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-64 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue/20 focus:border-blue transition-all duration-300 text-sm bg-gray-50/50 hover:bg-white"
-                  />
-                </div>
-              </form>
             </div>
 
             {/* Mobile menu button */}
@@ -322,20 +295,6 @@ const Navigation: React.FC = () => {
         >
           <div className="border-t border-gray-300 bg-white shadow-lg">
             <div className="px-5 pt-5 pb-6 space-y-3 overflow-y-auto max-h-[calc(100vh-80px)]">
-              {/* Mobile Search */}
-              <form onSubmit={handleSearchSubmit} className="mb-2">
-                <div className="relative">
-                  <HiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search games..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 pr-4 py-3.5 w-full border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue/20 focus:border-blue transition-all duration-200 bg-gray-50 hover:bg-white"
-                  />
-                </div>
-              </form>
-
               {/* Mobile Navigation Items */}
               {navigationItems.map((item, index) => (
                 <div key={item.name}>

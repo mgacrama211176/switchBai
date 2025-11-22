@@ -111,37 +111,37 @@ export function PricingCalculator() {
 
   return (
     <SectionWrapper variant="white">
-      <div className="w-full px-8 lg:px-12 xl:px-16 max-w-6xl mx-auto">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-block bg-funBlue text-white px-4 py-2 rounded-full text-sm font-bold mb-4 transform -rotate-2">
+        <div className="text-center mb-8 sm:mb-10 md:mb-12">
+          <div className="inline-block bg-funBlue text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold mb-3 sm:mb-4 transform -rotate-2">
             💰 PRICING CALCULATOR
           </div>
-          <h2 className="text-4xl font-black text-neutral mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-3 sm:mb-4">
             {pricingCalculator.title}
           </h2>
-          <p className="text-lg text-gray-700 mb-2">
+          <p className="text-base sm:text-lg text-gray-700 mb-2 px-4 sm:px-0">
             {pricingCalculator.subtitle}
           </p>
-          <p className="text-sm text-gray-600">{pricingCalculator.note}</p>
+          <p className="text-xs sm:text-sm text-gray-600 px-4 sm:px-0">{pricingCalculator.note}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Section */}
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl p-8 shadow-lg border-2 border-gray-200 transform rotate-1 hover:rotate-0 transition-all duration-300">
-            <h3 className="text-2xl font-bold text-neutral mb-6">
+          <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-lg border-2 border-gray-200 transform rotate-1 hover:rotate-0 transition-all duration-300">
+            <h3 className="text-xl sm:text-2xl font-bold text-neutral mb-4 sm:mb-6">
               Rental Details
             </h3>
 
             {/* Game Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
                 {pricingCalculator.gamePriceLabel}
               </label>
               <select
                 value={selectedGamePrice}
                 onChange={handleGameChange}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-funBlue focus:border-transparent transition-all duration-300 text-lg font-semibold text-gray-600"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-funBlue focus:border-transparent transition-all duration-300 text-base sm:text-lg font-semibold text-gray-600 min-h-[44px]"
               >
                 {gameTiers.map((tier) => (
                   <option key={tier.value} value={tier.value}>
@@ -158,7 +158,7 @@ export function PricingCalculator() {
               </label>
               <div className="space-y-4">
                 {/* Date Inputs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-2">
                       Start Date
@@ -169,7 +169,7 @@ export function PricingCalculator() {
                       onChange={handleStartDateChange}
                       min={today}
                       max={maxStartDateStr}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-funBlue focus:border-transparent transition-all duration-300 text-lg font-semibold"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-funBlue focus:border-transparent transition-all duration-300 text-base sm:text-lg font-semibold min-h-[44px]"
                     />
                   </div>
                   <div>
@@ -182,15 +182,15 @@ export function PricingCalculator() {
                       onChange={handleEndDateChange}
                       min={minEndDateStr}
                       max={maxEndDateStr}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-funBlue focus:border-transparent transition-all duration-300 text-lg font-semibold"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-funBlue focus:border-transparent transition-all duration-300 text-base sm:text-lg font-semibold min-h-[44px]"
                     />
                   </div>
                 </div>
 
                 {/* Calculated Duration Display */}
-                <div className="bg-funBlue text-white rounded-xl p-4 text-center">
-                  <div className="text-sm font-semibold mb-1">Duration</div>
-                  <div className="text-2xl font-black">
+                <div className="bg-funBlue text-white rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
+                  <div className="text-xs sm:text-sm font-semibold mb-1">Duration</div>
+                  <div className="text-xl sm:text-2xl font-black">
                     {rentalDays} {rentalDays === 1 ? "Day" : "Days"}
                   </div>
                 </div>
@@ -201,7 +201,7 @@ export function PricingCalculator() {
                     <button
                       key={option.value}
                       onClick={() => handleDurationOptionClick(option.value)}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                      className={`px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base min-h-[44px] ${
                         rentalDays === option.value
                           ? "bg-funBlue text-white shadow-lg"
                           : "bg-white text-gray-700 border-2 border-gray-300 hover:border-funBlue hover:text-funBlue"
@@ -218,14 +218,14 @@ export function PricingCalculator() {
             </div>
 
             {/* Current Selection Summary */}
-            <div className="bg-white rounded-xl p-4 border-2 border-gray-200">
+            <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-gray-200">
               <div className="text-center">
-                <p className="text-sm text-gray-700 mb-1">Selected Game</p>
-                <p className="text-lg font-bold text-neutral">
+                <p className="text-xs sm:text-sm text-gray-700 mb-1">Selected Game</p>
+                <p className="text-base sm:text-lg font-bold text-neutral">
                   {formatRentalPrice(selectedGamePrice)} Value
                 </p>
-                <p className="text-sm text-gray-700 mt-2">Rental Period</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-700 mt-2">Rental Period</p>
+                <p className="text-xs sm:text-sm text-gray-600">
                   {new Date(startDate).toLocaleDateString()} -{" "}
                   {new Date(endDate).toLocaleDateString()}
                 </p>
@@ -234,61 +234,61 @@ export function PricingCalculator() {
           </div>
 
           {/* Results Section */}
-          <div className="bg-gradient-to-br from-funBlue to-blue-500 rounded-3xl p-8 shadow-2xl text-white transform -rotate-1 hover:rotate-0 transition-all duration-300">
-            <h3 className="text-2xl font-bold mb-6">Rental Breakdown</h3>
+          <div className="bg-gradient-to-br from-funBlue to-blue-500 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl text-white transform -rotate-1 hover:rotate-0 transition-all duration-300">
+            <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Rental Breakdown</h3>
 
             {calculation ? (
               <div className="space-y-6">
                 {/* Applied Plan */}
-                <div className="bg-white/20 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="text-sm text-white mb-1">Applied Plan</div>
-                  <div className="text-xl font-bold">
+                <div className="bg-white/20 rounded-lg sm:rounded-xl p-3 sm:p-4 backdrop-blur-sm">
+                  <div className="text-xs sm:text-sm text-white mb-1">Applied Plan</div>
+                  <div className="text-lg sm:text-xl font-bold">
                     {calculation.appliedPlan}
                   </div>
                 </div>
 
                 {/* Rental Fee */}
-                <div className="bg-white/20 rounded-xl p-4 backdrop-blur-sm">
+                <div className="bg-white/20 rounded-lg sm:rounded-xl p-3 sm:p-4 backdrop-blur-sm">
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="text-sm text-white mb-1">Rental Fee</div>
-                      <div className="text-xs text-blue-100">
+                      <div className="text-xs sm:text-sm text-white mb-1">Rental Fee</div>
+                      <div className="text-[10px] sm:text-xs text-blue-100">
                         {rentalDays} {rentalDays === 1 ? "day" : "days"} rental
                       </div>
                     </div>
-                    <div className="text-2xl font-black">
+                    <div className="text-xl sm:text-2xl font-black">
                       {formatRentalPrice(calculation.rentalFee)}
                     </div>
                   </div>
                 </div>
 
                 {/* Deposit */}
-                <div className="bg-white/20 rounded-xl p-4 backdrop-blur-sm">
+                <div className="bg-white/20 rounded-lg sm:rounded-xl p-3 sm:p-4 backdrop-blur-sm">
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="text-sm text-white mb-1">
+                      <div className="text-xs sm:text-sm text-white mb-1">
                         Refundable Deposit
                       </div>
-                      <div className="text-xs text-blue-100">
+                      <div className="text-[10px] sm:text-xs text-blue-100">
                         Returned when game is returned
                       </div>
                     </div>
-                    <div className="text-2xl font-black">
+                    <div className="text-xl sm:text-2xl font-black">
                       {formatRentalPrice(calculation.deposit)}
                     </div>
                   </div>
                 </div>
 
                 {/* Total Due */}
-                <div className="bg-white rounded-xl p-6 text-neutral">
+                <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 text-neutral">
                   <div className="text-center">
-                    <div className="text-sm text-gray-700 mb-2">
+                    <div className="text-xs sm:text-sm text-gray-700 mb-2">
                       Total Due Upfront
                     </div>
-                    <div className="text-4xl font-black text-neutral mb-2">
+                    <div className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral mb-2">
                       {formatRentalPrice(calculation.totalDue)}
                     </div>
-                    <div className="text-sm text-gray-700">
+                    <div className="text-xs sm:text-sm text-gray-700">
                       You get back {formatRentalPrice(calculation.deposit)}{" "}
                       after return
                     </div>
@@ -296,21 +296,21 @@ export function PricingCalculator() {
                 </div>
 
                 {/* Promo Message */}
-                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-xl p-4 text-neutral">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-lg sm:rounded-xl p-3 sm:p-4 text-neutral">
                   <div className="text-center">
-                    <div className="text-sm font-bold mb-1">🎉</div>
-                    <div className="text-sm font-semibold">
+                    <div className="text-xs sm:text-sm font-bold mb-1">🎉</div>
+                    <div className="text-xs sm:text-sm font-semibold">
                       {calculation.promoMessage}
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="space-y-3">
-                  <button className="w-full bg-white text-funBlue font-bold py-3 px-6 rounded-xl hover:bg-gray-100 transition-colors duration-300 shadow-lg">
+                <div className="space-y-2 sm:space-y-3">
+                  <button className="w-full bg-white text-funBlue font-bold py-3 px-6 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-colors duration-300 shadow-lg text-sm sm:text-base min-h-[44px]">
                     Contact Us to Rent
                   </button>
-                  <button className="w-full bg-white/20 text-white font-bold py-3 px-6 rounded-xl hover:bg-white/30 transition-colors duration-300 border-2 border-white/30">
+                  <button className="w-full bg-white/20 text-white font-bold py-3 px-6 rounded-lg sm:rounded-xl hover:bg-white/30 transition-colors duration-300 border-2 border-white/30 text-sm sm:text-base min-h-[44px]">
                     Browse Available Games
                   </button>
                 </div>
@@ -325,12 +325,12 @@ export function PricingCalculator() {
         </div>
 
         {/* Additional Info */}
-        <div className="mt-12 bg-gradient-to-r from-green-50 to-emerald-100 rounded-2xl p-6 border-2 border-green-200">
+        <div className="mt-8 sm:mt-10 md:mt-12 bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-green-200">
           <div className="text-center">
-            <h4 className="text-lg font-bold text-gray-900 mb-2">
+            <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-2">
               💡 How Our Pricing Works
             </h4>
-            <p className="text-gray-800 text-sm leading-relaxed max-w-3xl mx-auto">
+            <p className="text-gray-800 text-xs sm:text-sm leading-relaxed max-w-3xl mx-auto px-4 sm:px-0">
               We automatically apply the best rate for your rental duration. For
               1-6 days, you pay the daily rate. For 7+ days, we apply weekly,
               bi-weekly, or monthly rates with pro-rated calculations. No need
