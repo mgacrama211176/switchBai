@@ -11,6 +11,7 @@ import {
   HiUser,
   HiPencil,
   HiCheck,
+  HiClipboardCopy,
 } from "react-icons/hi";
 import UpdateOrderStatusModal from "./UpdateOrderStatusModal";
 import Toast from "./Toast";
@@ -328,6 +329,23 @@ export default function OrderDetailsModal({
     setIsEditing(false);
   }
 
+  async function handleCopyTrackingLink() {
+    try {
+      const trackingUrl = `${window.location.origin}/track-order?ordernumber=${currentOrder.orderNumber}`;
+      await navigator.clipboard.writeText(trackingUrl);
+      setToast({
+        message: "Tracking link copied to clipboard!",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Failed to copy tracking link:", error);
+      setToast({
+        message: "Failed to copy tracking link. Please try again.",
+        type: "error",
+      });
+    }
+  }
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -360,8 +378,17 @@ export default function OrderDetailsModal({
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-funBlue">
-                  {currentOrder.orderNumber}
+                <div className="flex items-center justify-end gap-2 mb-1">
+                  <div className="text-2xl font-bold text-funBlue">
+                    {currentOrder.orderNumber}
+                  </div>
+                  <button
+                    onClick={handleCopyTrackingLink}
+                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                    title="Copy tracking link"
+                  >
+                    <HiClipboardCopy className="w-5 h-5 text-funBlue group-hover:text-blue-600" />
+                  </button>
                 </div>
                 <div className="text-sm text-gray-500">
                   Submitted: {formatDate(currentOrder.submittedAt)}

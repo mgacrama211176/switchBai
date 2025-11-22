@@ -11,6 +11,7 @@ import {
   HiSearch,
   HiSwitchHorizontal,
   HiChevronDown,
+  HiClipboardList,
 } from "react-icons/hi";
 import { PiGameControllerThin } from "react-icons/pi";
 import { RiParentLine } from "react-icons/ri";
@@ -122,6 +123,12 @@ const Navigation: React.FC = () => {
           description: "Trade your games with us",
         },
       ],
+    },
+    {
+      name: "Track Order",
+      href: "/track-order",
+      icon: <HiClipboardList className="w-6 h-6" />,
+      description: "Track your order status",
     },
     {
       name: "About SwitchBai",

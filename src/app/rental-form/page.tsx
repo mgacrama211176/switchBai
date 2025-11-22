@@ -260,7 +260,9 @@ function RentalFormContent() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
               Game Not Found
             </h1>
-            <p className="text-sm sm:text-base text-gray-700 mb-6 sm:mb-8">{error}</p>
+            <p className="text-sm sm:text-base text-gray-700 mb-6 sm:mb-8">
+              {error}
+            </p>
             <Link
               href="/games"
               className="inline-block min-h-[44px] bg-funBlue text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors text-sm sm:text-base"
@@ -634,7 +636,9 @@ function RentalFormContent() {
                 <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-800">
                   <div className="flex justify-between">
                     <span>Game:</span>
-                    <span className="font-semibold text-right ml-2">{game.gameTitle}</span>
+                    <span className="font-semibold text-right ml-2">
+                      {game.gameTitle}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Duration:</span>

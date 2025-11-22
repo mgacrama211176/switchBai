@@ -256,9 +256,9 @@ const GameDetailPage: React.FC = () => {
                               1,
                               Math.min(
                                 game.gameAvailableStocks,
-                                Number(e.target.value)
-                              )
-                            )
+                                Number(e.target.value),
+                              ),
+                            ),
                           )
                         }
                         className="w-14 h-9 sm:w-16 sm:h-10 text-center border border-gray-300 rounded-lg font-semibold text-sm sm:text-base"
@@ -268,7 +268,7 @@ const GameDetailPage: React.FC = () => {
                       <button
                         onClick={() =>
                           setQuantity(
-                            Math.min(game.gameAvailableStocks, quantity + 1)
+                            Math.min(game.gameAvailableStocks, quantity + 1),
                           )
                         }
                         className="min-w-[44px] min-h-[44px] w-9 h-9 sm:w-10 sm:h-10 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold transition-colors text-sm sm:text-base"
@@ -284,7 +284,7 @@ const GameDetailPage: React.FC = () => {
                 <button
                   onClick={() =>
                     router.push(
-                      `/purchase-form?game=${game.gameBarcode}&qty=${quantity}`
+                      `/purchase-form?game=${game.gameBarcode}&qty=${quantity}`,
                     )
                   }
                   disabled={game.gameAvailableStocks === 0}
@@ -330,7 +330,7 @@ const GameDetailPage: React.FC = () => {
                         {(() => {
                           const config = calculateRentalPrice(
                             game.gamePrice,
-                            7
+                            7,
                           );
                           return formatPrice(config.rentalFee);
                         })()}
@@ -344,7 +344,7 @@ const GameDetailPage: React.FC = () => {
                         {(() => {
                           const config = calculateRentalPrice(
                             game.gamePrice,
-                            14
+                            14,
                           );
                           return formatPrice(config.rentalFee);
                         })()}
@@ -358,7 +358,7 @@ const GameDetailPage: React.FC = () => {
                         {(() => {
                           const config = calculateRentalPrice(
                             game.gamePrice,
-                            30
+                            30,
                           );
                           return formatPrice(config.rentalFee);
                         })()}

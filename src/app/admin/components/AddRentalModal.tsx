@@ -47,7 +47,7 @@ export default function AddRentalModal({
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [customerIdImageUrl, setCustomerIdImageUrl] = useState("");
   const [discountType, setDiscountType] = useState<"percentage" | "fixed" | "">(
-    ""
+    "",
   );
   const [discountValue, setDiscountValue] = useState<number | "">("");
 
@@ -166,7 +166,7 @@ export default function AddRentalModal({
       .filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.toLowerCase().includes(searchLower)
+          game.gameBarcode.toLowerCase().includes(searchLower),
       )
       .slice(0, 10); // Limit to 10 results
   }
@@ -189,7 +189,7 @@ export default function AddRentalModal({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setSelectedGameIndex((prev) =>
-        prev < filtered.length - 1 ? prev + 1 : prev
+        prev < filtered.length - 1 ? prev + 1 : prev,
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -558,7 +558,7 @@ export default function AddRentalModal({
                       value={discountType}
                       onChange={(e) => {
                         setDiscountType(
-                          e.target.value as "percentage" | "fixed" | ""
+                          e.target.value as "percentage" | "fixed" | "",
                         );
                         if (e.target.value === "") {
                           setDiscountValue("");
