@@ -17,14 +17,20 @@ export async function GET(request: NextRequest) {
     // Filter by platform (handle multiple comma-separated values)
     const platform = searchParams.get("platform");
     if (platform) {
-      const platforms = platform.split(",").map((p) => p.trim()).filter(Boolean);
+      const platforms = platform
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
       query.gamePlatform = { $in: platforms };
     }
 
     // Filter by category (handle multiple comma-separated values)
     const category = searchParams.get("category");
     if (category) {
-      const categories = category.split(",").map((c) => c.trim()).filter(Boolean);
+      const categories = category
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
       query.gameCategory = { $in: categories };
     }
 
@@ -63,9 +69,7 @@ export async function GET(request: NextRequest) {
     if (nintendoOnly) {
       // For Nintendo-only filter, we need to fetch all, filter, then paginate
       // This is because MongoDB can't easily filter "has Nintendo AND not PS4/PS5"
-      let allGames = await GameModel.find(query)
-        .sort({ updatedAt: -1 })
-        .lean();
+      let allGames = await GameModel.find(query).sort({ updatedAt: -1 }).lean();
 
       // Apply Nintendo Switch filter (exclude PS4/PS5 games)
       allGames = allGames.filter((game) => {
@@ -76,7 +80,8 @@ export async function GET(request: NextRequest) {
         const hasNintendo =
           platforms.includes("Nintendo Switch") ||
           platforms.includes("Nintendo Switch 2");
-        const hasPlayStation = platforms.includes("PS4") || platforms.includes("PS5");
+        const hasPlayStation =
+          platforms.includes("PS4") || platforms.includes("PS5");
         return hasNintendo && !hasPlayStation;
       });
 

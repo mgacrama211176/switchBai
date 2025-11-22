@@ -52,10 +52,10 @@ const GamesPageContent = () => {
 
   // Pagination state (from URL or defaults)
   const [currentPage, setCurrentPage] = useState(
-    () => Number(searchParams.get("page")) || 1
+    () => Number(searchParams.get("page")) || 1,
   );
   const [itemsPerPage, setItemsPerPage] = useState(
-    () => Number(searchParams.get("limit")) || 24
+    () => Number(searchParams.get("limit")) || 24,
   );
   const [totalPages, setTotalPages] = useState(1);
   const [totalGames, setTotalGames] = useState(0);
@@ -171,7 +171,7 @@ const GamesPageContent = () => {
     if (filters.priceRange) {
       const [min, max] = filters.priceRange.split("-").map(Number);
       filtered = filtered.filter(
-        (g) => g.gamePrice >= min && g.gamePrice <= max
+        (g) => g.gamePrice >= min && g.gamePrice <= max,
       );
     }
 
@@ -205,7 +205,7 @@ const GamesPageContent = () => {
       default:
         filtered.sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
         break;
     }
@@ -245,7 +245,7 @@ const GamesPageContent = () => {
   };
 
   const handleAvailabilityChange = (
-    availability: "all" | "inStock" | "outOfStock" | "onSale"
+    availability: "all" | "inStock" | "outOfStock" | "onSale",
   ) => {
     setFilters((prev) => ({ ...prev, availability }));
     setCurrentPage(1);
@@ -959,7 +959,7 @@ const GamesPageContent = () => {
                         <button
                           onClick={() =>
                             setCurrentPage(
-                              Math.min(totalPages, currentPage + 1)
+                              Math.min(totalPages, currentPage + 1),
                             )
                           }
                           disabled={currentPage === totalPages}

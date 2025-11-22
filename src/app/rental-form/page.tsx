@@ -255,15 +255,15 @@ function RentalFormContent() {
     return (
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50">
         <Navigation />
-        <div className="pt-32 pb-16 px-4 md:px-8">
+        <div className="pt-20 sm:pt-24 md:pt-32 pb-12 sm:pb-16 px-4 sm:px-6 md:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
               Game Not Found
             </h1>
-            <p className="text-gray-700 mb-8">{error}</p>
+            <p className="text-sm sm:text-base text-gray-700 mb-6 sm:mb-8">{error}</p>
             <Link
               href="/games"
-              className="inline-block bg-funBlue text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+              className="inline-block min-h-[44px] bg-funBlue text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors text-sm sm:text-base"
             >
               Browse All Games
             </Link>
@@ -280,22 +280,22 @@ function RentalFormContent() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50">
       <Navigation />
 
-      <div className="pt-24 md:pt-32 pb-16 px-4 md:px-8">
+      <div className="pt-20 sm:pt-24 md:pt-32 pb-12 sm:pb-16 px-4 sm:px-6 md:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 mb-2">
               Rent This Game
             </h1>
-            <p className="text-gray-700">
+            <p className="text-sm sm:text-base text-gray-700">
               Fill out your details to request a rental
             </p>
           </div>
 
           {/* Game Info */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg mb-8">
-            <div className="flex items-center gap-4">
-              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-6 sm:mb-8">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0">
                 <Image
                   src={game.gameImageURL}
                   alt={game.gameTitle}
@@ -303,21 +303,21 @@ function RentalFormContent() {
                   className="object-cover"
                 />
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1">
                   {game.gameTitle}
                 </h2>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-bold ${platformInfo.color}`}
+                    className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold ${platformInfo.color}`}
                   >
                     {platformInfo.icon} {platformInfo.display}
                   </span>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-xs sm:text-sm text-gray-600">
                     {game.gameCategory}
                   </span>
                 </div>
-                <div className="text-2xl font-black text-funBlue">
+                <div className="text-xl sm:text-2xl font-black text-funBlue">
                   {formatPrice(game.gamePrice)}
                 </div>
               </div>
@@ -325,15 +325,15 @@ function RentalFormContent() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Customer Information */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Customer Information
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Full Name *
                   </label>
                   <input
@@ -342,7 +342,7 @@ function RentalFormContent() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     maxLength={100}
                     required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.customerName ? "border-red-500" : "border-gray-400"
                     }`}
                     placeholder="Enter your full name"
@@ -355,7 +355,7 @@ function RentalFormContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Phone Number *
                   </label>
                   <input
@@ -364,7 +364,7 @@ function RentalFormContent() {
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     maxLength={20}
                     required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-400"
                     }`}
                     placeholder="09XX-XXX-XXXX"
@@ -377,7 +377,7 @@ function RentalFormContent() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Email Address *
                   </label>
                   <input
@@ -386,7 +386,7 @@ function RentalFormContent() {
                     onChange={(e) => setEmail(e.target.value)}
                     maxLength={100}
                     required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.email ? "border-red-500" : "border-gray-400"
                     }`}
                     placeholder="your.email@example.com"
@@ -397,7 +397,7 @@ function RentalFormContent() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Facebook URL (Optional)
                   </label>
                   <input
@@ -405,7 +405,7 @@ function RentalFormContent() {
                     value={facebookUrl}
                     onChange={(e) => setFacebookUrl(e.target.value)}
                     maxLength={200}
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.facebookUrl ? "border-red-500" : "border-gray-400"
                     }`}
                     placeholder="https://facebook.com/yourprofile"
@@ -420,13 +420,13 @@ function RentalFormContent() {
             </div>
 
             {/* Rental Details */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Rental Details
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Start Date *
                   </label>
                   <input
@@ -435,7 +435,7 @@ function RentalFormContent() {
                     onChange={(e) => setStartDate(e.target.value)}
                     min={getTodayString()}
                     required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.startDate ? "border-red-500" : "border-gray-400"
                     }`}
                   />
@@ -447,7 +447,7 @@ function RentalFormContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     End Date *
                   </label>
                   <input
@@ -457,7 +457,7 @@ function RentalFormContent() {
                     min={startDate || getTodayString()}
                     max={getMaxDateString(startDate)}
                     required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.endDate ? "border-red-500" : "border-gray-400"
                     }`}
                   />
@@ -470,12 +470,12 @@ function RentalFormContent() {
 
                 {rentalDays > 0 && (
                   <div className="md:col-span-2">
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-700 mb-1">
+                        <div className="text-xl sm:text-2xl font-bold text-green-700 mb-1">
                           {rentalDays} {rentalDays === 1 ? "Day" : "Days"}
                         </div>
-                        <div className="text-sm text-green-600">
+                        <div className="text-xs sm:text-sm text-green-600">
                           Rental Duration
                         </div>
                       </div>
@@ -486,13 +486,13 @@ function RentalFormContent() {
             </div>
 
             {/* Delivery Information */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Delivery Information
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Delivery Address *
                   </label>
                   <textarea
@@ -501,7 +501,7 @@ function RentalFormContent() {
                     rows={3}
                     maxLength={500}
                     required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.address ? "border-red-500" : "border-gray-400"
                     }`}
                     placeholder="Enter your complete delivery address"
@@ -514,7 +514,7 @@ function RentalFormContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Landmark *
                   </label>
                   <input
@@ -523,7 +523,7 @@ function RentalFormContent() {
                     onChange={(e) => setLandmark(e.target.value)}
                     maxLength={200}
                     required
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                       errors.landmark ? "border-red-500" : "border-gray-400"
                     }`}
                     placeholder="e.g., Near SM Mall, Beside 7-Eleven"
@@ -535,9 +535,9 @@ function RentalFormContent() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                       City *
                     </label>
                     <input
@@ -546,7 +546,7 @@ function RentalFormContent() {
                       onChange={(e) => setCity(e.target.value)}
                       maxLength={100}
                       required
-                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white ${
+                      className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base ${
                         errors.city ? "border-red-500" : "border-gray-400"
                       }`}
                       placeholder="Cebu City"
@@ -557,7 +557,7 @@ function RentalFormContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                       Delivery Notes (Optional)
                     </label>
                     <textarea
@@ -565,7 +565,7 @@ function RentalFormContent() {
                       onChange={(e) => setDeliveryNotes(e.target.value)}
                       rows={2}
                       maxLength={500}
-                      className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white"
+                      className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-400 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-sm sm:text-base"
                       placeholder="Any special delivery instructions"
                     />
                   </div>
@@ -574,21 +574,21 @@ function RentalFormContent() {
             </div>
 
             {/* Identity Verification */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Identity Verification
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
                     Upload Valid ID *
                   </label>
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <input
                       type="file"
                       accept=".jpg,.jpeg,.png"
                       onChange={handleIdUpload}
-                      className="w-full px-4 py-3 border-2 border-gray-400 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                      className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-400 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-900 bg-white text-xs sm:text-sm file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-md sm:file:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                       disabled={isUploadingId}
                     />
                     {errors.idImageUrl && (
@@ -597,11 +597,11 @@ function RentalFormContent() {
                       </p>
                     )}
                     {idImageUrl && (
-                      <div className="mt-4">
-                        <p className="text-sm text-green-600 font-semibold mb-2">
+                      <div className="mt-3 sm:mt-4">
+                        <p className="text-xs sm:text-sm text-green-600 font-semibold mb-2">
                           ✓ ID uploaded successfully
                         </p>
-                        <div className="relative w-32 h-20 border-2 border-green-200 rounded-lg overflow-hidden">
+                        <div className="relative w-full max-w-32 sm:w-32 h-20 border-2 border-green-200 rounded-lg overflow-hidden">
                           <img
                             src={idImageUrl}
                             alt="Uploaded ID"
@@ -626,15 +626,15 @@ function RentalFormContent() {
 
             {/* Rental Summary */}
             {rentalCalculation && (
-              <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 border-2 border-green-300 shadow-lg">
-                <h3 className="text-xl font-bold text-green-900 mb-4">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-green-300 shadow-lg">
+                <h3 className="text-lg sm:text-xl font-bold text-green-900 mb-3 sm:mb-4">
                   Rental Summary
                 </h3>
 
-                <div className="space-y-3 text-gray-800">
+                <div className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-800">
                   <div className="flex justify-between">
                     <span>Game:</span>
-                    <span className="font-semibold">{game.gameTitle}</span>
+                    <span className="font-semibold text-right ml-2">{game.gameTitle}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Duration:</span>
@@ -647,20 +647,20 @@ function RentalFormContent() {
                     </span>
                   </div>
 
-                  <div className="border-t-2 border-green-200 pt-3 mt-3">
-                    <div className="flex justify-between mb-2">
+                  <div className="border-t-2 border-green-200 pt-2 sm:pt-3 mt-2 sm:mt-3">
+                    <div className="flex justify-between mb-1.5 sm:mb-2">
                       <span>Rental Fee:</span>
-                      <span className="font-bold text-lg">
+                      <span className="font-bold text-base sm:text-lg">
                         ₱{rentalCalculation.rentalFee.toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex justify-between mb-2">
+                    <div className="flex justify-between mb-1.5 sm:mb-2">
                       <span>Refundable Deposit:</span>
-                      <span className="font-bold text-lg text-green-600">
+                      <span className="font-bold text-base sm:text-lg text-green-600">
                         ₱{rentalCalculation.deposit.toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex justify-between text-xl font-black text-green-900 pt-3 border-t-2 border-green-300">
+                    <div className="flex justify-between text-lg sm:text-xl font-black text-green-900 pt-2 sm:pt-3 border-t-2 border-green-300">
                       <span>Total Due Upfront:</span>
                       <span>
                         ₱{rentalCalculation.totalDue.toLocaleString()}
@@ -668,7 +668,7 @@ function RentalFormContent() {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-3 text-sm text-green-800 mt-4">
+                  <div className="bg-white rounded-lg p-2.5 sm:p-3 text-xs sm:text-sm text-green-800 mt-3 sm:mt-4">
                     <div className="font-semibold mb-1">
                       ✓ {rentalCalculation.promoMessage}
                     </div>
@@ -683,7 +683,7 @@ function RentalFormContent() {
               <button
                 type="submit"
                 disabled={isSubmitting || !rentalCalculation}
-                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
+                className={`min-h-[44px] px-6 py-3 sm:px-8 sm:py-4 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg transition-all ${
                   isSubmitting || !rentalCalculation
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl active:scale-95"

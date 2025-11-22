@@ -7,9 +7,11 @@ import {
   HiChevronRight,
   HiEye,
   HiPencil,
+  HiPlus,
 } from "react-icons/hi";
 import RentalDetailsModal from "./RentalDetailsModal";
 import UpdateRentalStatusModal from "./UpdateRentalStatusModal";
+import AddRentalModal from "./AddRentalModal";
 import Toast from "./Toast";
 
 interface Rental {
@@ -55,6 +57,7 @@ export default function RentalsTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
   const [updatingRental, setUpdatingRental] = useState<Rental | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -169,6 +172,15 @@ export default function RentalsTable({
     onRentalUpdated();
   }
 
+  function handleAddSuccess() {
+    setShowAddModal(false);
+    setToast({
+      message: "Rental created successfully!",
+      type: "success",
+    });
+    onRentalUpdated();
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -184,6 +196,20 @@ export default function RentalsTable({
 
   return (
     <div className="space-y-6">
+      {/* Header with Add Button */}
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+          Showing {currentRentals.length} of {filteredRentals.length} rentals
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-funBlue text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          <HiPlus className="w-5 h-5" />
+          <span>Add Rental</span>
+        </button>
+      </div>
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
@@ -211,11 +237,6 @@ export default function RentalsTable({
             ))}
           </select>
         </div>
-      </div>
-
-      {/* Results Count */}
-      <div className="text-sm text-gray-600">
-        Showing {currentRentals.length} of {filteredRentals.length} rentals
       </div>
 
       {/* Table */}
@@ -373,6 +394,13 @@ export default function RentalsTable({
           rental={updatingRental}
           onClose={() => setUpdatingRental(null)}
           onSuccess={handleUpdateSuccess}
+        />
+      )}
+
+      {showAddModal && (
+        <AddRentalModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleAddSuccess}
         />
       )}
 
