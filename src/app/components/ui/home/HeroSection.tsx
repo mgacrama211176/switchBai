@@ -181,7 +181,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
   const isInCompare = (barcode: string): boolean =>
     compareItems.includes(barcode);
 
-  // Always filter to show only Nintendo Switch games (exclude PS4/PS5)
+  // Filter to show only Nintendo Switch games (exclude PS4/PS5)
+  // Note: API already filters to Nintendo Switch and sorts by numberOfSold,
+  // but keeping this as a safety filter
   const filteredGames = useMemo(() => {
     return filterNintendoSwitchGames(latestGames);
   }, [latestGames]);
@@ -213,10 +215,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
           </div>
 
           <h1 className="text-6xl font-black text-gray-900 mb-6 tracking-tight relative">
-            Latest Game
+            Top Selling
             <span className=" md:inline text-funBlue transform hover:rotate-1 transition-transform duration-300 inline-block">
               {" "}
-              Stocks
+              Games
             </span>
             {/* Floating decorations around title */}
             <div className="absolute -top-4 right-0 lg:right-8 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center transform rotate-12 shadow-lg opacity-80 animate-bounce">
@@ -228,7 +230,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
           </h1>
 
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-medium mb-6">
-            Discover our freshly updated Nintendo Switch game collection with
+            Discover our best-selling Nintendo Switch games with
             <span className="font-bold text-funBlue"> 10% savings</span>{" "}
             compared to retail prices
           </p>

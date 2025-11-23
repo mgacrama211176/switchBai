@@ -2,11 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Game } from "@/app/types/games";
 import { formatPrice } from "@/lib/game-utils";
 import Image from "next/image";
-import {
-  HiPencil,
-  HiTrash,
-  HiSearch,
-} from "react-icons/hi";
+import { HiPencil, HiTrash, HiSearch } from "react-icons/hi";
 import EditGameModal from "./EditGameModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import Toast from "./Toast";
@@ -36,7 +32,7 @@ export default function GamesTable({
   const [stockSort, setStockSort] = useState<"asc" | "desc" | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  
+
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [deletingGame, setDeletingGame] = useState<Game | null>(null);
   const [toast, setToast] = useState<{
@@ -78,7 +74,7 @@ export default function GamesTable({
             if (isNewSearch) return data.games;
             // Filter out duplicates
             const newGames = data.games.filter(
-              (newGame: Game) => !prev.some((g) => g._id === newGame._id)
+              (newGame: Game) => !prev.some((g) => g._id === newGame._id),
             );
             return [...prev, ...newGames];
           });
@@ -92,7 +88,7 @@ export default function GamesTable({
         setIsLoadingMore(false);
       }
     },
-    [searchTerm, platformFilter, categoryFilter, stockSort, activeFilter]
+    [searchTerm, platformFilter, categoryFilter, stockSort, activeFilter],
   );
 
   // Initial fetch and refresh
@@ -116,7 +112,18 @@ export default function GamesTable({
 
   // Hardcoded categories for filter (since we don't fetch all games at once anymore)
   const categories = [
-    "Action", "Adventure", "RPG", "Strategy", "Sports", "Racing", "Fighting", "Shooter", "Puzzle", "Simulation", "Family", "Music"
+    "Action",
+    "Adventure",
+    "RPG",
+    "Strategy",
+    "Sports",
+    "Racing",
+    "Fighting",
+    "Shooter",
+    "Puzzle",
+    "Simulation",
+    "Family",
+    "Music",
   ];
 
   function handleEditSuccess() {
@@ -225,7 +232,9 @@ export default function GamesTable({
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          {games.length > 0 ? `Showing ${games.length} games` : "No games found"}
+          {games.length > 0
+            ? `Showing ${games.length} games`
+            : "No games found"}
         </p>
         {(searchTerm ||
           platformFilter ||
@@ -280,7 +289,7 @@ export default function GamesTable({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {games.length === 0 && !isLoading ? (
-               <tr>
+              <tr>
                 <td colSpan={8} className="text-center py-12">
                   <p className="text-gray-500 text-lg">No games found</p>
                   <p className="text-gray-400 text-sm mt-2">
@@ -418,7 +427,7 @@ export default function GamesTable({
       {/* Loading Indicator */}
       {(isLoading || isLoadingMore) && (
         <div className="p-4 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-funBlue"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-funBlue"></div>
         </div>
       )}
     </div>

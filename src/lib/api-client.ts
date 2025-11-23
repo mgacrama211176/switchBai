@@ -90,13 +90,13 @@ async function apiRequest<T>(url: string): Promise<ApiResponse<T>> {
 }
 
 /**
- * Fetch latest games with pagination
- * Only returns games with stock > 0 by default
+ * Fetch top-selling games with pagination
+ * Returns Nintendo Switch games with stock > 0, sorted by numberOfSold (descending)
  */
 export async function fetchLatestGames(
   limit: number = 10,
 ): Promise<ApiResponse<Game[]>> {
-  const url = `/api/games?limit=${limit}&page=1&inStock=true`;
+  const url = `/api/games?limit=${limit}&page=1&inStock=true&nintendoOnly=true&sort=numberOfSold&order=desc`;
   const response = await apiRequest<GamesApiResponse>(url);
 
   if (response.success && response.data) {

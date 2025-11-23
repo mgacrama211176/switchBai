@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import {
-  HiSearch,
-  HiEye,
-  HiPencil,
-  HiPlus,
-  HiTrash,
-} from "react-icons/hi";
+import { HiSearch, HiEye, HiPencil, HiPlus, HiTrash } from "react-icons/hi";
 import OrderDetailsModal from "./OrderDetailsModal";
 import UpdateOrderStatusModal from "./UpdateOrderStatusModal";
 import AddOrderModal from "./AddOrderModal";
@@ -73,7 +67,7 @@ export default function OrdersTable({
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingOrder, setUpdatingOrder] = useState<Order | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -121,7 +115,7 @@ export default function OrdersTable({
             if (isNewSearch) return data.purchases;
             // Filter out duplicates just in case
             const newOrders = data.purchases.filter(
-              (newOrder: Order) => !prev.some((o) => o._id === newOrder._id)
+              (newOrder: Order) => !prev.some((o) => o._id === newOrder._id),
             );
             return [...prev, ...newOrders];
           });
@@ -135,7 +129,7 @@ export default function OrdersTable({
         setIsLoadingMore(false);
       }
     },
-    [searchTerm, statusFilter]
+    [searchTerm, statusFilter],
   );
 
   // Initial fetch and refresh trigger
@@ -282,7 +276,9 @@ export default function OrdersTable({
       {/* Header with Add Button */}
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-600">
-          {orders.length > 0 ? `Showing ${orders.length} orders` : "No orders found"}
+          {orders.length > 0
+            ? `Showing ${orders.length} orders`
+            : "No orders found"}
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -494,11 +490,11 @@ export default function OrdersTable({
             </tbody>
           </table>
         </div>
-        
+
         {/* Loading Indicator */}
         {(isLoading || isLoadingMore) && (
           <div className="p-4 flex justify-center">
-             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-funBlue"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-funBlue"></div>
           </div>
         )}
       </div>
