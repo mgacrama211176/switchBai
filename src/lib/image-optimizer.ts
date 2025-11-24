@@ -18,7 +18,7 @@ interface OptimizeImageOptions {
 export async function optimizeImage(
   inputPath: string,
   outputPath: string,
-  options: OptimizeImageOptions = {},
+  options: OptimizeImageOptions = {}
 ): Promise<string> {
   const { quality = 85, maxWidth = 1920, maxHeight = 1080 } = options;
 
@@ -69,33 +69,24 @@ export async function optimizeImage(
  * Converts uploaded file buffer to optimized WebP
  * @param buffer - Image file buffer
  * @param filename - Original filename (will be converted to .webp)
- * @param outputDir - Directory to save the optimized image
+ * @param outputDir - Directory to save the optimized image (optional, for backward compatibility)
  * @param options - Optimization options
- * @returns Object with the file path and public URL
+ * @returns Object with the optimized buffer, file path, and public URL
  */
 export async function optimizeUploadedImage(
   buffer: Buffer,
   filename: string,
-  outputDir: string,
-  options: OptimizeImageOptions = {},
-): Promise<{ filePath: string; publicUrl: string }> {
+  outputDir?: string,
+  options: OptimizeImageOptions = {}
+): Promise<{
+  buffer: Buffer;
+  filePath?: string;
+  publicUrl?: string;
+}> {
   const { quality = 85, maxWidth = 1920, maxHeight = 1080 } = options;
 
   try {
-    // Generate WebP filename
-    const timestamp = Date.now();
-    const sanitizedName = filename
-      .replace(/\.[^/.]+$/, "")
-      .replace(/[^a-zA-Z0-9-_]/g, "-");
-    const webpFilename = `${sanitizedName}-${timestamp}.webp`;
-    const outputPath = path.join(outputDir, webpFilename);
-
-    // Ensure output directory exists
-    await fs.mkdir(outputDir, { recursive: true });
-
     // Process the image with Sharp
-
-    // Process and save the image
     const image = sharp(buffer);
     const metadata = await image.metadata();
 
@@ -109,27 +100,40 @@ export async function optimizeUploadedImage(
       height = Math.round(height * ratio);
     }
 
-    // Convert to WebP with optimization
-    await image
+    // Convert to WebP with optimization and get buffer directly (no disk I/O)
+    const optimizedBuffer = await image
       .resize(width, height, {
         fit: "inside",
         withoutEnlargement: true,
       })
       .webp({ quality })
-      .toFile(outputPath);
+      .toBuffer();
 
-    // Generate public URL (assuming /public/games/ maps to /games/)
-    const publicUrl = `/games/${webpFilename}`;
+    // Generate WebP filename for backward compatibility
+    const timestamp = Date.now();
+    const sanitizedName = filename
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9-_]/g, "-");
+    const webpFilename = `${sanitizedName}-${timestamp}.webp`;
+
+    // Optional: Save to disk if outputDir is provided (for backward compatibility)
+    let filePath: string | undefined;
+    let publicUrl: string | undefined;
+
+    if (outputDir) {
+      filePath = path.join(outputDir, webpFilename);
+      await fs.mkdir(outputDir, { recursive: true });
+      await fs.writeFile(filePath, optimizedBuffer);
+      publicUrl = `/games/${webpFilename}`;
+    }
 
     return {
-      filePath: outputPath,
+      buffer: optimizedBuffer,
+      filePath,
       publicUrl,
     };
   } catch (error) {
     console.error("Error optimizing uploaded image:", error);
-
-    // Standard error handling for image optimization
-
     throw new Error("Failed to optimize uploaded image");
   }
 }
@@ -143,7 +147,7 @@ export async function optimizeUploadedImage(
 export async function batchOptimizeImages(
   inputDir: string,
   outputDir: string,
-  options: OptimizeImageOptions = {},
+  options: OptimizeImageOptions = {}
 ): Promise<{ success: string[]; failed: string[] }> {
   const success: string[] = [];
   const failed: string[] = [];
@@ -151,7 +155,7 @@ export async function batchOptimizeImages(
   try {
     const files = await fs.readdir(inputDir);
     const imageFiles = files.filter((file) =>
-      /\.(jpg|jpeg|png|gif)$/i.test(file),
+      /\.(jpg|jpeg|png|gif)$/i.test(file)
     );
 
     await fs.mkdir(outputDir, { recursive: true });

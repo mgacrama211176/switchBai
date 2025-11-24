@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: "Invalid file type. Only JPG, PNG, and WebP are allowed" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "File too large. Maximum size is 5MB" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -37,16 +37,16 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Optimize and convert to WebP (server-side optimization)
-    const tempDir = "/tmp";
-    const { filePath } = await optimizeUploadedImage(
+    // Returns optimized buffer directly (no disk I/O needed)
+    const { buffer: optimizedBuffer } = await optimizeUploadedImage(
       buffer,
       file.name,
-      tempDir,
+      undefined, // No outputDir needed since we're using buffer directly
       {
         quality: 85,
         maxWidth: 1920,
         maxHeight: 1080,
-      },
+      }
     );
 
     // Upload optimized image to Firebase Storage
@@ -54,7 +54,11 @@ export async function POST(request: NextRequest) {
     const baseName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filename = `${baseName}-${timestamp}.webp`;
 
-    const firebaseUrl = await uploadImageToFirebase(buffer, filename, folder);
+    const firebaseUrl = await uploadImageToFirebase(
+      optimizedBuffer,
+      filename,
+      folder
+    );
 
     return NextResponse.json({
       success: true,
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
     console.error("Upload error:", error);
     return NextResponse.json(
       { error: "Failed to upload and optimize file" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

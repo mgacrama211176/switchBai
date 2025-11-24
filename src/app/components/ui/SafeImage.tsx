@@ -10,6 +10,20 @@ interface SafeImageProps extends Omit<ImageProps, "onError" | "placeholder"> {
   fallbackPlaceholder?: React.ReactNode;
 }
 
+/**
+ * Detects if a URL is from Firebase Storage
+ * Firebase Storage URLs match patterns like:
+ * - https://firebasestorage.googleapis.com/v0/b/...
+ * - https://storage.googleapis.com/...
+ */
+function isFirebaseStorageURL(url: string | undefined | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  return (
+    url.includes("firebasestorage.googleapis.com") ||
+    url.includes("storage.googleapis.com")
+  );
+}
+
 export default function SafeImage({
   src,
   maxRetries = 4,
@@ -83,15 +97,31 @@ export default function SafeImage({
   // For fill prop, we need to ensure parent has relative positioning
   const hasFill = "fill" in props && props.fill;
 
+  // Detect Firebase Storage URLs and bypass Next.js optimization
+  // Firebase images are already optimized (WebP), so we don't need Next.js to optimize them
+  const imageSrc = src || fallbackSrc || "";
+  // Convert src to string for Firebase detection (handles StaticImport types)
+  const srcString =
+    typeof imageSrc === "string"
+      ? imageSrc
+      : imageSrc && typeof imageSrc === "object" && "src" in imageSrc
+        ? imageSrc.src
+        : "";
+  const isFirebaseURL = isFirebaseStorageURL(srcString);
+  const imageProps = {
+    ...props,
+    unoptimized: isFirebaseURL || props.unoptimized,
+  };
+
   if (hasFill) {
     return (
       <>
         <Image
           key={imageKey}
-          src={src || fallbackSrc || ""}
+          src={imageSrc}
           alt={alt || "Image"}
           onError={handleError}
-          {...props}
+          {...imageProps}
         />
         {isRetrying && (
           <div className="absolute inset-0 bg-black bg-opacity-5 flex items-center justify-center z-10">
@@ -106,10 +136,10 @@ export default function SafeImage({
     <div className="relative w-full h-full">
       <Image
         key={imageKey}
-        src={src || fallbackSrc || ""}
+        src={imageSrc}
         alt={alt || "Image"}
         onError={handleError}
-        {...props}
+        {...imageProps}
       />
       {isRetrying && (
         <div className="absolute inset-0 bg-black bg-opacity-5 flex items-center justify-center">
