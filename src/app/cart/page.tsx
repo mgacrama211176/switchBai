@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import SafeImage from "@/app/components/ui/SafeImage";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { Game } from "@/app/types/games";
@@ -29,6 +29,9 @@ import {
   HiPlus,
   HiChatAlt2,
   HiSearch,
+  HiInformationCircle,
+  HiArrowRight,
+  HiArrowLeft,
 } from "react-icons/hi";
 
 function CartContent() {
@@ -106,7 +109,7 @@ function CartContent() {
 
     const totalQuantity = cart.items.reduce(
       (sum, item) => sum + item.quantity,
-      0,
+      0
     );
 
     // Delivery fee is set to 0 by default - will be added manually after customer discussion
@@ -116,7 +119,7 @@ function CartContent() {
     const totalBeforeDiscount = calculateTotal(subtotal, deliveryFee);
     const totalAmount = Math.max(
       0,
-      totalBeforeDiscount - (negotiatedDiscount || 0),
+      totalBeforeDiscount - (negotiatedDiscount || 0)
     );
 
     return { deliveryFee, subtotal, totalAmount, totalQuantity };
@@ -178,8 +181,51 @@ function CartContent() {
     };
   }, [cart.type, cart.items, cart.gamesGiven]);
 
+  // Check for non-tradable games in received items
+  const hasNonTradableGames = useMemo(() => {
+    if (cart.type !== "trade") return false;
+    return cart.items.some((item) => item.tradable === false);
+  }, [cart.type, cart.items]);
+
+  // Calculate totals for games given
+  const gamesGivenSummary = useMemo(() => {
+    if (!cart.gamesGiven || cart.gamesGiven.length === 0) {
+      return { itemCount: 0, totalQuantity: 0, totalValue: 0 };
+    }
+    const itemCount = cart.gamesGiven.length;
+    const totalQuantity = cart.gamesGiven.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+    const totalValue = cart.gamesGiven.reduce(
+      (sum, item) => sum + item.gamePrice * item.quantity,
+      0
+    );
+    return { itemCount, totalQuantity, totalValue };
+  }, [cart.gamesGiven]);
+
+  // Calculate totals for games received
+  const gamesReceivedSummary = useMemo(() => {
+    if (cart.items.length === 0) {
+      return { itemCount: 0, totalQuantity: 0, totalValue: 0 };
+    }
+    const itemCount = cart.items.length;
+    const totalQuantity = cart.items.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+    const totalValue = cart.items.reduce(
+      (sum, item) =>
+        sum +
+        (item.isOnSale && item.salePrice ? item.salePrice : item.gamePrice) *
+          item.quantity,
+      0
+    );
+    return { itemCount, totalQuantity, totalValue };
+  }, [cart.items]);
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -191,12 +237,12 @@ function CartContent() {
 
   const handleRentalDateChange = (
     field: "startDate" | "endDate",
-    value: string,
+    value: string
   ) => {
     setRentalDates((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Load games for trade search
+  // Load games for trade search (all Nintendo Switch games)
   useEffect(() => {
     if (cart.type === "trade" && availableGames.length === 0) {
       setIsLoadingGames(true);
@@ -215,20 +261,45 @@ function CartContent() {
     }
   }, [cart.type]);
 
-  // Filter games for search
-  const filteredGames = useMemo(() => {
+  // Filter games for "Games Trading In" (all games, no tradable filter)
+  const filteredGamesGiven = useMemo(() => {
+    if (tradeGameSearch.side !== "given") return [];
+
     if (!tradeGameSearch.term.trim()) {
       return availableGames.slice(0, 10);
     }
+
     const searchLower = tradeGameSearch.term.toLowerCase();
     return availableGames
       .filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.toLowerCase().includes(searchLower),
+          game.gameBarcode.toLowerCase().includes(searchLower)
       )
       .slice(0, 10);
-  }, [availableGames, tradeGameSearch.term]);
+  }, [availableGames, tradeGameSearch.term, tradeGameSearch.side]);
+
+  // Filter games for "Games Receiving" (only tradable games with stock > 0)
+  const filteredGamesReceived = useMemo(() => {
+    if (tradeGameSearch.side !== "received") return [];
+
+    const tradableInStock = availableGames.filter(
+      (game) => game.tradable && game.gameAvailableStocks > 0
+    );
+
+    if (!tradeGameSearch.term.trim()) {
+      return tradableInStock.slice(0, 10);
+    }
+
+    const searchLower = tradeGameSearch.term.toLowerCase();
+    return tradableInStock
+      .filter(
+        (game) =>
+          game.gameTitle.toLowerCase().includes(searchLower) ||
+          game.gameBarcode.toLowerCase().includes(searchLower)
+      )
+      .slice(0, 10);
+  }, [availableGames, tradeGameSearch.term, tradeGameSearch.side]);
 
   const handleTradeGameSelect = (game: Game, side: "received" | "given") => {
     addToTradeCart(game, 1, side);
@@ -356,7 +427,7 @@ function CartContent() {
             item.isOnSale && item.salePrice ? item.salePrice : item.gamePrice;
           const calculation = calculateRentalPrice(
             price,
-            rentalDates.rentalDays,
+            rentalDates.rentalDays
           );
 
           return fetch("/api/rentals", {
@@ -525,7 +596,7 @@ function CartContent() {
                       onClick={() => {
                         if (
                           confirm(
-                            "Changing cart type will clear your cart. Are you sure?",
+                            "Changing cart type will clear your cart. Are you sure?"
                           )
                         ) {
                           setCartType("purchase");
@@ -541,7 +612,7 @@ function CartContent() {
                       onClick={() => {
                         if (
                           confirm(
-                            "Changing cart type will clear your cart. Are you sure?",
+                            "Changing cart type will clear your cart. Are you sure?"
                           )
                         ) {
                           setCartType("rental");
@@ -557,7 +628,7 @@ function CartContent() {
                       onClick={() => {
                         if (
                           confirm(
-                            "Changing cart type will clear your cart. Are you sure?",
+                            "Changing cart type will clear your cart. Are you sure?"
                           )
                         ) {
                           setCartType("trade");
@@ -579,17 +650,78 @@ function CartContent() {
               {/* Trade Cart - Two Sided */}
               {cart.type === "trade" && (
                 <div className="bg-white rounded-2xl p-6 shadow-lg space-y-6">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Trade Cart
-                  </h2>
+                  {/* Enhanced Header */}
+                  <div className="border-b border-gray-200 pb-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xl">🔄</span>
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                          Trade Cart
+                        </h2>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Trade your games for new ones
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <HiInformationCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-semibold mb-1">How it works:</p>
+                          <ul className="list-disc list-inside space-y-1 text-blue-700">
+                            <li>Add games you want to trade in (left side)</li>
+                            <li>
+                              Search and add games you want to receive (right
+                              side)
+                            </li>
+                            <li>
+                              Review the trade summary and proceed to complete
+                              your trade
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Two Column Layout */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Games You're Trading In */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Games You're Trading In
-                      </h3>
+                      {/* Enhanced Section Header */}
+                      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <HiArrowLeft className="w-5 h-5 text-orange-600" />
+                            <h3 className="text-lg font-bold text-gray-900">
+                              Games You're Trading In
+                            </h3>
+                          </div>
+                          {gamesGivenSummary.itemCount > 0 && (
+                            <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                              {gamesGivenSummary.itemCount} game
+                              {gamesGivenSummary.itemCount !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">
+                          Add games you want to trade in. Search by title or
+                          barcode.
+                        </p>
+                        {gamesGivenSummary.itemCount > 0 && (
+                          <div className="flex items-center justify-between pt-2 border-t border-orange-200">
+                            <span className="text-xs text-gray-600">
+                              Total Quantity: {gamesGivenSummary.totalQuantity}
+                            </span>
+                            <span className="text-sm font-bold text-orange-700">
+                              Total Value: ₱
+                              {gamesGivenSummary.totalValue.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Search for games to trade */}
                       <div className="relative">
@@ -627,8 +759,8 @@ function CartContent() {
                                 <div className="px-4 py-3 text-sm text-gray-500 text-center">
                                   Loading games...
                                 </div>
-                              ) : filteredGames.length > 0 ? (
-                                filteredGames.map((game) => (
+                              ) : filteredGamesGiven.length > 0 ? (
+                                filteredGamesGiven.map((game) => (
                                   <button
                                     key={game.gameBarcode}
                                     type="button"
@@ -666,85 +798,169 @@ function CartContent() {
                       {/* Games Given List */}
                       <div className="space-y-3">
                         {cart.gamesGiven && cart.gamesGiven.length > 0 ? (
-                          cart.gamesGiven.map((item) => (
-                            <div
-                              key={item.gameBarcode}
-                              className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"
-                            >
-                              <Image
-                                src={item.gameImageURL}
-                                alt={item.gameTitle}
-                                width={60}
-                                height={60}
-                                className="rounded-lg object-cover"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-gray-900 truncate">
-                                  {item.gameTitle}
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  ₱{item.gamePrice.toLocaleString()} ×{" "}
-                                  {item.quantity}
-                                </p>
+                          cart.gamesGiven.map((item) => {
+                            const lineTotal = item.gamePrice * item.quantity;
+                            return (
+                              <div
+                                key={item.gameBarcode}
+                                className="flex items-center gap-3 p-4 border-2 border-orange-200 bg-orange-50/30 rounded-lg hover:border-orange-300 transition-colors"
+                              >
+                                <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 border-orange-200 bg-gray-100">
+                                  <SafeImage
+                                    src={item.gameImageURL}
+                                    alt={item.gameTitle}
+                                    fill
+                                    className="object-cover"
+                                    sizes="64px"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-gray-900 truncate mb-1">
+                                    {item.gameTitle}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 font-mono mb-2">
+                                    {item.gameBarcode}
+                                  </p>
+                                  <div className="space-y-1">
+                                    <p className="text-sm text-gray-600">
+                                      <span className="font-medium">
+                                        ₱{item.gamePrice.toLocaleString()}
+                                      </span>{" "}
+                                      × {item.quantity}
+                                    </p>
+                                    <p className="text-sm font-bold text-orange-700">
+                                      Line Total: ₱{lineTotal.toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                  <div className="flex items-center gap-2 bg-white rounded-lg border border-orange-200 p-1">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateTradeQuantity(
+                                          item.gameBarcode,
+                                          item.quantity - 1,
+                                          "given"
+                                        )
+                                      }
+                                      className="p-1.5 hover:bg-orange-100 rounded transition-colors"
+                                      title="Decrease quantity"
+                                    >
+                                      <HiMinus className="w-4 h-4 text-orange-600" />
+                                    </button>
+                                    <span className="w-10 text-center font-semibold text-gray-900">
+                                      {item.quantity}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateTradeQuantity(
+                                          item.gameBarcode,
+                                          item.quantity + 1,
+                                          "given"
+                                        )
+                                      }
+                                      className="p-1.5 hover:bg-orange-100 rounded transition-colors"
+                                      title="Increase quantity"
+                                    >
+                                      <HiPlus className="w-4 h-4 text-orange-600" />
+                                    </button>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeFromTradeCart(
+                                        item.gameBarcode,
+                                        "given"
+                                      )
+                                    }
+                                    className="p-2 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
+                                    title="Remove game"
+                                  >
+                                    <HiTrash className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateTradeQuantity(
-                                      item.gameBarcode,
-                                      item.quantity - 1,
-                                      "given",
-                                    )
-                                  }
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                >
-                                  <HiMinus className="w-4 h-4" />
-                                </button>
-                                <span className="w-8 text-center">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateTradeQuantity(
-                                      item.gameBarcode,
-                                      item.quantity + 1,
-                                      "given",
-                                    )
-                                  }
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                >
-                                  <HiPlus className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removeFromTradeCart(
-                                      item.gameBarcode,
-                                      "given",
-                                    )
-                                  }
-                                  className="p-1 hover:bg-red-50 text-red-600 rounded"
-                                >
-                                  <HiTrash className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          ))
+                            );
+                          })
                         ) : (
-                          <p className="text-sm text-gray-500 text-center py-4">
-                            No games added yet
-                          </p>
+                          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                            <div className="text-4xl mb-2">📦</div>
+                            <p className="text-sm text-gray-500 font-medium">
+                              No games added yet
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Search above to add games
+                            </p>
+                          </div>
                         )}
                       </div>
+
+                      {/* Summary Card for Games Given */}
+                      {gamesGivenSummary.itemCount > 0 && (
+                        <div className="bg-gradient-to-r from-orange-100 to-amber-100 border-2 border-orange-300 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs text-gray-600 mb-1">
+                                Games Trading In
+                              </p>
+                              <p className="text-lg font-bold text-gray-900">
+                                {gamesGivenSummary.itemCount} game
+                                {gamesGivenSummary.itemCount !== 1
+                                  ? "s"
+                                  : ""} • {gamesGivenSummary.totalQuantity}{" "}
+                                total
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-600 mb-1">
+                                Total Value
+                              </p>
+                              <p className="text-xl font-black text-orange-700">
+                                ₱{gamesGivenSummary.totalValue.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Games You Want to Receive */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Games You Want to Receive
-                      </h3>
+                      {/* Enhanced Section Header */}
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <HiArrowRight className="w-5 h-5 text-green-600" />
+                            <h3 className="text-lg font-bold text-gray-900">
+                              Games You Want to Receive
+                            </h3>
+                          </div>
+                          {gamesReceivedSummary.itemCount > 0 && (
+                            <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                              {gamesReceivedSummary.itemCount} game
+                              {gamesReceivedSummary.itemCount !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">
+                          Search and add games you want to receive. Only
+                          tradable games are shown.
+                        </p>
+                        {gamesReceivedSummary.itemCount > 0 && (
+                          <div className="flex items-center justify-between pt-2 border-t border-green-200">
+                            <span className="text-xs text-gray-600">
+                              Total Quantity:{" "}
+                              {gamesReceivedSummary.totalQuantity}
+                            </span>
+                            <span className="text-sm font-bold text-green-700">
+                              Total Value: ₱
+                              {gamesReceivedSummary.totalValue.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Search for games to receive */}
                       <div className="relative">
@@ -782,38 +998,36 @@ function CartContent() {
                                 <div className="px-4 py-3 text-sm text-gray-500 text-center">
                                   Loading games...
                                 </div>
-                              ) : filteredGames.length > 0 ? (
-                                filteredGames
-                                  .filter((g) => g.gameAvailableStocks > 0)
-                                  .map((game) => (
-                                    <button
-                                      key={game.gameBarcode}
-                                      type="button"
-                                      onClick={() =>
-                                        handleTradeGameSelect(game, "received")
-                                      }
-                                      className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
-                                    >
-                                      <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                          <div className="font-medium text-gray-900">
-                                            {game.gameTitle}
-                                          </div>
-                                          <div className="text-sm text-gray-500 font-mono">
-                                            {game.gameBarcode}
-                                          </div>
+                              ) : filteredGamesReceived.length > 0 ? (
+                                filteredGamesReceived.map((game) => (
+                                  <button
+                                    key={game.gameBarcode}
+                                    type="button"
+                                    onClick={() =>
+                                      handleTradeGameSelect(game, "received")
+                                    }
+                                    className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <div className="font-medium text-gray-900">
+                                          {game.gameTitle}
                                         </div>
-                                        <div className="text-right ml-4">
-                                          <div className="text-sm font-medium text-gray-900">
-                                            ₱{game.gamePrice.toLocaleString()}
-                                          </div>
-                                          <div className="text-xs text-gray-500">
-                                            Stock: {game.gameAvailableStocks}
-                                          </div>
+                                        <div className="text-sm text-gray-500 font-mono">
+                                          {game.gameBarcode}
                                         </div>
                                       </div>
-                                    </button>
-                                  ))
+                                      <div className="text-right ml-4">
+                                        <div className="text-sm font-medium text-gray-900">
+                                          ₱{game.gamePrice.toLocaleString()}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                          Stock: {game.gameAvailableStocks}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </button>
+                                ))
                               ) : (
                                 <div className="px-4 py-3 text-sm text-gray-500 text-center">
                                   No games found
@@ -826,113 +1040,286 @@ function CartContent() {
                       {/* Games Received List */}
                       <div className="space-y-3">
                         {cart.items.length > 0 ? (
-                          cart.items.map((item) => (
-                            <div
-                              key={item.gameBarcode}
-                              className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"
-                            >
-                              <Image
-                                src={item.gameImageURL}
-                                alt={item.gameTitle}
-                                width={60}
-                                height={60}
-                                className="rounded-lg object-cover"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-gray-900 truncate">
-                                  {item.gameTitle}
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  ₱{item.gamePrice.toLocaleString()} ×{" "}
-                                  {item.quantity}
-                                </p>
+                          cart.items.map((item) => {
+                            const price =
+                              item.isOnSale && item.salePrice
+                                ? item.salePrice
+                                : item.gamePrice;
+                            const lineTotal = price * item.quantity;
+                            return (
+                              <div
+                                key={item.gameBarcode}
+                                className={`flex items-center gap-3 p-4 border-2 rounded-lg relative ${
+                                  item.tradable === false
+                                    ? "border-red-300 bg-red-50"
+                                    : "border-green-200 bg-green-50/30 hover:border-green-300 transition-colors"
+                                }`}
+                              >
+                                {item.tradable === false && (
+                                  <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10 shadow-lg">
+                                    Not Tradable
+                                  </div>
+                                )}
+                                <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 border-green-200 bg-gray-100">
+                                  <SafeImage
+                                    src={item.gameImageURL}
+                                    alt={item.gameTitle}
+                                    fill
+                                    className="object-cover"
+                                    sizes="64px"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-gray-900 truncate mb-1">
+                                    {item.gameTitle}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 font-mono mb-2">
+                                    {item.gameBarcode}
+                                  </p>
+                                  {item.tradable === false && (
+                                    <div className="flex items-center gap-1 text-red-600 text-xs font-semibold mb-2 bg-red-100 px-2 py-1 rounded">
+                                      <span>⚠️</span>
+                                      <span>This game is not tradable</span>
+                                    </div>
+                                  )}
+                                  <div className="space-y-1">
+                                    {item.isOnSale && item.salePrice ? (
+                                      <div>
+                                        <p className="text-sm text-gray-600">
+                                          <span className="font-medium text-red-600">
+                                            ₱{item.salePrice.toLocaleString()}
+                                          </span>{" "}
+                                          <span className="line-through text-gray-400">
+                                            ₱{item.gamePrice.toLocaleString()}
+                                          </span>{" "}
+                                          × {item.quantity}
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-600">
+                                        <span className="font-medium">
+                                          ₱{price.toLocaleString()}
+                                        </span>{" "}
+                                        × {item.quantity}
+                                      </p>
+                                    )}
+                                    <p className="text-sm font-bold text-green-700">
+                                      Line Total: ₱{lineTotal.toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                  <div className="flex items-center gap-2 bg-white rounded-lg border border-green-200 p-1">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateTradeQuantity(
+                                          item.gameBarcode,
+                                          item.quantity - 1,
+                                          "received"
+                                        )
+                                      }
+                                      className="p-1.5 hover:bg-green-100 rounded transition-colors"
+                                      title="Decrease quantity"
+                                    >
+                                      <HiMinus className="w-4 h-4 text-green-600" />
+                                    </button>
+                                    <span className="w-10 text-center font-semibold text-gray-900">
+                                      {item.quantity}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateTradeQuantity(
+                                          item.gameBarcode,
+                                          item.quantity + 1,
+                                          "received"
+                                        )
+                                      }
+                                      className="p-1.5 hover:bg-green-100 rounded transition-colors"
+                                      title="Increase quantity"
+                                    >
+                                      <HiPlus className="w-4 h-4 text-green-600" />
+                                    </button>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeFromTradeCart(
+                                        item.gameBarcode,
+                                        "received"
+                                      )
+                                    }
+                                    className="p-2 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
+                                    title="Remove game"
+                                  >
+                                    <HiTrash className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateTradeQuantity(
-                                      item.gameBarcode,
-                                      item.quantity - 1,
-                                      "received",
-                                    )
-                                  }
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                >
-                                  <HiMinus className="w-4 h-4" />
-                                </button>
-                                <span className="w-8 text-center">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateTradeQuantity(
-                                      item.gameBarcode,
-                                      item.quantity + 1,
-                                      "received",
-                                    )
-                                  }
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                >
-                                  <HiPlus className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removeFromTradeCart(
-                                      item.gameBarcode,
-                                      "received",
-                                    )
-                                  }
-                                  className="p-1 hover:bg-red-50 text-red-600 rounded"
-                                >
-                                  <HiTrash className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          ))
+                            );
+                          })
                         ) : (
-                          <p className="text-sm text-gray-500 text-center py-4">
-                            No games added yet
-                          </p>
+                          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                            <div className="text-4xl mb-2">🎮</div>
+                            <p className="text-sm text-gray-500 font-medium">
+                              No games added yet
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Search above to add tradable games
+                            </p>
+                          </div>
                         )}
                       </div>
+
+                      {/* Summary Card for Games Received */}
+                      {gamesReceivedSummary.itemCount > 0 && (
+                        <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs text-gray-600 mb-1">
+                                Games Receiving
+                              </p>
+                              <p className="text-lg font-bold text-gray-900">
+                                {gamesReceivedSummary.itemCount} game
+                                {gamesReceivedSummary.itemCount !== 1
+                                  ? "s"
+                                  : ""}{" "}
+                                • {gamesReceivedSummary.totalQuantity} total
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-600 mb-1">
+                                Total Value
+                              </p>
+                              <p className="text-xl font-black text-green-700">
+                                ₱
+                                {gamesReceivedSummary.totalValue.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Trade Summary */}
+                  {/* Enhanced Trade Summary */}
                   {(cart.gamesGiven && cart.gamesGiven.length > 0) ||
                   cart.items.length > 0 ? (
-                    <div className="mt-6 pt-6 border-t border-gray-200">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">
-                            Total Value Given:
-                          </span>
-                          <span className="font-medium">
-                            ₱{tradeSummary.totalValueGiven.toLocaleString()}
-                          </span>
+                    <div className="mt-6 pt-6 border-t-2 border-gray-300">
+                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6 space-y-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                            <span className="text-white text-lg">💰</span>
+                          </div>
+                          <h3 className="text-xl font-bold text-gray-900">
+                            Trade Summary
+                          </h3>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">
-                            Total Value Received:
-                          </span>
-                          <span className="font-medium">
-                            ₱{tradeSummary.totalValueReceived.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Trade Fee:</span>
-                          <span className="font-medium">
-                            ₱{tradeSummary.tradeFee.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-300">
-                          <span>Cash Difference (You Pay):</span>
-                          <span className="text-funBlue">
-                            ₱{tradeSummary.cashDifference.toLocaleString()}
-                          </span>
+
+                        <div className="space-y-3">
+                          {/* Total Value Given */}
+                          <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                            <div className="flex items-center gap-2">
+                              <HiArrowLeft className="w-5 h-5 text-orange-600" />
+                              <span className="text-sm font-semibold text-gray-700">
+                                Total Value Given:
+                              </span>
+                            </div>
+                            <span className="text-base font-bold text-orange-700">
+                              ₱{tradeSummary.totalValueGiven.toLocaleString()}
+                            </span>
+                          </div>
+
+                          {/* Total Value Received */}
+                          <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
+                            <div className="flex items-center gap-2">
+                              <HiArrowRight className="w-5 h-5 text-green-600" />
+                              <span className="text-sm font-semibold text-gray-700">
+                                Total Value Received:
+                              </span>
+                            </div>
+                            <span className="text-base font-bold text-green-700">
+                              ₱
+                              {tradeSummary.totalValueReceived.toLocaleString()}
+                            </span>
+                          </div>
+
+                          {/* Trade Fee */}
+                          <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">🔄</span>
+                              <span className="text-sm font-semibold text-gray-700">
+                                Trade Fee:
+                              </span>
+                            </div>
+                            <span className="text-base font-bold text-gray-700">
+                              ₱{tradeSummary.tradeFee.toLocaleString()}
+                            </span>
+                          </div>
+
+                          {/* Trade Type Indicator */}
+                          {tradeSummary.tradeType !== "even" && (
+                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="flex items-center gap-2 text-sm">
+                                <HiInformationCircle className="w-4 h-4 text-blue-600" />
+                                <span className="text-blue-800">
+                                  {tradeSummary.tradeType === "trade_up"
+                                    ? "You're trading up (receiving more value)"
+                                    : "You're trading down (giving more value)"}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Suggestion to Add Another Game When Trading Down */}
+                          {tradeSummary.tradeType === "trade_down" && (
+                            <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-lg">
+                              <div className="flex items-start gap-3">
+                                <span className="text-2xl">💡</span>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-amber-900 mb-1">
+                                    Great Trade Value!
+                                  </p>
+                                  <p className="text-sm text-amber-800 mb-2">
+                                    You're trading in more value than you're
+                                    receiving. Consider adding another game to
+                                    make the most of your trade!
+                                  </p>
+                                  {tradeSummary.totalValueGiven -
+                                    tradeSummary.totalValueReceived >
+                                    0 && (
+                                    <p className="text-xs text-amber-700 font-medium">
+                                      You have approximately ₱
+                                      {(
+                                        tradeSummary.totalValueGiven -
+                                        tradeSummary.totalValueReceived
+                                      ).toLocaleString()}{" "}
+                                      in additional value you could use for
+                                      another game.
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Cash Difference */}
+                          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-funBlue to-blue-600 rounded-lg border-2 border-blue-400 shadow-lg">
+                            <div>
+                              <p className="text-sm text-blue-100 mb-1">
+                                Cash Difference
+                              </p>
+                              <p className="text-xs text-blue-200">
+                                {tradeSummary.cashDifference > 0
+                                  ? "Amount you need to pay"
+                                  : "Even trade"}
+                              </p>
+                            </div>
+                            <span className="text-2xl font-black text-white">
+                              ₱{tradeSummary.cashDifference.toLocaleString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -940,6 +1327,17 @@ function CartContent() {
 
                   {/* Proceed to Trade Form Button */}
                   <div className="mt-6">
+                    {hasNonTradableGames && (
+                      <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-yellow-800 font-semibold mb-1">
+                          ⚠️ Non-Tradable Games Detected
+                        </p>
+                        <p className="text-yellow-700 text-sm">
+                          Some games in your cart are not available for trading.
+                          Please remove them before proceeding.
+                        </p>
+                      </div>
+                    )}
                     {errors.submit && (
                       <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <p className="text-red-600">{errors.submit}</p>
@@ -951,7 +1349,8 @@ function CartContent() {
                       disabled={
                         cart.items.length === 0 ||
                         !cart.gamesGiven ||
-                        cart.gamesGiven.length === 0
+                        cart.gamesGiven.length === 0 ||
+                        hasNonTradableGames
                       }
                       className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -1004,7 +1403,7 @@ function CartContent() {
                           rentalDates.startDate
                             ? new Date(
                                 new Date(rentalDates.startDate).getTime() +
-                                  30 * 24 * 60 * 60 * 1000,
+                                  30 * 24 * 60 * 60 * 1000
                               )
                                 .toISOString()
                                 .split("T")[0]
@@ -1343,7 +1742,7 @@ function CartContent() {
                             className="flex items-start gap-3 pb-3 mb-3 border-b border-gray-100"
                           >
                             <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                              <Image
+                              <SafeImage
                                 src={item.gameImageURL}
                                 alt={item.gameTitle}
                                 fill
@@ -1387,7 +1786,7 @@ function CartContent() {
                             className="flex items-start gap-3 pb-3 mb-3 border-b border-gray-100"
                           >
                             <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                              <Image
+                              <SafeImage
                                 src={item.gameImageURL}
                                 alt={item.gameTitle}
                                 fill
@@ -1471,7 +1870,7 @@ function CartContent() {
                           isOnSale: item.isOnSale,
                           salePrice: item.salePrice,
                           gamePrice: item.gamePrice,
-                        },
+                        }
                       );
                       return (
                         <div
@@ -1479,7 +1878,7 @@ function CartContent() {
                           className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0"
                         >
                           <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                            <Image
+                            <SafeImage
                               src={item.gameImageURL}
                               alt={item.gameTitle}
                               fill
@@ -1518,7 +1917,7 @@ function CartContent() {
                                   onClick={() =>
                                     updateQuantity(
                                       item.gameBarcode,
-                                      item.quantity - 1,
+                                      item.quantity - 1
                                     )
                                   }
                                   disabled={item.quantity <= 1}
@@ -1533,7 +1932,7 @@ function CartContent() {
                                   onClick={() =>
                                     updateQuantity(
                                       item.gameBarcode,
-                                      item.quantity + 1,
+                                      item.quantity + 1
                                     )
                                   }
                                   disabled={item.quantity >= item.maxStock}
@@ -1549,7 +1948,7 @@ function CartContent() {
                                   <div className="flex flex-col items-end">
                                     <span className="text-xs text-gray-400 line-through">
                                       {formatPrice(
-                                        item.gamePrice * item.quantity,
+                                        item.gamePrice * item.quantity
                                       )}
                                     </span>
                                     <span className="text-sm font-semibold text-funBlue">
@@ -1642,7 +2041,7 @@ function CartContent() {
                           isOnSale: item.isOnSale,
                           salePrice: item.salePrice,
                           gamePrice: item.gamePrice,
-                        },
+                        }
                       );
                       return (
                         <div
@@ -1650,7 +2049,7 @@ function CartContent() {
                           className="flex items-start gap-3"
                         >
                           <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                            <Image
+                            <SafeImage
                               src={item.gameImageURL}
                               alt={item.gameTitle}
                               fill

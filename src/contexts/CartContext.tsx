@@ -19,6 +19,7 @@ export interface CartItem {
   maxStock: number;
   salePrice?: number;
   isOnSale?: boolean;
+  tradable?: boolean;
 }
 
 export interface Cart {
@@ -199,6 +200,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       maxStock: game.gameAvailableStocks || 999,
                       salePrice: game.salePrice,
                       isOnSale: game.isOnSale,
+                      tradable: game.tradable,
                     },
                   ]
                 : [],
@@ -214,6 +216,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       maxStock: 999, // No stock limit for games being traded in
                       salePrice: game.salePrice,
                       isOnSale: game.isOnSale,
+                      tradable: game.tradable,
                     },
                   ]
                 : [],
@@ -256,6 +259,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             quantity: newQuantity,
             maxStock:
               side === "received" ? game.gameAvailableStocks || 999 : 999,
+            tradable: game.tradable,
           };
 
           if (side === "received") {
@@ -284,6 +288,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           maxStock: side === "received" ? game.gameAvailableStocks || 999 : 999,
           salePrice: game.salePrice,
           isOnSale: game.isOnSale,
+          tradable: game.tradable,
         };
 
         if (side === "received") {
