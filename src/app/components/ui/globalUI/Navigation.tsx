@@ -177,7 +177,7 @@ const Navigation: React.FC = () => {
             >
               <div className="w-24 h-24 relative p-1 rounded-xl py-4">
                 <Image
-                  src="/logo.png"
+                  src="/logo.webp"
                   alt="switchBai Logo"
                   width={1000}
                   height={1000}
@@ -200,7 +200,7 @@ const Navigation: React.FC = () => {
                     <button
                       onClick={() =>
                         setOpenDropdown(
-                          openDropdown === item.name ? null : item.name,
+                          openDropdown === item.name ? null : item.name
                         )
                       }
                       className="flex items-center space-x-2 text-gray-800 hover:text-lameRed font-medium transition-all duration-300 relative px-3 py-2 rounded-lg hover:bg-lameRed/5 group"
@@ -261,7 +261,7 @@ const Navigation: React.FC = () => {
                     {/* Subtle hover underline */}
                     <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-blue to-red scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full"></span>
                   </Link>
-                ),
+                )
               )}
             </div>
 

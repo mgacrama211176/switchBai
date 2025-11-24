@@ -34,7 +34,7 @@ export default function Home() {
             {/* Logo */}
             <div className="mx-auto w-64 h-64 flex items-center justify-center">
               <Image
-                src="/logo.png"
+                src="/logo.webp"
                 alt="Logo"
                 width={256}
                 height={256}
