@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 import { SectionWrapper } from "@/app/components/ui/SectionWrapper";
 import { fetchGames } from "@/lib/api-client";
 import { Game } from "@/app/types/games";
@@ -15,9 +17,16 @@ import {
 } from "@/app/components/ui/home/game-utils";
 
 export function TradableGamesSection() {
+  const router = useRouter();
+  const { addToCart } = useCart();
   const [games, setGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleTradeGame = (game: Game) => {
+    addToCart(game, 1, "trade");
+    router.push("/cart");
+  };
 
   useEffect(() => {
     async function loadTradableGames() {
@@ -214,13 +223,23 @@ export function TradableGamesSection() {
                       </div>
 
                       {/* Stock Info */}
-                      <div className="text-center">
+                      <div className="text-center mb-2">
                         <span
                           className={`text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${stockInfo.bgColor} ${stockInfo.color}`}
                         >
                           {game.gameAvailableStocks} in stock
                         </span>
                       </div>
+
+                      {/* Trade Button */}
+                      {game.gameAvailableStocks > 0 && (
+                        <button
+                          onClick={() => handleTradeGame(game)}
+                          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2 px-3 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg text-xs sm:text-sm"
+                        >
+                          Trade This Game
+                        </button>
+                      )}
                     </div>
                   </article>
                 );

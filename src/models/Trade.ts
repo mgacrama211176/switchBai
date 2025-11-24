@@ -44,7 +44,7 @@ export interface ITrade extends Document {
   totalValueGiven: number;
   totalValueReceived: number;
   cashDifference: number; // Always >= 0
-  tradeFee: number; // ₱200 for even trade, 0 otherwise
+  tradeFee: number; // Always ₱200 trading fee
 
   // Status and timestamps
   status: "pending" | "confirmed" | "completed" | "cancelled";

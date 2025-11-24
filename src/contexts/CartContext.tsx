@@ -22,8 +22,9 @@ export interface CartItem {
 }
 
 export interface Cart {
-  items: CartItem[];
-  type: "purchase" | "rental" | null;
+  items: CartItem[]; // gamesReceived for trade
+  gamesGiven?: CartItem[]; // games being traded in (only for trade type)
+  type: "purchase" | "rental" | "trade" | null;
 }
 
 interface CartContextType {
@@ -31,11 +32,22 @@ interface CartContextType {
   addToCart: (
     game: Game,
     quantity: number,
-    type: "purchase" | "rental",
+    type: "purchase" | "rental" | "trade",
+  ) => void;
+  addToTradeCart: (
+    game: Game,
+    quantity: number,
+    side: "received" | "given",
   ) => void;
   removeFromCart: (barcode: string) => void;
+  removeFromTradeCart: (barcode: string, side: "received" | "given") => void;
   updateQuantity: (barcode: string, quantity: number) => void;
-  setCartType: (type: "purchase" | "rental" | null) => void;
+  updateTradeQuantity: (
+    barcode: string,
+    quantity: number,
+    side: "received" | "given",
+  ) => void;
+  setCartType: (type: "purchase" | "rental" | "trade" | null) => void;
   clearCart: () => void;
   getCartItemCount: () => number;
   isInCart: (barcode: string) => boolean;
@@ -62,6 +74,7 @@ function loadCartFromStorage(): Cart {
       if (parsed && Array.isArray(parsed.items)) {
         return {
           items: parsed.items,
+          gamesGiven: parsed.gamesGiven || undefined,
           type: parsed.type || null,
         };
       }
@@ -89,7 +102,11 @@ function saveCartToStorage(cart: Cart): void {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   // Start with empty cart to ensure server/client match
-  const [cart, setCart] = useState<Cart>({ items: [], type: null });
+  const [cart, setCart] = useState<Cart>({
+    items: [],
+    gamesGiven: undefined,
+    type: null,
+  });
   const [negotiatedDiscount, setNegotiatedDiscount] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const isInternalUpdateRef = useRef(false);
@@ -159,8 +176,142 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, 0);
   }, [cart, isHydrated]);
 
+  const addToTradeCart = useCallback(
+    (game: Game, quantity: number, side: "received" | "given") => {
+      setCart((prevCart) => {
+        // Ensure cart type is trade
+        const cartType = prevCart.type || "trade";
+        if (cartType !== "trade") {
+          // If switching to trade, initialize gamesGiven
+          return {
+            items:
+              side === "received"
+                ? [
+                    {
+                      gameBarcode: game.gameBarcode,
+                      gameTitle: game.gameTitle,
+                      gameImageURL: game.gameImageURL,
+                      gamePrice: game.gamePrice,
+                      quantity: Math.min(
+                        quantity,
+                        game.gameAvailableStocks || 999,
+                      ),
+                      maxStock: game.gameAvailableStocks || 999,
+                      salePrice: game.salePrice,
+                      isOnSale: game.isOnSale,
+                    },
+                  ]
+                : [],
+            gamesGiven:
+              side === "given"
+                ? [
+                    {
+                      gameBarcode: game.gameBarcode,
+                      gameTitle: game.gameTitle,
+                      gameImageURL: game.gameImageURL,
+                      gamePrice: game.gamePrice,
+                      quantity,
+                      maxStock: 999, // No stock limit for games being traded in
+                      salePrice: game.salePrice,
+                      isOnSale: game.isOnSale,
+                    },
+                  ]
+                : [],
+            type: "trade",
+          };
+        }
+
+        const targetArray =
+          side === "received" ? prevCart.items : prevCart.gamesGiven || [];
+        const existingIndex = targetArray.findIndex(
+          (item) => item.gameBarcode === game.gameBarcode,
+        );
+
+        if (existingIndex >= 0) {
+          // Update existing item
+          const existingItem = targetArray[existingIndex];
+          const newQuantity = existingItem.quantity + quantity;
+          if (newQuantity <= 0) {
+            // Remove item
+            if (side === "received") {
+              return {
+                ...prevCart,
+                items: prevCart.items.filter(
+                  (item) => item.gameBarcode !== game.gameBarcode,
+                ),
+              };
+            } else {
+              return {
+                ...prevCart,
+                gamesGiven: (prevCart.gamesGiven || []).filter(
+                  (item) => item.gameBarcode !== game.gameBarcode,
+                ),
+              };
+            }
+          }
+
+          const updatedItems = [...targetArray];
+          updatedItems[existingIndex] = {
+            ...existingItem,
+            quantity: newQuantity,
+            maxStock:
+              side === "received" ? game.gameAvailableStocks || 999 : 999,
+          };
+
+          if (side === "received") {
+            return {
+              ...prevCart,
+              items: updatedItems,
+            };
+          } else {
+            return {
+              ...prevCart,
+              gamesGiven: updatedItems,
+            };
+          }
+        }
+
+        // Add new item
+        const newItem: CartItem = {
+          gameBarcode: game.gameBarcode,
+          gameTitle: game.gameTitle,
+          gameImageURL: game.gameImageURL,
+          gamePrice: game.gamePrice,
+          quantity:
+            side === "received"
+              ? Math.min(quantity, game.gameAvailableStocks || 999)
+              : quantity,
+          maxStock: side === "received" ? game.gameAvailableStocks || 999 : 999,
+          salePrice: game.salePrice,
+          isOnSale: game.isOnSale,
+        };
+
+        if (side === "received") {
+          return {
+            ...prevCart,
+            items: [...prevCart.items, newItem],
+            type: "trade",
+          };
+        } else {
+          return {
+            ...prevCart,
+            gamesGiven: [...(prevCart.gamesGiven || []), newItem],
+            type: "trade",
+          };
+        }
+      });
+    },
+    [],
+  );
+
   const addToCart = useCallback(
-    (game: Game, quantity: number, type: "purchase" | "rental") => {
+    (game: Game, quantity: number, type: "purchase" | "rental" | "trade") => {
+      // For trade type, use addToTradeCart instead
+      if (type === "trade") {
+        addToTradeCart(game, quantity, "received");
+        return;
+      }
+
       if (game.gameAvailableStocks === 0) {
         return;
       }
@@ -181,6 +332,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 isOnSale: game.isOnSale,
               },
             ],
+            gamesGiven: undefined,
             type,
           };
         }
@@ -229,20 +381,64 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               isOnSale: game.isOnSale,
             },
           ],
+          gamesGiven: undefined,
           type: prevCart.type || type,
         };
       });
     },
-    [],
+    [addToTradeCart],
   );
 
   const removeFromCart = useCallback((barcode: string) => {
-    setCart((prevCart) => ({
-      ...prevCart,
-      items: prevCart.items.filter((item) => item.gameBarcode !== barcode),
-      type: prevCart.items.length === 1 ? null : prevCart.type,
-    }));
+    setCart((prevCart) => {
+      const newItems = prevCart.items.filter(
+        (item) => item.gameBarcode !== barcode,
+      );
+      return {
+        ...prevCart,
+        items: newItems,
+        type:
+          newItems.length === 0 &&
+          (!prevCart.gamesGiven || prevCart.gamesGiven.length === 0)
+            ? null
+            : prevCart.type,
+      };
+    });
   }, []);
+
+  const removeFromTradeCart = useCallback(
+    (barcode: string, side: "received" | "given") => {
+      setCart((prevCart) => {
+        if (side === "received") {
+          const newItems = prevCart.items.filter(
+            (item) => item.gameBarcode !== barcode,
+          );
+          return {
+            ...prevCart,
+            items: newItems,
+            type:
+              newItems.length === 0 &&
+              (!prevCart.gamesGiven || prevCart.gamesGiven.length === 0)
+                ? null
+                : prevCart.type,
+          };
+        } else {
+          const newGamesGiven = (prevCart.gamesGiven || []).filter(
+            (item) => item.gameBarcode !== barcode,
+          );
+          return {
+            ...prevCart,
+            gamesGiven: newGamesGiven,
+            type:
+              prevCart.items.length === 0 && newGamesGiven.length === 0
+                ? null
+                : prevCart.type,
+          };
+        }
+      });
+    },
+    [],
+  );
 
   const updateQuantity = useCallback(
     (barcode: string, quantity: number) => {
@@ -264,7 +460,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             items: prevCart.items.filter(
               (item) => item.gameBarcode !== barcode,
             ),
-            type: prevCart.items.length === 1 ? null : prevCart.type,
+            type:
+              prevCart.items.length === 1 &&
+              (!prevCart.gamesGiven || prevCart.gamesGiven.length === 0)
+                ? null
+                : prevCart.type,
           };
         }
 
@@ -281,16 +481,92 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [removeFromCart],
   );
 
-  const setCartType = useCallback((type: "purchase" | "rental" | null) => {
-    setCart((prevCart) => ({
-      ...prevCart,
-      type,
-      items: type === null ? [] : prevCart.items,
-    }));
-  }, []);
+  const updateTradeQuantity = useCallback(
+    (barcode: string, quantity: number, side: "received" | "given") => {
+      if (quantity <= 0) {
+        removeFromTradeCart(barcode, side);
+        return;
+      }
+
+      setCart((prevCart) => {
+        if (side === "received") {
+          const item = prevCart.items.find(
+            (item) => item.gameBarcode === barcode,
+          );
+          if (!item) return prevCart;
+
+          const newQuantity = Math.min(quantity, item.maxStock);
+          if (newQuantity <= 0) {
+            return {
+              ...prevCart,
+              items: prevCart.items.filter(
+                (item) => item.gameBarcode !== barcode,
+              ),
+              type:
+                prevCart.items.length === 1 &&
+                (!prevCart.gamesGiven || prevCart.gamesGiven.length === 0)
+                  ? null
+                  : prevCart.type,
+            };
+          }
+
+          return {
+            ...prevCart,
+            items: prevCart.items.map((item) =>
+              item.gameBarcode === barcode
+                ? { ...item, quantity: newQuantity }
+                : item,
+            ),
+          };
+        } else {
+          const item = (prevCart.gamesGiven || []).find(
+            (item) => item.gameBarcode === barcode,
+          );
+          if (!item) return prevCart;
+
+          const newQuantity = quantity; // No max stock for games being traded in
+          if (newQuantity <= 0) {
+            return {
+              ...prevCart,
+              gamesGiven: (prevCart.gamesGiven || []).filter(
+                (item) => item.gameBarcode !== barcode,
+              ),
+              type:
+                prevCart.items.length === 0 &&
+                (prevCart.gamesGiven || []).length === 1
+                  ? null
+                  : prevCart.type,
+            };
+          }
+
+          return {
+            ...prevCart,
+            gamesGiven: (prevCart.gamesGiven || []).map((item) =>
+              item.gameBarcode === barcode
+                ? { ...item, quantity: newQuantity }
+                : item,
+            ),
+          };
+        }
+      });
+    },
+    [removeFromTradeCart],
+  );
+
+  const setCartType = useCallback(
+    (type: "purchase" | "rental" | "trade" | null) => {
+      setCart((prevCart) => ({
+        ...prevCart,
+        type,
+        items: type === null ? [] : prevCart.items,
+        gamesGiven: type !== "trade" ? undefined : prevCart.gamesGiven || [],
+      }));
+    },
+    [],
+  );
 
   const clearCart = useCallback(() => {
-    setCart({ items: [], type: null });
+    setCart({ items: [], gamesGiven: undefined, type: null });
     setNegotiatedDiscount(0);
   }, []);
 
@@ -317,8 +593,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       value={{
         cart,
         addToCart,
+        addToTradeCart,
         removeFromCart,
+        removeFromTradeCart,
         updateQuantity,
+        updateTradeQuantity,
         setCartType,
         clearCart,
         getCartItemCount,

@@ -349,11 +349,9 @@ export default function TradesTable({
                       <div className="text-sm font-medium text-gray-900">
                         {formatPrice(trade.cashDifference)}
                       </div>
-                      {trade.tradeFee > 0 && (
-                        <div className="text-xs text-gray-500">
-                          (Fee: {formatPrice(trade.tradeFee)})
-                        </div>
-                      )}
+                      <div className="text-xs text-gray-500">
+                        (Fee: {formatPrice(trade.tradeFee)})
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(trade.status)}

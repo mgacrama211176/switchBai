@@ -311,7 +311,7 @@ const GamesPageContent = () => {
     }
   };
 
-  const handleCartTypeSelection = (type: "purchase" | "rental") => {
+  const handleCartTypeSelection = (type: "purchase" | "rental" | "trade") => {
     if (pendingGame) {
       addToCart(pendingGame, 1, type);
       setPendingGame(null);
@@ -348,7 +348,7 @@ const GamesPageContent = () => {
             Select Cart Type
           </h2>
           <p className="text-gray-700 mb-6">
-            Would you like to purchase or rent this game?
+            Would you like to purchase, rent, or trade this game?
           </p>
           <div className="flex flex-col gap-4">
             <button
@@ -362,6 +362,12 @@ const GamesPageContent = () => {
               className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
             >
               Rent
+            </button>
+            <button
+              onClick={() => handleCartTypeSelection("trade")}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              Trade
             </button>
             <button
               onClick={() => {

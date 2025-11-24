@@ -33,9 +33,9 @@ export function calculateGamesValue(
  * Returns: { cashDifference, tradeFee, tradeType }
  *
  * Rules:
- * - Even trade (values equal): ₱200 trade fee
- * - Trade up (receives more): Customer pays the difference
- * - Trade down (gives more): Customer pays ₱0 (no compensation)
+ * - Always charges ₱200 trading fee (since prices are based on pricing database)
+ * - Cash difference = (valueReceived - valueGiven) + ₱200
+ * - Customer always pays at least ₱200 (the trading fee)
  */
 export function calculateTradeCashDifference(
   valueGiven: number,
@@ -46,27 +46,25 @@ export function calculateTradeCashDifference(
   tradeType: "even" | "trade_up" | "trade_down";
 } {
   const rawDifference = valueReceived - valueGiven;
+  const tradeFee = 200;
 
+  // Calculate cash difference: (valueReceived - valueGiven) + ₱200
+  // Ensure customer always pays at least ₱200 (the trading fee)
+  const cashDifference = Math.max(200, rawDifference + tradeFee);
+
+  // Determine trade type for informational purposes
+  let tradeType: "even" | "trade_up" | "trade_down";
   if (rawDifference === 0) {
-    // Even trade: ₱200 trade fee
-    return {
-      cashDifference: 200,
-      tradeFee: 200,
-      tradeType: "even",
-    };
+    tradeType = "even";
   } else if (rawDifference > 0) {
-    // Trade up: Customer pays the difference
-    return {
-      cashDifference: rawDifference,
-      tradeFee: 0,
-      tradeType: "trade_up",
-    };
+    tradeType = "trade_up";
   } else {
-    // Trade down: Customer pays ₱0 (no cash back)
-    return {
-      cashDifference: 0,
-      tradeFee: 0,
-      tradeType: "trade_down",
-    };
+    tradeType = "trade_down";
   }
+
+  return {
+    cashDifference,
+    tradeFee,
+    tradeType,
+  };
 }

@@ -339,14 +339,12 @@ export default function TradeDetailsModal({
                     {getTradeType()}
                   </span>
                 </div>
-                {trade.tradeFee > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Trade Fee:</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatPrice(trade.tradeFee)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Trade Fee:</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatPrice(trade.tradeFee)}
+                  </span>
+                </div>
                 <div className="border-t border-gray-300 pt-3 flex justify-between">
                   <span className="text-base font-semibold text-gray-900">
                     Cash Difference (Customer Pays):
