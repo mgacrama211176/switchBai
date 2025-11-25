@@ -28,11 +28,11 @@ async function testGameSearch() {
       .lean();
 
     console.log(
-      `Found ${directQuery.length} games with "Mario Kart World" in title:`,
+      `Found ${directQuery.length} games with "Mario Kart World" in title:`
     );
     directQuery.forEach((game: any) => {
       console.log(
-        `  - ${game.gameTitle} (Barcode: ${game.gameBarcode}, Price: ₱${game.gamePrice}, Stock: ${game.gameAvailableStocks})`,
+        `  - ${game.gameTitle} (Barcode: ${game.gameBarcode}, Price: ₱${game.gamePrice}, Stock: ${game.gameAvailableStocks})`
       );
     });
     console.log();
@@ -64,7 +64,12 @@ async function testGameSearch() {
     const partialQuery = await Game.find({
       $or: [
         { gameTitle: { $regex: /mario.*kart|kart.*mario/i } },
-        { gameTitle: { $regex: /mario/i }, gameTitle: { $regex: /kart/i } },
+        {
+          $and: [
+            { gameTitle: { $regex: /mario/i } },
+            { gameTitle: { $regex: /kart/i } },
+          ],
+        },
       ],
     })
       .select("gameTitle gameBarcode")
@@ -95,7 +100,7 @@ async function testGameSearch() {
         if (games.length > 0) {
           games.forEach((game, idx) => {
             console.log(
-              `    ${idx + 1}. "${game.gameTitle}" (Score: ${game.score.toFixed(3)})`,
+              `    ${idx + 1}. "${game.gameTitle}" (Score: ${game.score.toFixed(3)})`
             );
           });
         } else {

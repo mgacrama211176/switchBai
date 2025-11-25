@@ -25,7 +25,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
       truncate: "END",
     });
 
-    if (!response.embeddings || response.embeddings.length === 0) {
+    if (!response.embeddings || !Array.isArray(response.embeddings)) {
       throw new Error("No embeddings returned from Cohere");
     }
 
@@ -60,7 +60,7 @@ export async function generateQueryEmbedding(text: string): Promise<number[]> {
       truncate: "END",
     });
 
-    if (!response.embeddings || response.embeddings.length === 0) {
+    if (!response.embeddings || !Array.isArray(response.embeddings)) {
       throw new Error("No embedding returned from Cohere");
     }
 
@@ -74,7 +74,7 @@ export async function generateQueryEmbedding(text: string): Promise<number[]> {
     }
 
     throw new Error(
-      `Failed to generate query embedding: ${error.message || error}`,
+      `Failed to generate query embedding: ${error.message || error}`
     );
   }
 }
@@ -85,7 +85,7 @@ export async function generateQueryEmbedding(text: string): Promise<number[]> {
  * @returns Embedding vector (1024 dimensions)
  */
 export async function generateDocumentEmbedding(
-  text: string,
+  text: string
 ): Promise<number[]> {
   if (!process.env.COHERE_API_KEY) {
     throw new Error("COHERE_API_KEY is not set in environment variables");
@@ -99,7 +99,7 @@ export async function generateDocumentEmbedding(
       truncate: "END",
     });
 
-    if (!response.embeddings || response.embeddings.length === 0) {
+    if (!response.embeddings || !Array.isArray(response.embeddings)) {
       throw new Error("No embedding returned from Cohere");
     }
 
@@ -113,7 +113,7 @@ export async function generateDocumentEmbedding(
     }
 
     throw new Error(
-      `Failed to generate document embedding: ${error.message || error}`,
+      `Failed to generate document embedding: ${error.message || error}`
     );
   }
 }
