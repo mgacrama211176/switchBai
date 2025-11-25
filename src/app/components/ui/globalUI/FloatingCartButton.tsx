@@ -1,17 +1,23 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import { HiShoppingCart } from "react-icons/hi";
 
 export default function FloatingCartButton() {
   const router = useRouter();
+  const pathname = usePathname();
   const { getCartItemCount } = useCart();
   const itemCount = getCartItemCount();
 
   const handleClick = () => {
     router.push("/cart");
   };
+
+  // Hide on cart page
+  if (pathname === "/cart") {
+    return null;
+  }
 
   if (itemCount === 0) {
     return null;

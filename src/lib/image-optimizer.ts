@@ -18,7 +18,7 @@ interface OptimizeImageOptions {
 export async function optimizeImage(
   inputPath: string,
   outputPath: string,
-  options: OptimizeImageOptions = {}
+  options: OptimizeImageOptions = {},
 ): Promise<string> {
   const { quality = 85, maxWidth = 1920, maxHeight = 1080 } = options;
 
@@ -77,7 +77,7 @@ export async function optimizeUploadedImage(
   buffer: Buffer,
   filename: string,
   outputDir?: string,
-  options: OptimizeImageOptions = {}
+  options: OptimizeImageOptions = {},
 ): Promise<{
   buffer: Buffer;
   filePath?: string;
@@ -147,7 +147,7 @@ export async function optimizeUploadedImage(
 export async function batchOptimizeImages(
   inputDir: string,
   outputDir: string,
-  options: OptimizeImageOptions = {}
+  options: OptimizeImageOptions = {},
 ): Promise<{ success: string[]; failed: string[] }> {
   const success: string[] = [];
   const failed: string[] = [];
@@ -155,7 +155,7 @@ export async function batchOptimizeImages(
   try {
     const files = await fs.readdir(inputDir);
     const imageFiles = files.filter((file) =>
-      /\.(jpg|jpeg|png|gif)$/i.test(file)
+      /\.(jpg|jpeg|png|gif)$/i.test(file),
     );
 
     await fs.mkdir(outputDir, { recursive: true });

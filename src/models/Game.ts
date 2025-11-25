@@ -19,6 +19,7 @@ export interface IGame extends Document {
   isOnSale?: boolean;
   salePrice?: number;
   costPrice?: number;
+  vector?: number[]; // Vector embedding for semantic search (1024 dimensions)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -193,6 +194,11 @@ const GameSchema = new Schema<IGame>(
       type: Number,
       min: [0, "Cost price cannot be negative"],
       max: [99999, "Cost price cannot exceed 99999"],
+    },
+    vector: {
+      type: [Number],
+      default: undefined,
+      select: false, // Don't include in default queries to reduce payload size
     },
   },
   {

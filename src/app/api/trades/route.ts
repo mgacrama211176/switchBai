@@ -72,33 +72,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate values - use sale price if game is on sale
+    // Calculate values - for trade transactions, always use original price, not sale price
     const totalValueGiven = await Promise.all(
       body.gamesGiven.map(async (game: any) => {
         if (game.isNewGame) {
           return game.gamePrice * game.quantity;
         }
-        const gameDoc = await GameModel.findOne({
-          gameBarcode: game.gameBarcode,
-        });
-        const priceToUse =
-          gameDoc?.isOnSale && gameDoc?.salePrice
-            ? gameDoc.salePrice
-            : game.gamePrice;
-        return priceToUse * game.quantity;
+        // Always use original gamePrice for trade valuations
+        return game.gamePrice * game.quantity;
       }),
     ).then((values) => values.reduce((sum, val) => sum + val, 0));
 
     const totalValueReceived = await Promise.all(
       body.gamesReceived.map(async (game: any) => {
-        const gameDoc = await GameModel.findOne({
-          gameBarcode: game.gameBarcode,
-        });
-        const priceToUse =
-          gameDoc?.isOnSale && gameDoc?.salePrice
-            ? gameDoc.salePrice
-            : game.gamePrice;
-        return priceToUse * game.quantity;
+        // Always use original gamePrice for trade valuations
+        return game.gamePrice * game.quantity;
       }),
     ).then((values) => values.reduce((sum, val) => sum + val, 0));
 

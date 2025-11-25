@@ -3,6 +3,7 @@ import RadialBackground from "@/app/components/ui/RadialBackground";
 import Navigation from "@/app/components/ui/globalUI/Navigation";
 import HeroSectionWrapper from "@/app/components/ui/home/HeroSectionWrapper";
 import CompareGamesSection from "./components/ui/home/CompareGamesSection";
+import TradingSection from "./components/ui/home/TradingSection";
 import RentalsSection from "./components/ui/home/RentalsSection";
 import AboutUsSection from "./components/ui/home/AboutUsSection";
 import ContactSection from "./components/ui/home/ContactSection";
@@ -20,6 +21,7 @@ export default function Home() {
           <Navigation />
           <HeroSectionWrapper fallbackGames={[]} />
           <CompareGamesSection />
+          <TradingSection />
           <RentalsSection />
           <AboutUsSection />
           <ContactSection />

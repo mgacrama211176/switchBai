@@ -11,7 +11,6 @@ import Navigation from "@/app/components/ui/globalUI/Navigation";
 import Footer from "@/app/components/ui/globalUI/Footer";
 import {
   validatePurchaseData,
-  calculateDeliveryFee,
   calculateTotal,
   formatPrice,
 } from "@/lib/purchase-form-utils";
@@ -23,7 +22,6 @@ import {
 } from "@/lib/trade-utils";
 import NegotiationChat from "@/app/components/ui/cart/NegotiationChat";
 import {
-  HiX,
   HiTrash,
   HiMinus,
   HiPlus,
@@ -109,7 +107,7 @@ function CartContent() {
 
     const totalQuantity = cart.items.reduce(
       (sum, item) => sum + item.quantity,
-      0
+      0,
     );
 
     // Delivery fee is set to 0 by default - will be added manually after customer discussion
@@ -119,7 +117,7 @@ function CartContent() {
     const totalBeforeDiscount = calculateTotal(subtotal, deliveryFee);
     const totalAmount = Math.max(
       0,
-      totalBeforeDiscount - (negotiatedDiscount || 0)
+      totalBeforeDiscount - (negotiatedDiscount || 0),
     );
 
     return { deliveryFee, subtotal, totalAmount, totalQuantity };
@@ -195,11 +193,11 @@ function CartContent() {
     const itemCount = cart.gamesGiven.length;
     const totalQuantity = cart.gamesGiven.reduce(
       (sum, item) => sum + item.quantity,
-      0
+      0,
     );
     const totalValue = cart.gamesGiven.reduce(
       (sum, item) => sum + item.gamePrice * item.quantity,
-      0
+      0,
     );
     return { itemCount, totalQuantity, totalValue };
   }, [cart.gamesGiven]);
@@ -212,20 +210,18 @@ function CartContent() {
     const itemCount = cart.items.length;
     const totalQuantity = cart.items.reduce(
       (sum, item) => sum + item.quantity,
-      0
+      0,
     );
+    // For trade transactions, always use original price, not sale price
     const totalValue = cart.items.reduce(
-      (sum, item) =>
-        sum +
-        (item.isOnSale && item.salePrice ? item.salePrice : item.gamePrice) *
-          item.quantity,
-      0
+      (sum, item) => sum + item.gamePrice * item.quantity,
+      0,
     );
     return { itemCount, totalQuantity, totalValue };
   }, [cart.items]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -237,7 +233,7 @@ function CartContent() {
 
   const handleRentalDateChange = (
     field: "startDate" | "endDate",
-    value: string
+    value: string,
   ) => {
     setRentalDates((prev) => ({ ...prev, [field]: value }));
   };
@@ -274,7 +270,7 @@ function CartContent() {
       .filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.toLowerCase().includes(searchLower)
+          game.gameBarcode.toLowerCase().includes(searchLower),
       )
       .slice(0, 10);
   }, [availableGames, tradeGameSearch.term, tradeGameSearch.side]);
@@ -284,7 +280,7 @@ function CartContent() {
     if (tradeGameSearch.side !== "received") return [];
 
     const tradableInStock = availableGames.filter(
-      (game) => game.tradable && game.gameAvailableStocks > 0
+      (game) => game.tradable && game.gameAvailableStocks > 0,
     );
 
     if (!tradeGameSearch.term.trim()) {
@@ -296,7 +292,7 @@ function CartContent() {
       .filter(
         (game) =>
           game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.toLowerCase().includes(searchLower)
+          game.gameBarcode.toLowerCase().includes(searchLower),
       )
       .slice(0, 10);
   }, [availableGames, tradeGameSearch.term, tradeGameSearch.side]);
@@ -427,7 +423,7 @@ function CartContent() {
             item.isOnSale && item.salePrice ? item.salePrice : item.gamePrice;
           const calculation = calculateRentalPrice(
             price,
-            rentalDates.rentalDays
+            rentalDates.rentalDays,
           );
 
           return fetch("/api/rentals", {
@@ -596,7 +592,7 @@ function CartContent() {
                       onClick={() => {
                         if (
                           confirm(
-                            "Changing cart type will clear your cart. Are you sure?"
+                            "Changing cart type will clear your cart. Are you sure?",
                           )
                         ) {
                           setCartType("purchase");
@@ -612,7 +608,7 @@ function CartContent() {
                       onClick={() => {
                         if (
                           confirm(
-                            "Changing cart type will clear your cart. Are you sure?"
+                            "Changing cart type will clear your cart. Are you sure?",
                           )
                         ) {
                           setCartType("rental");
@@ -628,7 +624,7 @@ function CartContent() {
                       onClick={() => {
                         if (
                           confirm(
-                            "Changing cart type will clear your cart. Are you sure?"
+                            "Changing cart type will clear your cart. Are you sure?",
                           )
                         ) {
                           setCartType("trade");
@@ -695,7 +691,7 @@ function CartContent() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <HiArrowLeft className="w-5 h-5 text-orange-600" />
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3 className="text-sm font-bold text-gray-900">
                               Games You're Trading In
                             </h3>
                           </div>
@@ -841,7 +837,7 @@ function CartContent() {
                                         updateTradeQuantity(
                                           item.gameBarcode,
                                           item.quantity - 1,
-                                          "given"
+                                          "given",
                                         )
                                       }
                                       className="p-1.5 hover:bg-orange-100 rounded transition-colors"
@@ -849,7 +845,7 @@ function CartContent() {
                                     >
                                       <HiMinus className="w-4 h-4 text-orange-600" />
                                     </button>
-                                    <span className="w-10 text-center font-semibold text-gray-900">
+                                    <span className="text-center font-semibold text-gray-900">
                                       {item.quantity}
                                     </span>
                                     <button
@@ -858,7 +854,7 @@ function CartContent() {
                                         updateTradeQuantity(
                                           item.gameBarcode,
                                           item.quantity + 1,
-                                          "given"
+                                          "given",
                                         )
                                       }
                                       className="p-1.5 hover:bg-orange-100 rounded transition-colors"
@@ -872,7 +868,7 @@ function CartContent() {
                                     onClick={() =>
                                       removeFromTradeCart(
                                         item.gameBarcode,
-                                        "given"
+                                        "given",
                                       )
                                     }
                                     className="p-2 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
@@ -933,7 +929,7 @@ function CartContent() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <HiArrowRight className="w-5 h-5 text-green-600" />
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3 className="text-sm font-bold text-gray-900">
                               Games You Want to Receive
                             </h3>
                           </div>
@@ -1041,10 +1037,8 @@ function CartContent() {
                       <div className="space-y-3">
                         {cart.items.length > 0 ? (
                           cart.items.map((item) => {
-                            const price =
-                              item.isOnSale && item.salePrice
-                                ? item.salePrice
-                                : item.gamePrice;
+                            // For trade transactions, always use original price
+                            const price = item.gamePrice;
                             const lineTotal = price * item.quantity;
                             return (
                               <div
@@ -1069,7 +1063,7 @@ function CartContent() {
                                     sizes="64px"
                                   />
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 ">
                                   <h4 className="font-semibold text-gray-900 truncate mb-1">
                                     {item.gameTitle}
                                   </h4>
@@ -1082,28 +1076,15 @@ function CartContent() {
                                       <span>This game is not tradable</span>
                                     </div>
                                   )}
-                                  <div className="space-y-1">
-                                    {item.isOnSale && item.salePrice ? (
-                                      <div>
-                                        <p className="text-sm text-gray-600">
-                                          <span className="font-medium text-red-600">
-                                            ₱{item.salePrice.toLocaleString()}
-                                          </span>{" "}
-                                          <span className="line-through text-gray-400">
-                                            ₱{item.gamePrice.toLocaleString()}
-                                          </span>{" "}
-                                          × {item.quantity}
-                                        </p>
-                                      </div>
-                                    ) : (
-                                      <p className="text-sm text-gray-600">
-                                        <span className="font-medium">
-                                          ₱{price.toLocaleString()}
-                                        </span>{" "}
-                                        × {item.quantity}
-                                      </p>
-                                    )}
-                                    <p className="text-sm font-bold text-green-700">
+                                  <div className="space-y-1 ">
+                                    {/* For trade transactions, always show original price */}
+                                    <p className="text-sm text-gray-600">
+                                      <span className="font-medium">
+                                        ₱{item.gamePrice.toLocaleString()}
+                                      </span>{" "}
+                                      × {item.quantity}
+                                    </p>
+                                    <p className="text-sm font-bold text-green-700 ">
                                       Line Total: ₱{lineTotal.toLocaleString()}
                                     </p>
                                   </div>
@@ -1116,7 +1097,7 @@ function CartContent() {
                                         updateTradeQuantity(
                                           item.gameBarcode,
                                           item.quantity - 1,
-                                          "received"
+                                          "received",
                                         )
                                       }
                                       className="p-1.5 hover:bg-green-100 rounded transition-colors"
@@ -1124,7 +1105,7 @@ function CartContent() {
                                     >
                                       <HiMinus className="w-4 h-4 text-green-600" />
                                     </button>
-                                    <span className="w-10 text-center font-semibold text-gray-900">
+                                    <span className="text-center font-semibold text-gray-900">
                                       {item.quantity}
                                     </span>
                                     <button
@@ -1133,7 +1114,7 @@ function CartContent() {
                                         updateTradeQuantity(
                                           item.gameBarcode,
                                           item.quantity + 1,
-                                          "received"
+                                          "received",
                                         )
                                       }
                                       className="p-1.5 hover:bg-green-100 rounded transition-colors"
@@ -1147,7 +1128,7 @@ function CartContent() {
                                     onClick={() =>
                                       removeFromTradeCart(
                                         item.gameBarcode,
-                                        "received"
+                                        "received",
                                       )
                                     }
                                     className="p-2 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition-colors"
@@ -1403,7 +1384,7 @@ function CartContent() {
                           rentalDates.startDate
                             ? new Date(
                                 new Date(rentalDates.startDate).getTime() +
-                                  30 * 24 * 60 * 60 * 1000
+                                  30 * 24 * 60 * 60 * 1000,
                               )
                                 .toISOString()
                                 .split("T")[0]
@@ -1808,9 +1789,7 @@ function CartContent() {
                                 <span className="text-sm font-semibold">
                                   ₱
                                   {(
-                                    (item.isOnSale && item.salePrice
-                                      ? item.salePrice
-                                      : item.gamePrice) * item.quantity
+                                    item.gamePrice * item.quantity
                                   ).toLocaleString()}
                                 </span>
                               </div>
@@ -1870,7 +1849,7 @@ function CartContent() {
                           isOnSale: item.isOnSale,
                           salePrice: item.salePrice,
                           gamePrice: item.gamePrice,
-                        }
+                        },
                       );
                       return (
                         <div
@@ -1917,7 +1896,7 @@ function CartContent() {
                                   onClick={() =>
                                     updateQuantity(
                                       item.gameBarcode,
-                                      item.quantity - 1
+                                      item.quantity - 1,
                                     )
                                   }
                                   disabled={item.quantity <= 1}
@@ -1932,7 +1911,7 @@ function CartContent() {
                                   onClick={() =>
                                     updateQuantity(
                                       item.gameBarcode,
-                                      item.quantity + 1
+                                      item.quantity + 1,
                                     )
                                   }
                                   disabled={item.quantity >= item.maxStock}
@@ -1948,7 +1927,7 @@ function CartContent() {
                                   <div className="flex flex-col items-end">
                                     <span className="text-xs text-gray-400 line-through">
                                       {formatPrice(
-                                        item.gamePrice * item.quantity
+                                        item.gamePrice * item.quantity,
                                       )}
                                     </span>
                                     <span className="text-sm font-semibold text-funBlue">
@@ -2041,7 +2020,7 @@ function CartContent() {
                           isOnSale: item.isOnSale,
                           salePrice: item.salePrice,
                           gamePrice: item.gamePrice,
-                        }
+                        },
                       );
                       return (
                         <div

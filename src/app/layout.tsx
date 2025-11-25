@@ -4,6 +4,7 @@ import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { CartProvider } from "@/contexts/CartContext";
 import FloatingCartButton from "@/app/components/ui/globalUI/FloatingCartButton";
+import GlobalSupportChat from "@/app/components/ui/globalUI/GlobalSupportChat";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -85,6 +86,7 @@ export default function RootLayout({
         <CartProvider>
           {children}
           <FloatingCartButton />
+          <GlobalSupportChat />
         </CartProvider>
       </body>
     </html>

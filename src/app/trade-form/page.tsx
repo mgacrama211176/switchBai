@@ -129,8 +129,8 @@ function TradeFormContent() {
         gamesReceived: cart.items.map((game) => ({
           gameBarcode: game.gameBarcode,
           gameTitle: game.gameTitle,
-          gamePrice:
-            game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice,
+          // For trade transactions, always use original price, not sale price
+          gamePrice: game.gamePrice,
           quantity: game.quantity,
         })),
         tradeLocation: formData.tradeLocation.trim() || undefined,
