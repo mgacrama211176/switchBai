@@ -27,6 +27,8 @@ export default function AddRentalModal({
   // Game selection state
   const [gameSearchTerm, setGameSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<Game[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isGameSearchOpen, setIsGameSearchOpen] = useState(false);
   const [selectedGameIndex, setSelectedGameIndex] = useState(0);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -93,12 +95,12 @@ export default function AddRentalModal({
     return selectedGame.gamePrice;
   }
 
+  // Fetch initial games (100 most recent) when modal opens
   useEffect(() => {
-    async function fetchGames() {
+    async function fetchInitialGames() {
       setIsLoadingGames(true);
       try {
-        // Fetch all games for admin selection
-        const response = await fetch("/api/games?limit=1000");
+        const response = await fetch("/api/games?limit=100&sort=updatedAt&order=desc");
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -109,8 +111,36 @@ export default function AddRentalModal({
       }
     }
 
-    fetchGames();
+    fetchInitialGames();
   }, []);
+
+  // Fetch games from API when search term changes (server-side search)
+  useEffect(() => {
+    if (!debouncedSearchTerm.trim()) {
+      // Clear search results when search term is empty
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    async function searchGames() {
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `/api/games?search=${encodeURIComponent(debouncedSearchTerm)}&limit=10000`
+        );
+        const data = await response.json();
+        setSearchResults(data.games || []);
+      } catch (error) {
+        console.error("Error searching games:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }
+
+    searchGames();
+  }, [debouncedSearchTerm]);
 
   // Set default end date when start date changes
   useEffect(() => {
@@ -158,17 +188,12 @@ export default function AddRentalModal({
 
   function getFilteredGames(): Game[] {
     if (!debouncedSearchTerm.trim()) {
-      return games.slice(0, 10); // Show first 10 games when no search
+      // When no search term, return initial games (limited to 10 for display)
+      return games.slice(0, 10);
     }
 
-    const searchLower = debouncedSearchTerm.toLowerCase();
-    return games
-      .filter(
-        (game) =>
-          game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.toLowerCase().includes(searchLower),
-      )
-      .slice(0, 10); // Limit to 10 results
+    // When search term exists, return server-side search results
+    return searchResults.slice(0, 10); // Limit to 10 for display
   }
 
   function handleGameSelect(game: Game) {
@@ -389,28 +414,38 @@ export default function AddRentalModal({
                   placeholder="Search for a game by title or barcode..."
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
                 />
-                {isGameSearchOpen && filteredGames.length > 0 && (
+                {isGameSearchOpen && (
                   <div
                     ref={searchResultsRef}
                     className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
                   >
-                    {filteredGames.map((game, index) => (
-                      <div
-                        key={game._id || game.gameBarcode}
-                        onClick={() => handleGameSelect(game)}
-                        className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                          index === selectedGameIndex ? "bg-gray-100" : ""
-                        }`}
-                      >
-                        <div className="font-medium text-gray-900">
-                          {game.gameTitle}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {game.gameBarcode} • ₱
-                          {game.gamePrice.toLocaleString()}
-                        </div>
+                    {isSearching ? (
+                      <div className="p-4 text-sm text-gray-500">
+                        Searching...
                       </div>
-                    ))}
+                    ) : filteredGames.length > 0 ? (
+                      filteredGames.map((game, index) => (
+                        <div
+                          key={game._id || game.gameBarcode}
+                          onClick={() => handleGameSelect(game)}
+                          className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                            index === selectedGameIndex ? "bg-gray-100" : ""
+                          }`}
+                        >
+                          <div className="font-medium text-gray-900">
+                            {game.gameTitle}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {game.gameBarcode} • ₱
+                            {game.gamePrice.toLocaleString()}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-sm text-gray-500">
+                        No games found
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

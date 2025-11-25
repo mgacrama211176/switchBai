@@ -32,7 +32,7 @@ export interface RetrievedFAQ {
 export async function searchGames(
   queryEmbedding: number[],
   queryText: string,
-  limit: number = 5
+  limit: number = 5,
 ): Promise<RetrievedGame[]> {
   try {
     await connectDB();
@@ -88,18 +88,18 @@ export async function searchGames(
 
     // If vector search returns no results, try text search as fallback
     console.log(
-      `⚠️ [Vector Search] Returned no results for "${queryText}", trying text search fallback...`
+      `⚠️ [Vector Search] Returned no results for "${queryText}", trying text search fallback...`,
     );
     return await searchGamesTextFallback(queryText, limit);
   } catch (error: any) {
     console.error(
       `❌ [Vector Search] Error for query "${queryText}":`,
-      error.message
+      error.message,
     );
     console.error("Full error:", error);
     // If vector search fails, fallback to text search
     console.log(
-      `🔄 [Vector Search] Falling back to text search for "${queryText}"`
+      `🔄 [Vector Search] Falling back to text search for "${queryText}"`,
     );
     return await searchGamesTextFallback(queryText, limit);
   }
@@ -110,7 +110,7 @@ export async function searchGames(
  */
 async function searchGamesTextFallback(
   queryText: string,
-  limit: number = 5
+  limit: number = 5,
 ): Promise<RetrievedGame[]> {
   try {
     // Clean and prepare search query
@@ -226,7 +226,7 @@ async function searchGamesTextFallback(
       const results = await Game.find(condition)
         .limit(limit)
         .select(
-          "gameTitle gameDescription gameCategory gamePlatform gamePrice isOnSale salePrice gameAvailableStocks gameBarcode"
+          "gameTitle gameDescription gameCategory gamePlatform gamePrice isOnSale salePrice gameAvailableStocks gameBarcode",
         )
         .lean();
 
@@ -234,7 +234,7 @@ async function searchGamesTextFallback(
         games = results;
         console.log(
           `✅ Text search found ${games.length} games with condition:`,
-          Object.keys(condition)[0]
+          Object.keys(condition)[0],
         );
         break; // Use the first successful search
       }
@@ -252,7 +252,7 @@ async function searchGamesTextFallback(
       })
         .limit(limit)
         .select(
-          "gameTitle gameDescription gameCategory gamePlatform gamePrice isOnSale salePrice gameAvailableStocks gameBarcode"
+          "gameTitle gameDescription gameCategory gamePlatform gamePrice isOnSale salePrice gameAvailableStocks gameBarcode",
         )
         .lean();
 
@@ -265,7 +265,7 @@ async function searchGamesTextFallback(
     console.log(`✅ [Text Search] Found ${games.length} games total`);
     if (games.length > 0) {
       console.log(
-        `   Game titles: ${games.map((g: any) => `"${g.gameTitle}"`).join(", ")}`
+        `   Game titles: ${games.map((g: any) => `"${g.gameTitle}"`).join(", ")}`,
       );
     }
 
@@ -284,7 +284,7 @@ async function searchGamesTextFallback(
   } catch (fallbackError: any) {
     console.error(
       "❌ Text search fallback also failed:",
-      fallbackError.message
+      fallbackError.message,
     );
     return [];
   }
@@ -295,7 +295,7 @@ async function searchGamesTextFallback(
  */
 export async function searchKnowledgeBase(
   queryEmbedding: number[],
-  limit: number = 3
+  limit: number = 3,
 ): Promise<RetrievedFAQ[]> {
   try {
     await connectDB();
@@ -376,7 +376,7 @@ export async function retrieveContext(query: string): Promise<{
     // Generate query embedding
     const queryEmbedding = await generateQueryEmbedding(query);
     console.log(
-      `✅ Generated query embedding (${queryEmbedding.length} dimensions)`
+      `✅ Generated query embedding (${queryEmbedding.length} dimensions)`,
     );
 
     // Search both games and knowledge base in parallel

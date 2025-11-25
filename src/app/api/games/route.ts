@@ -75,8 +75,12 @@ export async function GET(request: NextRequest) {
     const sortOptions: any = { [sortField]: sortOrder };
 
     // Pagination
+    // When search is provided, use high limit to allow full database search
+    // Otherwise use default limit for normal pagination
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const limit = search
+      ? parseInt(searchParams.get("limit") || "10000") // High limit for searches
+      : parseInt(searchParams.get("limit") || "50"); // Normal limit otherwise
     const skip = (page - 1) * limit;
 
     let games: any[];

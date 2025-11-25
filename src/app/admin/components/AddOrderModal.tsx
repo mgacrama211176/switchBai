@@ -63,16 +63,22 @@ export default function AddOrderModal({
   const [debouncedSearchTerms, setDebouncedSearchTerms] = useState<
     Record<number, string>
   >({});
+  const [searchResults, setSearchResults] = useState<
+    Record<number, Game[]>
+  >({});
+  const [isSearching, setIsSearching] = useState<
+    Record<number, boolean>
+  >({});
   const searchInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const searchResultsRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const debounceTimeouts = useRef<Record<number, NodeJS.Timeout>>({});
 
+  // Fetch initial games (100 most recent with stock) when modal opens
   useEffect(() => {
-    async function fetchGames() {
+    async function fetchInitialGames() {
       setIsLoadingGames(true);
       try {
-        // Use API filter to only get games with stock > 0
-        const response = await fetch("/api/games?inStock=true");
+        const response = await fetch("/api/games?inStock=true&limit=100&sort=updatedAt&order=desc");
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -83,8 +89,59 @@ export default function AddOrderModal({
       }
     }
 
-    fetchGames();
+    fetchInitialGames();
   }, []);
+
+  // Fetch games from API when search terms change (server-side search)
+  useEffect(() => {
+    const searchPromises = Object.entries(debouncedSearchTerms).map(
+      async ([indexStr, searchTerm]) => {
+        const index = parseInt(indexStr);
+        if (!searchTerm.trim()) {
+          // Clear search results when search term is empty
+          setSearchResults((prev) => {
+            const updated = { ...prev };
+            delete updated[index];
+            return updated;
+          });
+          setIsSearching((prev) => {
+            const updated = { ...prev };
+            delete updated[index];
+            return updated;
+          });
+          return;
+        }
+
+        // Set loading state for this specific search
+        setIsSearching((prev) => ({ ...prev, [index]: true }));
+
+        try {
+          const response = await fetch(
+            `/api/games?search=${encodeURIComponent(searchTerm)}&inStock=true&limit=10000`
+          );
+          const data = await response.json();
+          setSearchResults((prev) => ({
+            ...prev,
+            [index]: data.games || [],
+          }));
+        } catch (error) {
+          console.error(`Error searching games for row ${index}:`, error);
+          setSearchResults((prev) => ({
+            ...prev,
+            [index]: [],
+          }));
+        } finally {
+          setIsSearching((prev) => {
+            const updated = { ...prev };
+            delete updated[index];
+            return updated;
+          });
+        }
+      }
+    );
+
+    Promise.all(searchPromises);
+  }, [debouncedSearchTerms]);
 
   // Add initial game row
   useEffect(() => {
@@ -152,17 +209,13 @@ export default function AddOrderModal({
   function getFilteredGames(index: number): Game[] {
     const searchTerm = debouncedSearchTerms[index] || "";
     if (!searchTerm.trim()) {
-      return games.slice(0, 10); // Show first 10 games when no search
+      // When no search term, return initial games (limited to 10 for display)
+      return games.slice(0, 10);
     }
 
-    const searchLower = searchTerm.toLowerCase();
-    return games
-      .filter(
-        (game) =>
-          game.gameTitle.toLowerCase().includes(searchLower) ||
-          game.gameBarcode.toLowerCase().includes(searchLower),
-      )
-      .slice(0, 10); // Limit to 10 results
+    // When search term exists, return server-side search results
+    const results = searchResults[index] || [];
+    return results.slice(0, 10); // Limit to 10 for display
   }
 
   function handleSearchChange(index: number, value: string) {
@@ -620,7 +673,11 @@ export default function AddOrderModal({
                                 }}
                                 className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
                               >
-                                {getFilteredGames(index).length > 0 ? (
+                                {isSearching[index] ? (
+                                  <div className="p-4 text-sm text-gray-500">
+                                    Searching...
+                                  </div>
+                                ) : getFilteredGames(index).length > 0 ? (
                                   getFilteredGames(index).map((game) => (
                                     <button
                                       key={game.gameBarcode}
