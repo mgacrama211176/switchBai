@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useLayoutEffect,
+  Suspense,
+  startTransition,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +25,7 @@ import {
   getStockUrgency,
 } from "@/app/components/ui/home/game-utils";
 import { useCart } from "@/contexts/CartContext";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 const CATEGORIES = [
   "RPG",
@@ -33,13 +42,8 @@ const CATEGORIES = [
 
 const PLATFORMS = ["Nintendo Switch", "Nintendo Switch 2", "PS4", "PS5"];
 
-const PRICE_RANGES = [
-  { label: "Under ₱1,000", min: 0, max: 999, value: "0-999" },
-  { label: "₱1,000 - ₱2,000", min: 1000, max: 2000, value: "1000-2000" },
-  { label: "₱2,000 - ₱3,000", min: 2000, max: 3000, value: "2000-3000" },
-  { label: "₱3,000 - ₱4,000", min: 3000, max: 4000, value: "3000-4000" },
-  { label: "Over ₱4,000", min: 4001, max: 99999, value: "4001-99999" },
-];
+const PRICE_MIN = 500;
+const PRICE_MAX = 3500;
 
 const GamesPageContent = () => {
   // URL params handling
@@ -49,30 +53,41 @@ const GamesPageContent = () => {
   // Data state
   const [games, setGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Pagination state (from URL or defaults)
   const [currentPage, setCurrentPage] = useState(
     () => Number(searchParams.get("page")) || 1,
   );
-  const [itemsPerPage, setItemsPerPage] = useState(
-    () => Number(searchParams.get("limit")) || 24,
-  );
+  // Fixed items per page for infinite scroll
+  const itemsPerPage = 24;
   const [totalPages, setTotalPages] = useState(1);
   const [totalGames, setTotalGames] = useState(0);
+
+  // Parse price range from URL
+  const priceMinParam = searchParams.get("priceMin");
+  const priceMaxParam = searchParams.get("priceMax");
+  const initialPriceRange =
+    priceMinParam && priceMaxParam
+      ? { min: Number(priceMinParam), max: Number(priceMaxParam) }
+      : { min: PRICE_MIN, max: PRICE_MAX };
 
   // Filter state (from URL or defaults)
   const [filters, setFilters] = useState({
     search: searchParams.get("search") || "",
     platforms: searchParams.get("platform")?.split(",").filter(Boolean) || [],
     categories: searchParams.get("category")?.split(",").filter(Boolean) || [],
-    priceRange: searchParams.get("priceRange") || "", // e.g., "1000-2000"
+    priceRange: initialPriceRange,
     availability: (searchParams.get("availability") || "inStock") as
       | "all"
       | "inStock"
       | "outOfStock"
       | "onSale",
     sortBy: searchParams.get("sort") || "newest",
+    cartridgeOnly: searchParams.get("cartridgeOnly") === "true",
+    tradable: searchParams.get("tradable") === "true",
   });
 
   // UI state
@@ -82,27 +97,36 @@ const GamesPageContent = () => {
   const [showCartTypeModal, setShowCartTypeModal] = useState(false);
   const [pendingGame, setPendingGame] = useState<Game | null>(null);
 
+  // Local price range state for immediate UI feedback (separate from filter state)
+  const [localPriceRange, setLocalPriceRange] = useState(initialPriceRange);
+
   // Cart context
   const { addToCart, isInCart, cart } = useCart();
 
   // Load URL params on mount (for shared links)
   useEffect(() => {
+    const priceMin = searchParams.get("priceMin");
+    const priceMax = searchParams.get("priceMax");
     const urlFilters = {
       search: searchParams.get("search") || "",
       platforms: searchParams.get("platform")?.split(",").filter(Boolean) || [],
       categories:
         searchParams.get("category")?.split(",").filter(Boolean) || [],
-      priceRange: searchParams.get("priceRange") || "",
+      priceRange:
+        priceMin && priceMax
+          ? { min: Number(priceMin), max: Number(priceMax) }
+          : { min: PRICE_MIN, max: PRICE_MAX },
       availability: (searchParams.get("availability") || "inStock") as
         | "all"
         | "inStock"
         | "outOfStock"
         | "onSale",
       sortBy: searchParams.get("sort") || "newest",
+      cartridgeOnly: searchParams.get("cartridgeOnly") === "true",
+      tradable: searchParams.get("tradable") === "true",
     };
     setFilters(urlFilters);
     setCurrentPage(Number(searchParams.get("page")) || 1);
-    setItemsPerPage(Number(searchParams.get("limit")) || 24);
   }, []); // Only on mount
 
   // Update URL whenever filters change
@@ -115,37 +139,87 @@ const GamesPageContent = () => {
       params.set("platform", filters.platforms.join(","));
     if (filters.categories.length > 0)
       params.set("category", filters.categories.join(","));
-    if (filters.priceRange) params.set("priceRange", filters.priceRange);
+    if (
+      filters.priceRange.min !== PRICE_MIN ||
+      filters.priceRange.max !== PRICE_MAX
+    ) {
+      params.set("priceMin", filters.priceRange.min.toString());
+      params.set("priceMax", filters.priceRange.max.toString());
+    }
     if (filters.availability !== "inStock")
       params.set("availability", filters.availability);
     if (filters.sortBy !== "newest") params.set("sort", filters.sortBy);
+    if (filters.cartridgeOnly) params.set("cartridgeOnly", "true");
+    if (filters.tradable) params.set("tradable", "true");
     if (currentPage > 1) params.set("page", currentPage.toString());
-    if (itemsPerPage !== 24) params.set("limit", itemsPerPage.toString());
 
     // Update URL without page reload
     const newUrl = params.toString() ? `?${params.toString()}` : "/games";
     router.push(newUrl, { scroll: false });
-  }, [filters, currentPage, itemsPerPage, router]);
-
-  // Fetch games whenever filters or pagination changes
-  useEffect(() => {
-    loadGames();
   }, [
-    currentPage,
-    itemsPerPage,
     filters.search,
-    filters.platforms,
-    filters.categories,
+    filters.platforms.join(","),
+    filters.categories.join(","),
+    filters.availability,
+    filters.sortBy,
+    filters.cartridgeOnly,
+    filters.tradable,
+    currentPage,
+    router,
   ]);
 
-  const loadGames = async () => {
-    setIsLoading(true);
-    setError(null);
+  // Update URL when price range filter is committed (separate from other filters)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (
+      filters.priceRange.min !== PRICE_MIN ||
+      filters.priceRange.max !== PRICE_MAX
+    ) {
+      params.set("priceMin", filters.priceRange.min.toString());
+      params.set("priceMax", filters.priceRange.max.toString());
+    } else {
+      params.delete("priceMin");
+      params.delete("priceMax");
+    }
+
+    const newUrl = params.toString() ? `?${params.toString()}` : "/games";
+    router.push(newUrl, { scroll: false });
+  }, [filters.priceRange.min, filters.priceRange.max, router]);
+
+  // Sync local price range with filter state when filter changes externally
+  useEffect(() => {
+    setLocalPriceRange(filters.priceRange);
+  }, [filters.priceRange.min, filters.priceRange.max]);
+
+  // Initial load on mount
+  useEffect(() => {
+    loadGames(1, true);
+  }, []);
+
+  // Fetch games whenever filters change (reset to page 1)
+  useEffect(() => {
+    setCurrentPage(1);
+    setGames([]);
+    setHasMore(true);
+    loadGames(1, true);
+  }, [filters.search, filters.platforms, filters.categories]);
+
+  const loadGames = async (
+    pageNum: number = currentPage,
+    isNewSearch: boolean = false,
+  ) => {
+    if (isNewSearch) {
+      setIsLoading(true);
+      setError(null);
+    } else {
+      setIsLoadingMore(true);
+    }
 
     try {
       const response = await fetchGames({
         limit: itemsPerPage,
-        page: currentPage,
+        page: pageNum,
         platform: filters.platforms.join(","),
         category: filters.categories.join(","),
         search: filters.search, // API searches only titles
@@ -153,8 +227,23 @@ const GamesPageContent = () => {
       });
 
       if (response.success && response.data) {
-        setGames(response.data.games);
-        // Use API pagination data
+        if (isNewSearch) {
+          setGames(response.data.games);
+        } else {
+          // Append new games, filtering out duplicates
+          setGames((prev) => {
+            const newGames = response.data.games.filter(
+              (newGame: Game) =>
+                !prev.some((g) => g.gameBarcode === newGame.gameBarcode),
+            );
+            return [...prev, ...newGames];
+          });
+        }
+
+        // Check if there are more games to load
+        setHasMore(response.data.games.length === itemsPerPage);
+
+        // Use API pagination data for display
         setTotalPages(response.data.pagination.pages);
         setTotalGames(response.data.pagination.total);
       } else {
@@ -165,19 +254,47 @@ const GamesPageContent = () => {
       setError("An unexpected error occurred while loading games");
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
+
+  // Memoize price range calculations for UI
+  const priceRangePercentages = useMemo(() => {
+    const minPercent =
+      ((localPriceRange.min - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+    const widthPercent =
+      ((localPriceRange.max - localPriceRange.min) / (PRICE_MAX - PRICE_MIN)) *
+      100;
+    const rangePercent =
+      ((localPriceRange.max - localPriceRange.min) / (PRICE_MAX - PRICE_MIN)) *
+      100;
+    return { minPercent, widthPercent, rangePercent };
+  }, [localPriceRange.min, localPriceRange.max]);
 
   // Apply client-side filters and sorting
   const filteredAndSortedGames = useMemo(() => {
     let filtered = [...games];
 
     // Price range filter (client-side)
-    if (filters.priceRange) {
-      const [min, max] = filters.priceRange.split("-").map(Number);
+    if (
+      filters.priceRange.min !== PRICE_MIN ||
+      filters.priceRange.max !== PRICE_MAX
+    ) {
       filtered = filtered.filter(
-        (g) => g.gamePrice >= min && g.gamePrice <= max,
+        (g) =>
+          g.gamePrice >= filters.priceRange.min &&
+          g.gamePrice <= filters.priceRange.max,
       );
+    }
+
+    // Cartridge only filter (client-side)
+    if (filters.cartridgeOnly) {
+      filtered = filtered.filter((g) => (g.stockCartridgeOnly || 0) > 0);
+    }
+
+    // Tradable filter (client-side)
+    if (filters.tradable) {
+      filtered = filtered.filter((g) => g.tradable === true);
     }
 
     // Availability filter (client-side)
@@ -218,27 +335,56 @@ const GamesPageContent = () => {
     }
 
     return filtered;
-  }, [games, filters.priceRange, filters.availability, filters.sortBy]);
+  }, [
+    games,
+    filters.priceRange.min,
+    filters.priceRange.max,
+    filters.cartridgeOnly,
+    filters.tradable,
+    filters.availability,
+    filters.sortBy,
+  ]);
 
-  // Calculate client-side pagination based on filtered results
-  const clientTotalPages = Math.ceil(
-    filteredAndSortedGames.length / itemsPerPage,
-  );
+  // Calculate total filtered games for display
   const clientTotalGames = filteredAndSortedGames.length;
 
-  // Slice games for current page
-  const paginatedGames = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredAndSortedGames.slice(startIndex, endIndex);
-  }, [filteredAndSortedGames, currentPage, itemsPerPage]);
-
-  // Reset to page 1 if current page exceeds total pages after filtering
-  useEffect(() => {
-    if (currentPage > clientTotalPages && clientTotalPages > 0) {
-      setCurrentPage(1);
+  // Infinite scroll handler
+  const handleLoadMore = useCallback(() => {
+    if (!isLoading && !isLoadingMore && hasMore) {
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      loadGames(nextPage, false);
     }
-  }, [currentPage, clientTotalPages]);
+  }, [currentPage, isLoading, isLoadingMore, hasMore]);
+
+  // Setup infinite scroll
+  const lastElementRef = useInfiniteScroll({
+    isLoading: isLoading || isLoadingMore,
+    hasMore,
+    onLoadMore: handleLoadMore,
+  });
+
+  // Scroll to top smoothly when filters change (not on infinite scroll)
+  useLayoutEffect(() => {
+    if (!isLoading && games.length > 0 && currentPage === 1) {
+      startTransition(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      });
+    }
+  }, [
+    filters.search,
+    filters.platforms.join(","),
+    filters.categories.join(","),
+    filters.priceRange.min,
+    filters.priceRange.max,
+    filters.availability,
+    filters.cartridgeOnly,
+    filters.tradable,
+    filters.sortBy,
+  ]);
 
   // Filter Handlers (Real-time, automatic)
   const handleSearchChange = (value: string) => {
@@ -254,6 +400,8 @@ const GamesPageContent = () => {
         : prev.platforms.filter((p) => p !== platform),
     }));
     setCurrentPage(1);
+    setGames([]);
+    setHasMore(true);
   };
 
   const handleCategoryChange = (category: string, checked: boolean) => {
@@ -264,12 +412,26 @@ const GamesPageContent = () => {
         : prev.categories.filter((c) => c !== category),
     }));
     setCurrentPage(1);
+    setGames([]);
+    setHasMore(true);
   };
 
-  const handlePriceRangeChange = (range: string) => {
-    setFilters((prev) => ({ ...prev, priceRange: range }));
+  // Update local price range immediately for UI feedback
+  const handlePriceRangeLocalChange = useCallback(
+    (min: number, max: number) => {
+      setLocalPriceRange({ min, max });
+    },
+    [],
+  );
+
+  // Commit price range to filter state (called on mouseUp or when user stops dragging)
+  const handlePriceRangeCommit = useCallback((min: number, max: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      priceRange: { min, max },
+    }));
     setCurrentPage(1);
-  };
+  }, []);
 
   const handleAvailabilityChange = (
     availability: "all" | "inStock" | "outOfStock" | "onSale",
@@ -278,20 +440,36 @@ const GamesPageContent = () => {
     setCurrentPage(1);
   };
 
+  const handleCartridgeOnlyChange = (checked: boolean) => {
+    setFilters((prev) => ({ ...prev, cartridgeOnly: checked }));
+    setCurrentPage(1);
+  };
+
+  const handleTradableChange = (checked: boolean) => {
+    setFilters((prev) => ({ ...prev, tradable: checked }));
+    setCurrentPage(1);
+  };
+
   const handleSortChange = (sortBy: string) => {
     setFilters((prev) => ({ ...prev, sortBy }));
   };
 
   const clearAllFilters = () => {
+    const defaultPriceRange = { min: PRICE_MIN, max: PRICE_MAX };
+    setLocalPriceRange(defaultPriceRange);
     setFilters({
       search: "",
       platforms: [],
       categories: [],
-      priceRange: "",
+      priceRange: defaultPriceRange,
       availability: "inStock", // Default
       sortBy: "newest",
+      cartridgeOnly: false,
+      tradable: false,
     });
     setCurrentPage(1);
+    setGames([]);
+    setHasMore(true);
   };
 
   // Cart & Compare Handlers
@@ -520,6 +698,54 @@ const GamesPageContent = () => {
 
   return (
     <main className="min-h-screen bg-white">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+          }
+          input[type="range"]::-webkit-slider-thumb:hover {
+            background: #1d4ed8;
+            transform: scale(1.1);
+          }
+          input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+          }
+          input[type="range"]::-moz-range-thumb:hover {
+            background: #1d4ed8;
+            transform: scale(1.1);
+          }
+          @keyframes fade-in {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+          }
+        `,
+        }}
+      />
       <Navigation />
 
       {/* Hero Section */}
@@ -529,8 +755,7 @@ const GamesPageContent = () => {
             Browse All <span className="text-funBlue">Games</span>
           </h1>
           <p className="text-lg lg:text-xl text-gray-700 text-center mb-8">
-            Discover {clientTotalGames}+ Nintendo Switch games for rent or
-            purchase
+            Discover Nintendo Switch games for rent or purchase
           </p>
 
           {/* Search Bar */}
@@ -560,8 +785,11 @@ const GamesPageContent = () => {
           {/* Active Filters Display */}
           {(filters.platforms.length > 0 ||
             filters.categories.length > 0 ||
-            filters.priceRange ||
-            filters.availability !== "inStock") && (
+            filters.priceRange.min !== PRICE_MIN ||
+            filters.priceRange.max !== PRICE_MAX ||
+            filters.availability !== "inStock" ||
+            filters.cartridgeOnly ||
+            filters.tradable) && (
             <div className="flex flex-wrap gap-2 justify-center mt-6">
               <span className="text-sm text-gray-700 font-medium">
                 Active filters:
@@ -589,15 +817,17 @@ const GamesPageContent = () => {
                 </button>
               ))}
 
-              {filters.priceRange && (
+              {(filters.priceRange.min !== PRICE_MIN ||
+                filters.priceRange.max !== PRICE_MAX) && (
                 <button
-                  onClick={() => handlePriceRangeChange("")}
+                  onClick={() => {
+                    setLocalPriceRange({ min: PRICE_MIN, max: PRICE_MAX });
+                    handlePriceRangeCommit(PRICE_MIN, PRICE_MAX);
+                  }}
                   className="bg-green-500 text-white text-sm px-3 py-1 rounded-full flex items-center gap-1 hover:bg-green-600"
                 >
-                  {
-                    PRICE_RANGES.find((r) => r.value === filters.priceRange)
-                      ?.label
-                  }
+                  ₱{filters.priceRange.min.toLocaleString()} - ₱
+                  {filters.priceRange.max.toLocaleString()}
                   <span className="text-xs">✕</span>
                 </button>
               )}
@@ -612,6 +842,26 @@ const GamesPageContent = () => {
                     : filters.availability === "outOfStock"
                       ? "Out of Stock"
                       : "On Sale"}
+                  <span className="text-xs">✕</span>
+                </button>
+              )}
+
+              {filters.cartridgeOnly && (
+                <button
+                  onClick={() => handleCartridgeOnlyChange(false)}
+                  className="bg-teal-500 text-white text-sm px-3 py-1 rounded-full flex items-center gap-1 hover:bg-teal-600"
+                >
+                  Cartridge Only
+                  <span className="text-xs">✕</span>
+                </button>
+              )}
+
+              {filters.tradable && (
+                <button
+                  onClick={() => handleTradableChange(false)}
+                  className="bg-indigo-500 text-white text-sm px-3 py-1 rounded-full flex items-center gap-1 hover:bg-indigo-600"
+                >
+                  Open for Trades
                   <span className="text-xs">✕</span>
                 </button>
               )}
@@ -739,36 +989,137 @@ const GamesPageContent = () => {
                     <h3 className="font-bold mb-3 text-gray-800">
                       Price Range
                     </h3>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 cursor-pointer group">
-                        <input
-                          type="radio"
-                          name="priceRange"
-                          checked={!filters.priceRange}
-                          onChange={() => handlePriceRangeChange("")}
-                          className="border-gray-300 text-funBlue focus:ring-funBlue cursor-pointer"
-                        />
-                        <span className="text-gray-700 group-hover:text-funBlue transition-colors">
-                          All Prices
-                        </span>
-                      </label>
-                      {PRICE_RANGES.map((range) => (
-                        <label
-                          key={range.value}
-                          className="flex items-center gap-2 cursor-pointer group"
-                        >
-                          <input
-                            type="radio"
-                            name="priceRange"
-                            checked={filters.priceRange === range.value}
-                            onChange={() => handlePriceRangeChange(range.value)}
-                            className="border-gray-300 text-funBlue focus:ring-funBlue cursor-pointer"
-                          />
-                          <span className="text-gray-700 group-hover:text-funBlue transition-colors">
-                            {range.label}
+                    <div className="space-y-4">
+                      {/* Price Display */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col items-start">
+                          <span className="text-xs text-gray-500 mb-1">
+                            Min
                           </span>
-                        </label>
-                      ))}
+                          <span className="text-lg font-bold text-funBlue">
+                            ₱{localPriceRange.min.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex-1 mx-4">
+                          <div className="h-px bg-gray-300"></div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs text-gray-500 mb-1">
+                            Max
+                          </span>
+                          <span className="text-lg font-bold text-funBlue">
+                            ₱{localPriceRange.max.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Dual Range Slider */}
+                      <div className="relative py-2">
+                        {/* Track */}
+                        <div className="h-2 bg-gray-200 rounded-full"></div>
+
+                        {/* Active Range */}
+                        <div
+                          className="absolute top-2 h-2 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-150"
+                          style={{
+                            left: `${priceRangePercentages.minPercent}%`,
+                            width: `${priceRangePercentages.widthPercent}%`,
+                          }}
+                        ></div>
+
+                        {/* Min Slider */}
+                        <input
+                          type="range"
+                          min={PRICE_MIN}
+                          max={localPriceRange.max}
+                          value={localPriceRange.min}
+                          onChange={(e) => {
+                            const newMin = Math.min(
+                              Number(e.target.value),
+                              localPriceRange.max,
+                            );
+                            handlePriceRangeLocalChange(
+                              newMin,
+                              localPriceRange.max,
+                            );
+                          }}
+                          onMouseUp={(e) => {
+                            handlePriceRangeCommit(
+                              localPriceRange.min,
+                              localPriceRange.max,
+                            );
+                          }}
+                          onTouchEnd={(e) => {
+                            handlePriceRangeCommit(
+                              localPriceRange.min,
+                              localPriceRange.max,
+                            );
+                          }}
+                          className="absolute top-2 w-full h-2 bg-transparent appearance-none cursor-pointer"
+                          style={{ zIndex: 2 }}
+                        />
+
+                        {/* Max Slider */}
+                        <input
+                          type="range"
+                          min={localPriceRange.min}
+                          max={PRICE_MAX}
+                          value={localPriceRange.max}
+                          onChange={(e) => {
+                            const newMax = Math.max(
+                              Number(e.target.value),
+                              localPriceRange.min,
+                            );
+                            handlePriceRangeLocalChange(
+                              localPriceRange.min,
+                              newMax,
+                            );
+                          }}
+                          onMouseUp={(e) => {
+                            handlePriceRangeCommit(
+                              localPriceRange.min,
+                              localPriceRange.max,
+                            );
+                          }}
+                          onTouchEnd={(e) => {
+                            handlePriceRangeCommit(
+                              localPriceRange.min,
+                              localPriceRange.max,
+                            );
+                          }}
+                          className="absolute top-2 w-full h-2 bg-transparent appearance-none cursor-pointer"
+                          style={{ zIndex: 3 }}
+                        />
+                      </div>
+
+                      {/* Price Range Info */}
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>₱{PRICE_MIN.toLocaleString()}</span>
+                        <span className="text-gray-400">
+                          {localPriceRange.min === PRICE_MIN &&
+                          localPriceRange.max === PRICE_MAX
+                            ? "All prices"
+                            : `${priceRangePercentages.rangePercent.toFixed(0)}% range`}
+                        </span>
+                        <span>₱{PRICE_MAX.toLocaleString()}</span>
+                      </div>
+
+                      {/* Reset Button */}
+                      {(filters.priceRange.min !== PRICE_MIN ||
+                        filters.priceRange.max !== PRICE_MAX) && (
+                        <button
+                          onClick={() => {
+                            setLocalPriceRange({
+                              min: PRICE_MIN,
+                              max: PRICE_MAX,
+                            });
+                            handlePriceRangeCommit(PRICE_MIN, PRICE_MAX);
+                          }}
+                          className="text-sm text-funBlue hover:underline font-semibold transition-colors"
+                        >
+                          Reset to All Prices
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -831,6 +1182,39 @@ const GamesPageContent = () => {
                     </div>
                   </div>
 
+                  {/* Cartridge Only & Tradable Filters */}
+                  <div className="mb-6 pb-6 border-b">
+                    <h3 className="font-bold mb-3 text-gray-800">Options</h3>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={filters.cartridgeOnly}
+                          onChange={(e) =>
+                            handleCartridgeOnlyChange(e.target.checked)
+                          }
+                          className="rounded border-gray-300 text-funBlue focus:ring-funBlue cursor-pointer"
+                        />
+                        <span className="text-gray-700 group-hover:text-funBlue transition-colors">
+                          Cartridge Only Available
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={filters.tradable}
+                          onChange={(e) =>
+                            handleTradableChange(e.target.checked)
+                          }
+                          className="rounded border-gray-300 text-funBlue focus:ring-funBlue cursor-pointer"
+                        />
+                        <span className="text-gray-700 group-hover:text-funBlue transition-colors">
+                          Open for Trades
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
                   {/* Sort By */}
                   <div>
                     <h3 className="font-bold mb-3 text-gray-800">Sort By</h3>
@@ -856,15 +1240,32 @@ const GamesPageContent = () => {
               {/* Toolbar */}
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                 <p className="text-gray-700">
-                  Showing{" "}
-                  <span className="font-bold text-gray-900">
-                    {paginatedGames.length}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-bold text-gray-900">
-                    {clientTotalGames}
-                  </span>{" "}
-                  games
+                  {totalGames > 0 ? (
+                    <>
+                      Loaded{" "}
+                      <span className="font-bold text-gray-900">
+                        {games.length}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-bold text-gray-900">
+                        {totalGames}
+                      </span>{" "}
+                      games
+                      {hasMore && (
+                        <span className="text-gray-500 text-sm ml-2">
+                          (scroll for more)
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      Showing{" "}
+                      <span className="font-bold text-gray-900">
+                        {filteredAndSortedGames.length}
+                      </span>{" "}
+                      games
+                    </>
+                  )}
                 </p>
 
                 <div className="flex items-center gap-4">
@@ -888,26 +1289,12 @@ const GamesPageContent = () => {
                     </svg>
                     Filters
                   </button>
-
-                  {/* Items per page */}
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue text-black"
-                  >
-                    <option value={12}>12 per page</option>
-                    <option value={24}>24 per page</option>
-                    <option value={48}>48 per page</option>
-                  </select>
                 </div>
               </div>
 
               {/* Loading State */}
               {isLoading && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6 min-h-[600px]">
                   {[...Array(itemsPerPage)].map((_, i) => (
                     <GameCardSkeleton key={`skeleton-${i}`} />
                   ))}
@@ -945,7 +1332,7 @@ const GamesPageContent = () => {
               {/* Games Grid */}
               {!isLoading && !error && (
                 <>
-                  {paginatedGames.length === 0 ? (
+                  {filteredAndSortedGames.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
                         <svg
@@ -976,104 +1363,53 @@ const GamesPageContent = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6">
-                      {paginatedGames.map((game) => (
-                        <GameCard
-                          key={game.gameBarcode}
-                          game={game}
-                          isInCart={isInCart(game.gameBarcode)}
-                          isInCompare={isInCompare(game.gameBarcode)}
-                          onAddToCart={() => handleAddToCart(game)}
-                          onAddToCompare={() => handleAddToCompare(game)}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Pagination */}
-                  {clientTotalGames > 0 && clientTotalPages > 1 && (
-                    <div className="mt-12 flex flex-col items-center gap-4 text-black">
-                      <div className="flex items-center gap-2 flex-wrap justify-center">
-                        <button
-                          onClick={() =>
-                            setCurrentPage(Math.max(1, currentPage - 1))
-                          }
-                          disabled={currentPage === 1}
-                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
-                        >
-                          Previous
-                        </button>
-
-                        {/* Page Numbers */}
-                        <div className="flex gap-1">
-                          {[...Array(clientTotalPages)].map((_, i) => {
-                            const pageNum = i + 1;
-                            // Show first, last, current, and neighbors
-                            if (
-                              pageNum === 1 ||
-                              pageNum === clientTotalPages ||
-                              (pageNum >= currentPage - 1 &&
-                                pageNum <= currentPage + 1)
-                            ) {
-                              return (
-                                <button
-                                  key={pageNum}
-                                  onClick={() => setCurrentPage(pageNum)}
-                                  className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
-                                    currentPage === pageNum
-                                      ? "bg-funBlue text-white"
-                                      : "border border-gray-300 hover:bg-gray-50"
-                                  }`}
-                                >
-                                  {pageNum}
-                                </button>
-                              );
-                            } else if (
-                              pageNum === currentPage - 2 ||
-                              pageNum === currentPage + 2
-                            ) {
-                              return (
-                                <span
-                                  key={pageNum}
-                                  className="px-2 text-gray-500"
-                                >
-                                  ...
-                                </span>
-                              );
-                            }
-                            return null;
-                          })}
-                        </div>
-
-                        <button
-                          onClick={() =>
-                            setCurrentPage(
-                              Math.min(clientTotalPages, currentPage + 1),
-                            )
-                          }
-                          disabled={currentPage === clientTotalPages}
-                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
-                        >
-                          Next
-                        </button>
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6 min-h-[600px] transition-all duration-300 ease-in-out">
+                        {filteredAndSortedGames.map((game, index) => {
+                          const isLastElement =
+                            index === filteredAndSortedGames.length - 1;
+                          return (
+                            <div
+                              key={game.gameBarcode}
+                              ref={isLastElement ? lastElementRef : null}
+                              className="opacity-0 animate-fade-in"
+                              style={{
+                                animationDelay: `${Math.min(index * 30, 200)}ms`,
+                                animationFillMode: "forwards",
+                              }}
+                            >
+                              <GameCard
+                                game={game}
+                                isInCart={isInCart(game.gameBarcode)}
+                                isInCompare={isInCompare(game.gameBarcode)}
+                                onAddToCart={() => handleAddToCart(game)}
+                                onAddToCompare={() => handleAddToCompare(game)}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
 
-                      <p className="text-sm text-gray-700">
-                        Page{" "}
-                        <span className="font-bold text-gray-900">
-                          {currentPage}
-                        </span>{" "}
-                        of{" "}
-                        <span className="font-bold text-gray-900">
-                          {clientTotalPages}
-                        </span>{" "}
-                        (
-                        <span className="font-bold text-gray-900">
-                          {clientTotalGames}
-                        </span>{" "}
-                        total games)
-                      </p>
-                    </div>
+                      {/* Loading More Indicator */}
+                      {isLoadingMore && (
+                        <div className="mt-8 flex justify-center">
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 xl:gap-6 w-full">
+                            {[...Array(4)].map((_, i) => (
+                              <GameCardSkeleton key={`loading-more-${i}`} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* End of Results */}
+                      {!hasMore && filteredAndSortedGames.length > 0 && (
+                        <div className="mt-8 text-center py-6">
+                          <p className="text-gray-500 text-sm">
+                            You've reached the end of the results
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}

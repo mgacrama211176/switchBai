@@ -560,7 +560,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ initialGames }) => {
               <p className="text-xl text-gray-600 leading-relaxed">
                 Discover{" "}
                 <span className="font-bold text-funBlue">
-                  500+ Nintendo Switch games
+                  100+ Nintendo Switch games
                 </span>{" "}
                 with detailed comparisons, verified quality, and the{" "}
                 <span className="font-bold text-green-600">best prices</span> in

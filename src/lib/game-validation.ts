@@ -5,6 +5,7 @@ export interface ValidationResult {
 
 export function validateGameForm(
   formData: Record<string, any>,
+  mode: "create" | "edit" = "create",
 ): ValidationResult {
   const errors: Record<string, string> = {};
 
@@ -68,10 +69,7 @@ export function validateGameForm(
   if (stockCartridgeOnly < 0) {
     errors.stockCartridgeOnly = "Stock cartridge only cannot be negative";
   }
-  if (totalStock === 0) {
-    errors.stockWithCase = "At least one variant must have stock";
-    errors.stockCartridgeOnly = "At least one variant must have stock";
-  }
+  // Allow zero stock in both create and edit modes
 
   // Price
   if (!formData.gamePrice || formData.gamePrice === "") {

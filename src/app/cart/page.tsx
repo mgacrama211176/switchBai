@@ -1042,7 +1042,7 @@ function CartContent() {
                             const lineTotal = price * item.quantity;
                             return (
                               <div
-                                key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
+                                key={`${item.gameBarcode}-${item.variant || "withCase"}`}
                                 className={`flex items-center gap-3 p-4 border-2 rounded-lg relative ${
                                   item.tradable === false
                                     ? "border-red-300 bg-red-50"
@@ -1763,7 +1763,7 @@ function CartContent() {
                         </h3>
                         {cart.items.map((item) => (
                           <div
-                            key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
+                            key={`${item.gameBarcode}-${item.variant || "withCase"}`}
                             className="flex items-start gap-3 pb-3 mb-3 border-b border-gray-100"
                           >
                             <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
@@ -1858,7 +1858,7 @@ function CartContent() {
                       );
                       return (
                         <div
-                          key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
+                          key={`${item.gameBarcode}-${item.variant || "withCase"}`}
                           className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0"
                         >
                           <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
@@ -2035,7 +2035,7 @@ function CartContent() {
                       );
                       return (
                         <div
-                          key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
+                          key={`${item.gameBarcode}-${item.variant || "withCase"}`}
                           className="flex items-start gap-3"
                         >
                           <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">

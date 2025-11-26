@@ -11,6 +11,13 @@ import {
 import { HiUpload } from "react-icons/hi";
 import Toast from "./Toast";
 import Image from "next/image";
+import {
+  calculateProfitMetrics,
+  formatCurrency,
+  formatPercentage,
+  getPriceUpdateWarning,
+} from "@/lib/financial-utils";
+import PriceUpdateWarningModal from "./PriceUpdateWarningModal";
 
 interface GameFormProps {
   mode: "create" | "edit";
@@ -35,6 +42,103 @@ const CATEGORIES = [
 const RATINGS = ["E", "E10+", "T", "M"];
 const PLATFORMS = ["Nintendo Switch", "Nintendo Switch 2", "PS4", "PS5"];
 const CLASSES = ["custom", "low", "mid", "high"];
+
+// Profit Display Component
+function ProfitDisplay({
+  currentPrice,
+  newPrice,
+  costPrice,
+  stock,
+}: {
+  currentPrice: number;
+  newPrice: number;
+  costPrice: number;
+  stock: number;
+}) {
+  const currentMetrics = calculateProfitMetrics(currentPrice, costPrice);
+  const newMetrics = calculateProfitMetrics(newPrice, costPrice);
+  const hasChange = newPrice !== currentPrice;
+
+  function getStatusColor(status: "safe" | "warning" | "danger"): string {
+    switch (status) {
+      case "safe":
+        return "text-green-600";
+      case "warning":
+        return "text-yellow-600";
+      case "danger":
+        return "text-red-600";
+    }
+  }
+
+  return (
+    <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="text-xs font-semibold text-gray-600 mb-2">
+        Profit Analysis
+      </div>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <span className="text-gray-600">Cost Price:</span>
+          <p className="font-semibold text-gray-900">
+            {formatCurrency(costPrice)}
+          </p>
+        </div>
+        <div>
+          <span className="text-gray-600">Profit Margin:</span>
+          <p
+            className={`font-semibold ${getStatusColor(
+              hasChange ? newMetrics.status : currentMetrics.status,
+            )}`}
+          >
+            {formatPercentage(
+              hasChange ? newMetrics.profitMargin : currentMetrics.profitMargin,
+            )}
+          </p>
+        </div>
+        <div>
+          <span className="text-gray-600">Profit per Unit:</span>
+          <p
+            className={`font-semibold ${
+              (hasChange ? newMetrics.profit : currentMetrics.profit) >= 0
+                ? "text-green-600"
+                : "text-red-600"
+            }`}
+          >
+            {(hasChange ? newMetrics.profit : currentMetrics.profit) >= 0
+              ? "+"
+              : ""}
+            {formatCurrency(
+              hasChange ? newMetrics.profit : currentMetrics.profit,
+            )}
+          </p>
+        </div>
+        {hasChange && (
+          <div>
+            <span className="text-gray-600">Status:</span>
+            <p className={`font-semibold ${getStatusColor(newMetrics.status)}`}>
+              {newMetrics.status === "danger"
+                ? "⚠️ Danger"
+                : newMetrics.status === "warning"
+                  ? "⚠️ Warning"
+                  : "✓ Safe"}
+            </p>
+          </div>
+        )}
+      </div>
+      {hasChange && newMetrics.status !== "safe" && (
+        <div className="mt-2 pt-2 border-t border-gray-300">
+          <p className="text-xs text-red-600">
+            {getPriceUpdateWarning(
+              newMetrics,
+              currentPrice,
+              newPrice,
+              costPrice,
+            )}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function GameForm({
   mode,
@@ -67,6 +171,7 @@ export default function GameForm({
     rentalWeeklyRate: initialData?.rentalWeeklyRate || 0,
     isOnSale: initialData?.isOnSale || false,
     salePrice: initialData?.salePrice || 0,
+    costPrice: initialData?.costPrice || 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -86,6 +191,8 @@ export default function GameForm({
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [showPriceWarning, setShowPriceWarning] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
 
   // Cleanup object URL on unmount
   useEffect(() => {
@@ -238,14 +345,34 @@ export default function GameForm({
     e.preventDefault();
 
     // Validate form
-    const validation = validateGameForm(formData);
+    const validation = validateGameForm(formData, mode);
     if (!validation.valid) {
       setErrors(validation.errors);
       setToast({ message: "Please fix the errors in the form", type: "error" });
       return;
     }
 
-    setIsLoading(true);
+    // Check for price warnings when costPrice is available
+    const costPrice = formData.costPrice > 0 ? formData.costPrice : (initialData?.costPrice || 0);
+    if (
+      costPrice > 0 &&
+      formData.gamePrice !== (initialData?.gamePrice || 0)
+    ) {
+      const metrics = calculateProfitMetrics(
+        formData.gamePrice,
+        costPrice,
+      );
+      if (metrics.status !== "safe") {
+        setPendingSubmit(true);
+        setShowPriceWarning(true);
+        return;
+      }
+    }
+
+    await performSubmit();
+  }
+
+  async function performSubmit() {
     try {
       let finalFormData = { ...formData };
 
@@ -310,6 +437,17 @@ export default function GameForm({
     }
   }
 
+  function handleWarningConfirm() {
+    setShowPriceWarning(false);
+    setPendingSubmit(false);
+    performSubmit();
+  }
+
+  function handleWarningCancel() {
+    setShowPriceWarning(false);
+    setPendingSubmit(false);
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       {toast && (
@@ -319,6 +457,26 @@ export default function GameForm({
           onClose={() => setToast(null)}
         />
       )}
+
+      {showPriceWarning && initialData && (() => {
+        const costPrice = formData.costPrice > 0 ? formData.costPrice : (initialData?.costPrice || 0);
+        if (costPrice > 0) {
+          return (
+            <PriceUpdateWarningModal
+              game={initialData}
+              currentPrice={initialData.gamePrice}
+              newPrice={formData.gamePrice}
+              metrics={calculateProfitMetrics(
+                formData.gamePrice,
+                costPrice,
+              )}
+              onConfirm={handleWarningConfirm}
+              onCancel={handleWarningCancel}
+            />
+          );
+        }
+        return null;
+      })()}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Image Upload */}
@@ -588,8 +746,8 @@ export default function GameForm({
           )}
         </div>
 
-        {/* Grid for Price, Release Date */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Grid for Price, Cost Price, Release Date */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Price */}
           <div>
             <label
@@ -616,8 +774,37 @@ export default function GameForm({
             )}
           </div>
 
+          {/* Cost Price */}
+          <div>
+            <label
+              htmlFor="costPrice"
+              className="block text-sm font-semibold text-gray-700 mb-2"
+            >
+              Cost Price (₱)
+            </label>
+            <input
+              id="costPrice"
+              name="costPrice"
+              type="number"
+              value={formData.costPrice}
+              onChange={handleInputChange}
+              min="0"
+              step="1"
+              className={`w-full px-4 py-3 rounded-xl border-2 ${
+                errors.costPrice ? "border-lameRed" : "border-gray-200"
+              } focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300 text-black`}
+              placeholder="0"
+            />
+            {errors.costPrice && (
+              <p className="text-sm text-lameRed mt-1">{errors.costPrice}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Purchase cost per unit
+            </p>
+          </div>
+
           {/* Stock Variants */}
-          <div className="col-span-2">
+          <div className="col-span-3">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Stock Management *
             </label>
@@ -727,6 +914,19 @@ export default function GameForm({
             )}
           </div>
         </div>
+
+        {/* Profit Calculation Display - Show when costPrice is available */}
+        {((mode === "edit" && (formData.costPrice > 0 || (initialData?.costPrice !== undefined && initialData.costPrice > 0))) ||
+          (mode === "create" && formData.costPrice > 0)) && (
+          <div className="mt-4">
+            <ProfitDisplay
+              currentPrice={mode === "edit" ? (initialData?.gamePrice || 0) : 0}
+              newPrice={formData.gamePrice}
+              costPrice={formData.costPrice > 0 ? formData.costPrice : (initialData?.costPrice || 0)}
+              stock={formData.stockWithCase + formData.stockCartridgeOnly}
+            />
+          </div>
+        )}
 
         {/* Sale Section */}
         <div className="border-2 border-gray-200 rounded-xl p-6 bg-gray-50">

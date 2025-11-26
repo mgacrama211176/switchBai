@@ -7,19 +7,19 @@ const AboutUsSection = () => {
   const router = useRouter();
   const stats = [
     {
-      number: "500+",
+      number: "100+",
       label: "Nintendo Switch Games",
       description: "Carefully curated collection",
     },
     {
-      number: "10k+",
-      label: "Happy Customers",
-      description: "Trusted by gamers nationwide",
+      number: "✓",
+      label: "Every Game Tested",
+      description: "Quality guaranteed",
     },
     {
-      number: "98%",
-      label: "Customer Satisfaction",
-      description: "Quality guaranteed service",
+      number: "📍",
+      label: "Cebu City Based",
+      description: "Local pickup available",
     },
     {
       number: "24/7",
@@ -94,7 +94,7 @@ const AboutUsSection = () => {
                 <div>
                   <h3 className="font-bold text-neutral mb-1">Best Prices</h3>
                   <p className="text-sm text-gray-600">
-                    Up to 30% savings compared to retail prices
+                    10% below retail prices
                   </p>
                 </div>
               </div>

@@ -41,10 +41,10 @@ const GameDetailPage: React.FC = () => {
   // Auto-select available variant if current selection is out of stock
   useEffect(() => {
     if (!game) return;
-    
+
     const stockWithCase = game.stockWithCase ?? 0;
     const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
-    
+
     if (
       selectedVariant === "cartridgeOnly" &&
       stockCartridgeOnly === 0 &&

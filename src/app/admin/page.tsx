@@ -14,11 +14,13 @@ import {
   HiSwitchHorizontal,
   HiShoppingBag,
   HiCurrencyDollar,
+  HiTag,
 } from "react-icons/hi";
 import OrdersTable from "./components/OrdersTable";
 import TradesTable from "./components/TradesTable";
 import BuyingTable from "./components/BuyingTable";
 import FinancialsTable from "./components/FinancialsTable";
+import PriceUpdatesTable from "./components/PriceUpdatesTable";
 
 type TabType =
   | "games"
@@ -27,6 +29,7 @@ type TabType =
   | "trades"
   | "buying"
   | "financials"
+  | "price-updates"
   | "add-game";
 
 export default function AdminPage() {
@@ -181,6 +184,17 @@ export default function AdminPage() {
                 <span>Financials</span>
               </button>
               <button
+                onClick={() => handleTabChange("price-updates")}
+                className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
+                  activeTab === "price-updates"
+                    ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <HiTag className="w-5 h-5" />
+                <span>Price Updates</span>
+              </button>
+              <button
                 onClick={() => handleTabChange("add-game")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "add-game"
@@ -231,6 +245,12 @@ export default function AdminPage() {
             )}
             {activeTab === "financials" && (
               <FinancialsTable refreshTrigger={refreshTrigger} />
+            )}
+            {activeTab === "price-updates" && (
+              <PriceUpdatesTable
+                refreshTrigger={refreshTrigger}
+                onPriceUpdated={handleGameUpdated}
+              />
             )}
             {activeTab === "add-game" && (
               <GameForm

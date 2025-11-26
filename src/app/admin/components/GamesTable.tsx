@@ -171,9 +171,7 @@ export default function GamesTable({
       console.error("Migration error:", error);
       setToast({
         message:
-          error instanceof Error
-            ? error.message
-            : "Failed to run migration",
+          error instanceof Error ? error.message : "Failed to run migration",
         type: "error",
       });
     } finally {
@@ -285,7 +283,9 @@ export default function GamesTable({
             disabled={isMigrating}
             className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white rounded-lg font-medium text-sm transition-colors"
           >
-            <HiRefresh className={`w-4 h-4 ${isMigrating ? "animate-spin" : ""}`} />
+            <HiRefresh
+              className={`w-4 h-4 ${isMigrating ? "animate-spin" : ""}`}
+            />
             {isMigrating ? "Migrating..." : "Migrate Stocks"}
           </button>
           {(searchTerm ||

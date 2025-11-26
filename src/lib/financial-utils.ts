@@ -80,3 +80,93 @@ export function getTrendIndicator(
   if (current < previous) return "down";
   return "neutral";
 }
+
+/**
+ * Price update profit calculation utilities
+ */
+
+export interface ProfitMetrics {
+  profit: number;
+  profitMargin: number;
+  isBelowCost: boolean;
+  isNegativeMargin: boolean;
+  isLowMargin: boolean;
+  status: "safe" | "warning" | "danger";
+}
+
+const MINIMUM_MARGIN_THRESHOLD = 10; // 10% minimum margin
+
+/**
+ * Calculate profit metrics for a price update
+ */
+export function calculateProfitMetrics(
+  newPrice: number,
+  costPrice: number,
+): ProfitMetrics {
+  const profit = newPrice - costPrice;
+  const profitMargin = newPrice > 0 ? (profit / newPrice) * 100 : 0;
+  const isBelowCost = newPrice < costPrice;
+  const isNegativeMargin = profit < 0;
+  const isLowMargin = profitMargin < MINIMUM_MARGIN_THRESHOLD;
+
+  let status: "safe" | "warning" | "danger" = "safe";
+  if (isBelowCost || isNegativeMargin) {
+    status = "danger";
+  } else if (isLowMargin) {
+    status = "warning";
+  }
+
+  return {
+    profit,
+    profitMargin,
+    isBelowCost,
+    isNegativeMargin,
+    isLowMargin,
+    status,
+  };
+}
+
+/**
+ * Get warning message for price update
+ */
+export function getPriceUpdateWarning(
+  metrics: ProfitMetrics,
+  currentPrice: number,
+  newPrice: number,
+  costPrice: number,
+): string | null {
+  if (metrics.isBelowCost) {
+    return `Warning: New price (${formatCurrency(newPrice)}) is below cost price (${formatCurrency(costPrice)}). You will lose money on each sale.`;
+  }
+  if (metrics.isNegativeMargin) {
+    return `Warning: This price change results in a negative profit margin. You will lose money.`;
+  }
+  if (metrics.isLowMargin) {
+    return `Warning: Profit margin (${formatPercentage(metrics.profitMargin)}) is below the minimum threshold of ${MINIMUM_MARGIN_THRESHOLD}%.`;
+  }
+  return null;
+}
+
+/**
+ * Calculate price change impact
+ */
+export function calculatePriceChangeImpact(
+  currentPrice: number,
+  newPrice: number,
+  stock: number,
+): {
+  priceDifference: number;
+  totalRevenueChange: number;
+  priceChangePercentage: number;
+} {
+  const priceDifference = newPrice - currentPrice;
+  const totalRevenueChange = priceDifference * stock;
+  const priceChangePercentage =
+    currentPrice > 0 ? (priceDifference / currentPrice) * 100 : 0;
+
+  return {
+    priceDifference,
+    totalRevenueChange,
+    priceChangePercentage,
+  };
+}
