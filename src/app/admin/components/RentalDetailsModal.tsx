@@ -24,6 +24,7 @@ interface Rental {
   gameTitle: string;
   gameBarcode: string;
   gamePrice: number;
+  variant?: "withCase" | "cartridgeOnly";
   startDate: string;
   endDate: string;
   rentalDays: number;
@@ -215,6 +216,15 @@ export default function RentalDetailsModal({
               <div className="flex-1">
                 <h4 className="text-lg font-semibold text-gray-900">
                   {rental.gameTitle}
+                  {rental.variant && (
+                    <span className="ml-2 text-sm font-normal text-gray-500">
+                      (
+                      {rental.variant === "cartridgeOnly"
+                        ? "Cartridge Only"
+                        : "With Case"}
+                      )
+                    </span>
+                  )}
                 </h4>
                 <p className="text-gray-600">Barcode: {rental.gameBarcode}</p>
                 <p className="text-gray-600">

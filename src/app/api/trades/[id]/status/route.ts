@@ -91,11 +91,19 @@ export async function PATCH(
           });
 
           if (existingGame) {
-            // Game exists, increment stock
-            existingGame.gameAvailableStocks += gameItem.quantity;
+            // Game exists, increment stock (add to "withCase" variant when receiving games)
+            const variant = gameItem.variant || "withCase";
+            if (variant === "cartridgeOnly") {
+              existingGame.stockCartridgeOnly =
+                (existingGame.stockCartridgeOnly || 0) + gameItem.quantity;
+            } else {
+              existingGame.stockWithCase =
+                (existingGame.stockWithCase || 0) + gameItem.quantity;
+            }
             await existingGame.save();
           } else {
-            // Create new game entry
+            // Create new game entry (default to "withCase" when receiving)
+            const variant = gameItem.variant || "withCase";
             const newGame = new GameModel({
               gameBarcode: gameItem.gameBarcode,
               gameTitle: gameItem.gameTitle,
@@ -106,7 +114,9 @@ export async function PATCH(
               gameImageURL: gameItem.newGameDetails.gameImageURL,
               gameCategory: gameItem.newGameDetails.gameCategory,
               gameReleaseDate: gameItem.newGameDetails.gameReleaseDate,
-              gameAvailableStocks: gameItem.quantity,
+              stockWithCase: variant === "withCase" ? gameItem.quantity : 0,
+              stockCartridgeOnly:
+                variant === "cartridgeOnly" ? gameItem.quantity : 0,
               numberOfSold: 0,
               rentalAvailable: false,
               tradable: true,
@@ -115,13 +125,20 @@ export async function PATCH(
             await newGame.save();
           }
         } else {
-          // Game exists, increment stock
+          // Game exists, increment stock (add to "withCase" variant when receiving games)
           const game = await GameModel.findOne({
             gameBarcode: gameItem.gameBarcode,
           });
 
           if (game) {
-            game.gameAvailableStocks += gameItem.quantity;
+            const variant = gameItem.variant || "withCase";
+            if (variant === "cartridgeOnly") {
+              game.stockCartridgeOnly =
+                (game.stockCartridgeOnly || 0) + gameItem.quantity;
+            } else {
+              game.stockWithCase =
+                (game.stockWithCase || 0) + gameItem.quantity;
+            }
             await game.save();
           } else {
             // Game not found but wasn't marked as new - log warning but continue
@@ -147,18 +164,30 @@ export async function PATCH(
           );
         }
 
+        // Get variant (default to "withCase" for backward compatibility)
+        const variant = gameItem.variant || "withCase";
+        const variantStock =
+          variant === "cartridgeOnly"
+            ? (game.stockCartridgeOnly ?? 0)
+            : (game.stockWithCase ?? 0);
+
         // Check if stock is sufficient
-        if (game.gameAvailableStocks < gameItem.quantity) {
+        if (variantStock < gameItem.quantity) {
           return NextResponse.json(
             {
-              error: `Insufficient stock for ${gameItem.gameTitle}. Available: ${game.gameAvailableStocks}, Required: ${gameItem.quantity}`,
+              error: `Insufficient stock for ${gameItem.gameTitle} (${variant}). Available: ${variantStock}, Required: ${gameItem.quantity}`,
             },
             { status: 400 },
           );
         }
 
-        // Deduct stock and increment sold count
-        game.gameAvailableStocks -= gameItem.quantity;
+        // Deduct from correct variant stock and increment sold count
+        if (variant === "cartridgeOnly") {
+          game.stockCartridgeOnly =
+            (game.stockCartridgeOnly || 0) - gameItem.quantity;
+        } else {
+          game.stockWithCase = (game.stockWithCase || 0) - gameItem.quantity;
+        }
         game.numberOfSold = (game.numberOfSold || 0) + gameItem.quantity;
 
         await game.save();

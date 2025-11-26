@@ -43,15 +43,21 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Filter by stock availability
+    // Filter by stock availability (using computed stock from variants)
     const inStockOnly = searchParams.get("inStock") === "true";
     if (inStockOnly) {
-      query.gameAvailableStocks = { $gt: 0 };
+      // Filter games where stockWithCase + stockCartridgeOnly > 0
+      query.$expr = {
+        $gt: [{ $add: ["$stockWithCase", "$stockCartridgeOnly"] }, 0],
+      };
     }
 
     const outOfStockOnly = searchParams.get("outOfStock") === "true";
     if (outOfStockOnly) {
-      query.gameAvailableStocks = 0;
+      // Filter games where stockWithCase + stockCartridgeOnly = 0
+      query.$expr = {
+        $eq: [{ $add: ["$stockWithCase", "$stockCartridgeOnly"] }, 0],
+      };
     }
 
     // Filter by rental availability
@@ -123,28 +129,41 @@ export async function GET(request: NextRequest) {
     }
 
     // Convert MongoDB documents to Game interface
-    const formattedGames: Game[] = games.map((game) => ({
-      _id: (game._id as unknown as string).toString(),
-      gameTitle: game.gameTitle,
-      gamePlatform: game.gamePlatform,
-      gameRatings: game.gameRatings,
-      gameBarcode: game.gameBarcode,
-      gameDescription: game.gameDescription,
-      gameImageURL: game.gameImageURL,
-      gameAvailableStocks: game.gameAvailableStocks,
-      gamePrice: game.gamePrice,
-      gameCategory: game.gameCategory,
-      gameReleaseDate: game.gameReleaseDate,
-      createdAt: game.createdAt.toISOString(),
-      updatedAt: game.updatedAt.toISOString(),
-      numberOfSold: game.numberOfSold,
-      rentalAvailable: game.rentalAvailable,
-      rentalWeeklyRate: game.rentalWeeklyRate,
-      class: game.class,
-      tradable: game.tradable,
-      isOnSale: game.isOnSale,
-      salePrice: game.salePrice,
-    }));
+    const formattedGames: Game[] = games.map((game: any) => {
+      const stockWithCase = game.stockWithCase ?? 0;
+      const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
+      const computedStock = stockWithCase + stockCartridgeOnly;
+      const cartridgeOnlyPrice = game.gamePrice
+        ? Math.max(0, game.gamePrice - 100)
+        : 0;
+
+      return {
+        _id: (game._id as unknown as string).toString(),
+        gameTitle: game.gameTitle,
+        gamePlatform: game.gamePlatform,
+        gameRatings: game.gameRatings,
+        gameBarcode: game.gameBarcode,
+        gameDescription: game.gameDescription,
+        gameImageURL: game.gameImageURL,
+        gameAvailableStocks: computedStock,
+        stockWithCase,
+        stockCartridgeOnly,
+        gamePrice: game.gamePrice,
+        gameCategory: game.gameCategory,
+        gameReleaseDate: game.gameReleaseDate,
+        createdAt: game.createdAt.toISOString(),
+        updatedAt: game.updatedAt.toISOString(),
+        numberOfSold: game.numberOfSold,
+        rentalAvailable: game.rentalAvailable,
+        rentalWeeklyRate: game.rentalWeeklyRate,
+        class: game.class,
+        tradable: game.tradable,
+        isOnSale: game.isOnSale,
+        salePrice: game.salePrice,
+        costPrice: game.costPrice,
+        cartridgeOnlyPrice,
+      };
+    });
 
     return NextResponse.json({
       games: formattedGames,
@@ -196,6 +215,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new game document
+    const stockWithCase = body.stockWithCase ?? 0;
+    const stockCartridgeOnly = body.stockCartridgeOnly ?? 0;
+
     const gameDoc = new GameModel({
       gameTitle: body.gameTitle,
       gamePlatform: body.gamePlatform,
@@ -203,7 +225,8 @@ export async function POST(request: NextRequest) {
       gameBarcode: body.gameBarcode,
       gameDescription: body.gameDescription,
       gameImageURL: body.gameImageURL,
-      gameAvailableStocks: body.gameAvailableStocks,
+      stockWithCase,
+      stockCartridgeOnly,
       gamePrice: body.gamePrice,
       gameCategory: body.gameCategory,
       gameReleaseDate: body.gameReleaseDate,
@@ -214,11 +237,18 @@ export async function POST(request: NextRequest) {
       tradable: body.tradable ?? true,
       isOnSale: body.isOnSale || false,
       salePrice: body.isOnSale ? body.salePrice : undefined,
+      costPrice: body.costPrice,
     });
 
     await gameDoc.save();
 
     // Convert to Game interface
+    const computedStock =
+      (gameDoc.stockWithCase || 0) + (gameDoc.stockCartridgeOnly || 0);
+    const cartridgeOnlyPrice = gameDoc.gamePrice
+      ? Math.max(0, gameDoc.gamePrice - 100)
+      : 0;
+
     const newGame: Game = {
       _id: gameDoc._id.toString(),
       gameTitle: gameDoc.gameTitle,
@@ -227,7 +257,9 @@ export async function POST(request: NextRequest) {
       gameBarcode: gameDoc.gameBarcode,
       gameDescription: gameDoc.gameDescription,
       gameImageURL: gameDoc.gameImageURL,
-      gameAvailableStocks: gameDoc.gameAvailableStocks,
+      gameAvailableStocks: computedStock,
+      stockWithCase: gameDoc.stockWithCase,
+      stockCartridgeOnly: gameDoc.stockCartridgeOnly,
       gamePrice: gameDoc.gamePrice,
       gameCategory: gameDoc.gameCategory,
       gameReleaseDate: gameDoc.gameReleaseDate,
@@ -240,6 +272,8 @@ export async function POST(request: NextRequest) {
       tradable: gameDoc.tradable,
       isOnSale: gameDoc.isOnSale,
       salePrice: gameDoc.salePrice,
+      costPrice: gameDoc.costPrice,
+      cartridgeOnlyPrice,
     };
 
     return NextResponse.json({ success: true, game: newGame }, { status: 201 });

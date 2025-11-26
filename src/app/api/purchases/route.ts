@@ -78,10 +78,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (gameDoc.gameAvailableStocks < game.quantity) {
+      // Get variant-specific stock (default to "withCase" if not specified)
+      const variant = game.variant || "withCase";
+      const variantStock =
+        variant === "cartridgeOnly"
+          ? (gameDoc.stockCartridgeOnly ?? 0)
+          : (gameDoc.stockWithCase ?? 0);
+
+      if (variantStock < game.quantity) {
         return NextResponse.json(
           {
-            error: `Insufficient stock for ${game.gameTitle}. Available: ${gameDoc.gameAvailableStocks}, Requested: ${game.quantity}`,
+            error: `Insufficient stock for ${game.gameTitle} (${variant}). Available: ${variantStock}, Requested: ${game.quantity}`,
           },
           { status: 400 },
         );
@@ -95,10 +102,16 @@ export async function POST(request: NextRequest) {
         const gameDoc = await GameModel.findOne({
           gameBarcode: game.gameBarcode,
         });
+        // Use variant-specific price if cartridge only
+        const variant = game.variant || "withCase";
+        const basePrice =
+          variant === "cartridgeOnly" && gameDoc?.gamePrice
+            ? Math.max(0, gameDoc.gamePrice - 100)
+            : game.gamePrice;
         const priceToUse =
           gameDoc?.isOnSale && gameDoc?.salePrice
             ? gameDoc.salePrice
-            : game.gamePrice;
+            : basePrice;
         return sum + priceToUse * game.quantity;
       },
       Promise.resolve(0),

@@ -57,14 +57,20 @@ export function validateGameForm(
     }
   }
 
-  // Available Stocks
-  if (
-    formData.gameAvailableStocks === undefined ||
-    formData.gameAvailableStocks === ""
-  ) {
-    errors.gameAvailableStocks = "Available stocks is required";
-  } else if (formData.gameAvailableStocks < 0) {
-    errors.gameAvailableStocks = "Stocks cannot be negative";
+  // Stock Variants
+  const stockWithCase = formData.stockWithCase ?? 0;
+  const stockCartridgeOnly = formData.stockCartridgeOnly ?? 0;
+  const totalStock = stockWithCase + stockCartridgeOnly;
+
+  if (stockWithCase < 0) {
+    errors.stockWithCase = "Stock with case cannot be negative";
+  }
+  if (stockCartridgeOnly < 0) {
+    errors.stockCartridgeOnly = "Stock cartridge only cannot be negative";
+  }
+  if (totalStock === 0) {
+    errors.stockWithCase = "At least one variant must have stock";
+    errors.stockCartridgeOnly = "At least one variant must have stock";
   }
 
   // Price

@@ -229,6 +229,9 @@ export async function POST(request: NextRequest) {
         // Calculate cost price for this game (proportional to quantity)
         const gameCostPrice = averageCostPerUnit;
 
+        // Get variant (default to "withCase" when adding inventory)
+        const variant = game.variant || "withCase";
+
         if (game.isNewGame) {
           // Create new game with initial stock and cost price
           await GameModel.create({
@@ -241,7 +244,8 @@ export async function POST(request: NextRequest) {
             gameCategory: game.newGameDetails.gameCategory,
             gameReleaseDate: game.newGameDetails.gameReleaseDate,
             gamePrice: game.sellingPrice,
-            gameAvailableStocks: game.quantity,
+            stockWithCase: variant === "withCase" ? game.quantity : 0,
+            stockCartridgeOnly: variant === "cartridgeOnly" ? game.quantity : 0,
             costPrice: gameCostPrice,
             tradable: game.newGameDetails.tradable ?? true,
             rentalAvailable: game.newGameDetails.rentalAvailable ?? false,
@@ -256,7 +260,9 @@ export async function POST(request: NextRequest) {
           });
 
           if (existingGame) {
-            const existingStock = existingGame.gameAvailableStocks || 0;
+            const existingStock =
+              (existingGame.stockWithCase || 0) +
+              (existingGame.stockCartridgeOnly || 0);
             const existingCost = existingGame.costPrice || 0;
             const newStock = existingStock + game.quantity;
 
@@ -269,20 +275,28 @@ export async function POST(request: NextRequest) {
                 newStock;
             }
 
-            // Increment stock and update cost price
+            // Increment variant-specific stock and update cost price
+            const updateField =
+              variant === "cartridgeOnly"
+                ? "stockCartridgeOnly"
+                : "stockWithCase";
             await GameModel.findOneAndUpdate(
               { gameBarcode: game.gameBarcode },
               {
-                $inc: { gameAvailableStocks: game.quantity },
+                $inc: { [updateField]: game.quantity },
                 $set: { costPrice: newCostPrice },
               },
             );
           } else {
             // Game not found, just increment stock (shouldn't happen due to validation)
+            const updateField =
+              variant === "cartridgeOnly"
+                ? "stockCartridgeOnly"
+                : "stockWithCase";
             await GameModel.findOneAndUpdate(
               { gameBarcode: game.gameBarcode },
               {
-                $inc: { gameAvailableStocks: game.quantity },
+                $inc: { [updateField]: game.quantity },
                 $set: { costPrice: gameCostPrice },
               },
             );

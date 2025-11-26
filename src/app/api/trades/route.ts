@@ -62,10 +62,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (gameDoc.gameAvailableStocks < game.quantity) {
+      // Get variant-specific stock (default to "withCase" if not specified)
+      const variant = game.variant || "withCase";
+      const variantStock =
+        variant === "cartridgeOnly"
+          ? (gameDoc.stockCartridgeOnly ?? 0)
+          : (gameDoc.stockWithCase ?? 0);
+
+      if (variantStock < game.quantity) {
         return NextResponse.json(
           {
-            error: `Insufficient stock for ${game.gameTitle}. Available: ${gameDoc.gameAvailableStocks}, Requested: ${game.quantity}`,
+            error: `Insufficient stock for ${game.gameTitle} (${variant}). Available: ${variantStock}, Requested: ${game.quantity}`,
           },
           { status: 400 },
         );

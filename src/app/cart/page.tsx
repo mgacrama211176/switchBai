@@ -1042,7 +1042,7 @@ function CartContent() {
                             const lineTotal = price * item.quantity;
                             return (
                               <div
-                                key={item.gameBarcode}
+                                key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
                                 className={`flex items-center gap-3 p-4 border-2 rounded-lg relative ${
                                   item.tradable === false
                                     ? "border-red-300 bg-red-50"
@@ -1763,7 +1763,7 @@ function CartContent() {
                         </h3>
                         {cart.items.map((item) => (
                           <div
-                            key={item.gameBarcode}
+                            key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
                             className="flex items-start gap-3 pb-3 mb-3 border-b border-gray-100"
                           >
                             <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
@@ -1782,6 +1782,11 @@ function CartContent() {
                               <p className="text-[10px] text-gray-400 mb-2 font-mono">
                                 {item.gameBarcode}
                               </p>
+                              {item.variant === "cartridgeOnly" && (
+                                <span className="inline-block text-[10px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full mb-2">
+                                  Cartridge Only
+                                </span>
+                              )}
                               <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-600">
                                   Qty: {item.quantity}
@@ -1853,7 +1858,7 @@ function CartContent() {
                       );
                       return (
                         <div
-                          key={item.gameBarcode}
+                          key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
                           className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0"
                         >
                           <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
@@ -1888,6 +1893,12 @@ function CartContent() {
                             <p className="text-[10px] text-gray-400 mb-2 font-mono">
                               {item.gameBarcode}
                             </p>
+
+                            {item.variant === "cartridgeOnly" && (
+                              <span className="inline-block text-[10px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full mb-2">
+                                Cartridge Only
+                              </span>
+                            )}
 
                             <div className="flex items-end justify-between">
                               {/* Quantity Controls */}
@@ -2024,7 +2035,7 @@ function CartContent() {
                       );
                       return (
                         <div
-                          key={item.gameBarcode}
+                          key={`${item.gameBarcode}-${item.variant || 'withCase'}`}
                           className="flex items-start gap-3"
                         >
                           <div className="relative w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
@@ -2046,6 +2057,11 @@ function CartContent() {
                             <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
                               {item.gameTitle}
                             </h3>
+                            {item.variant === "cartridgeOnly" && (
+                              <span className="inline-block text-[10px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full mb-1">
+                                Cartridge Only
+                              </span>
+                            )}
                             <p className="text-xs text-gray-500 mb-1">
                               {item.quantity} × {rentalDates.rentalDays} days
                             </p>

@@ -11,6 +11,7 @@ interface BuyingGameRow {
   sellingPrice: number;
   quantity: number;
   expectedRevenue: number;
+  variant?: "withCase" | "cartridgeOnly";
   isNewGame: boolean;
   existingGameId?: string;
   currentStock?: number;
@@ -84,12 +85,10 @@ export default function AddBuyingModal({
   const [debouncedSearchTerms, setDebouncedSearchTerms] = useState<
     Record<number, string>
   >({});
-  const [searchResults, setSearchResults] = useState<
-    Record<number, Game[]>
-  >({});
-  const [isSearching, setIsSearching] = useState<
-    Record<number, boolean>
-  >({});
+  const [searchResults, setSearchResults] = useState<Record<number, Game[]>>(
+    {},
+  );
+  const [isSearching, setIsSearching] = useState<Record<number, boolean>>({});
   const [newGameForms, setNewGameForms] = useState<
     Record<number, BuyingGameRow["newGameDetails"]>
   >({});
@@ -105,7 +104,9 @@ export default function AddBuyingModal({
     async function fetchInitialGames() {
       setIsLoadingGames(true);
       try {
-        const response = await fetch("/api/games?limit=100&sort=updatedAt&order=desc");
+        const response = await fetch(
+          "/api/games?limit=100&sort=updatedAt&order=desc",
+        );
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -144,7 +145,7 @@ export default function AddBuyingModal({
 
         try {
           const response = await fetch(
-            `/api/games?search=${encodeURIComponent(searchTerm)}&limit=10000`
+            `/api/games?search=${encodeURIComponent(searchTerm)}&limit=10000`,
           );
           const data = await response.json();
           setSearchResults((prev) => ({
@@ -164,7 +165,7 @@ export default function AddBuyingModal({
             return updated;
           });
         }
-      }
+      },
     );
 
     Promise.all(searchPromises);
@@ -436,6 +437,7 @@ export default function AddBuyingModal({
           gameTitle: row.gameTitle,
           sellingPrice: row.sellingPrice,
           quantity: row.quantity,
+          variant: row.variant || "withCase", // Default to "withCase" when adding inventory
           isNewGame: row.isNewGame,
           newGameDetails: row.isNewGame ? row.newGameDetails : undefined,
         })),
@@ -693,7 +695,7 @@ export default function AddBuyingModal({
                         </div>
 
                         {row.gameBarcode && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Current Stock
@@ -741,6 +743,27 @@ export default function AddBuyingModal({
                                 required
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
                               />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Variant
+                              </label>
+                              <select
+                                value={row.variant || "withCase"}
+                                onChange={(e) =>
+                                  updateGameRow(index, {
+                                    variant: e.target.value as
+                                      | "withCase"
+                                      | "cartridgeOnly",
+                                  })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+                              >
+                                <option value="withCase">With Case</option>
+                                <option value="cartridgeOnly">
+                                  Cartridge Only
+                                </option>
+                              </select>
                             </div>
                             <div className="md:col-span-3">
                               <div className="bg-gray-50 p-3 rounded-lg">

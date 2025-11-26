@@ -15,6 +15,7 @@ export interface IRental extends Document {
   gameBarcode: string;
   gameTitle: string;
   gamePrice: number;
+  variant?: "withCase" | "cartridgeOnly";
 
   // Rental details
   startDate: string;
@@ -120,6 +121,11 @@ const RentalSchema = new Schema<IRental>(
       type: Number,
       required: [true, "Game price is required"],
       min: [0, "Game price cannot be negative"],
+    },
+    variant: {
+      type: String,
+      enum: ["withCase", "cartridgeOnly"],
+      required: false,
     },
 
     // Rental details

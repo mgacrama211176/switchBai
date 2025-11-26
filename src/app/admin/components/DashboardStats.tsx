@@ -80,20 +80,34 @@ export default function DashboardStats({
       ? g.gamePlatform.includes("PS5")
       : g.gamePlatform === "PS5",
   ).length;
-  const lowStockGames = games.filter((g) => g.gameAvailableStocks === 0).length;
-  const totalValue = games.reduce(
-    (sum, game) => sum + game.gamePrice * game.gameAvailableStocks,
-    0,
-  );
+  const lowStockGames = games.filter((g) => {
+    const stockWithCase = g.stockWithCase ?? 0;
+    const stockCartridgeOnly = g.stockCartridgeOnly ?? 0;
+    return stockWithCase + stockCartridgeOnly === 0;
+  }).length;
+
+  const totalValue = games.reduce((sum, game) => {
+    const stockWithCase = game.stockWithCase ?? 0;
+    const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
+    const priceCartridgeOnly =
+      game.cartridgeOnlyPrice || Math.max(0, (game.gamePrice || 0) - 100);
+    return (
+      sum +
+      stockWithCase * game.gamePrice +
+      stockCartridgeOnly * priceCartridgeOnly
+    );
+  }, 0);
+
   const rentalGames = games.filter((g) => g.rentalAvailable).length;
   const topSeller = games
     .filter((g) => g.numberOfSold)
     .sort((a, b) => (b.numberOfSold || 0) - (a.numberOfSold || 0))[0];
 
-  const totalUnits = games.reduce(
-    (sum, game) => sum + game.gameAvailableStocks,
-    0,
-  );
+  const totalUnits = games.reduce((sum, game) => {
+    const stockWithCase = game.stockWithCase ?? 0;
+    const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
+    return sum + stockWithCase + stockCartridgeOnly;
+  }, 0);
 
   const stats = [
     {

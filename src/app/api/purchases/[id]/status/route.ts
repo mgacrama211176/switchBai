@@ -109,18 +109,30 @@ export async function PATCH(
           );
         }
 
+        // Get variant (default to "withCase" for backward compatibility)
+        const variant = gameItem.variant || "withCase";
+        const variantStock =
+          variant === "cartridgeOnly"
+            ? (game.stockCartridgeOnly ?? 0)
+            : (game.stockWithCase ?? 0);
+
         // Check if stock is sufficient
-        if (game.gameAvailableStocks < gameItem.quantity) {
+        if (variantStock < gameItem.quantity) {
           return NextResponse.json(
             {
-              error: `Insufficient stock for ${gameItem.gameTitle}. Available: ${game.gameAvailableStocks}, Required: ${gameItem.quantity}`,
+              error: `Insufficient stock for ${gameItem.gameTitle} (${variant}). Available: ${variantStock}, Required: ${gameItem.quantity}`,
             },
             { status: 400 },
           );
         }
 
-        // Deduct stock and increment sold count
-        game.gameAvailableStocks -= gameItem.quantity;
+        // Deduct from correct variant stock and increment sold count
+        if (variant === "cartridgeOnly") {
+          game.stockCartridgeOnly =
+            (game.stockCartridgeOnly || 0) - gameItem.quantity;
+        } else {
+          game.stockWithCase = (game.stockWithCase || 0) - gameItem.quantity;
+        }
         game.numberOfSold = (game.numberOfSold || 0) + gameItem.quantity;
 
         await game.save();

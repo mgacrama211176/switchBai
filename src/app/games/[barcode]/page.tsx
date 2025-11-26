@@ -27,6 +27,9 @@ const GameDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariant, setSelectedVariant] = useState<
+    "withCase" | "cartridgeOnly"
+  >("withCase");
   const [showCartTypeModal, setShowCartTypeModal] = useState(false);
 
   const { addToCart, cart } = useCart();
@@ -34,6 +37,28 @@ const GameDetailPage: React.FC = () => {
   useEffect(() => {
     loadGame();
   }, [barcode]);
+
+  // Auto-select available variant if current selection is out of stock
+  useEffect(() => {
+    if (!game) return;
+    
+    const stockWithCase = game.stockWithCase ?? 0;
+    const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
+    
+    if (
+      selectedVariant === "cartridgeOnly" &&
+      stockCartridgeOnly === 0 &&
+      stockWithCase > 0
+    ) {
+      setSelectedVariant("withCase");
+    } else if (
+      selectedVariant === "withCase" &&
+      stockWithCase === 0 &&
+      stockCartridgeOnly > 0
+    ) {
+      setSelectedVariant("cartridgeOnly");
+    }
+  }, [game, selectedVariant]);
 
   const loadGame = async () => {
     setIsLoading(true);
@@ -111,9 +136,21 @@ const GameDetailPage: React.FC = () => {
   }
 
   const platformInfo = getPlatformInfo(game.gamePlatform);
-  const stockInfo = getStockUrgency(game.gameAvailableStocks);
+
+  // Get variant-specific stock and price
+  const stockWithCase = game.stockWithCase ?? 0;
+  const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
+  const variantStock =
+    selectedVariant === "cartridgeOnly" ? stockCartridgeOnly : stockWithCase;
+  const variantPrice =
+    selectedVariant === "cartridgeOnly" && game.cartridgeOnlyPrice
+      ? game.cartridgeOnlyPrice
+      : game.gamePrice;
+  const totalStock = stockWithCase + stockCartridgeOnly;
+
+  const stockInfo = getStockUrgency(totalStock);
   const displayPrice =
-    game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice;
+    game.isOnSale && game.salePrice ? game.salePrice : variantPrice;
   const savings = calculateSavings(displayPrice, game.gameBarcode, game);
 
   return (
@@ -194,6 +231,57 @@ const GameDetailPage: React.FC = () => {
                 </p>
               </div>
 
+              {/* Variant Selector */}
+              {(stockWithCase > 0 || stockCartridgeOnly > 0) && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Select Variant
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedVariant("withCase")}
+                      disabled={stockWithCase === 0}
+                      className={`flex-1 px-4 py-3 rounded-xl border-2 font-semibold transition-all ${
+                        selectedVariant === "withCase"
+                          ? "border-funBlue bg-funBlue/10 text-funBlue"
+                          : stockWithCase === 0
+                            ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      With Case
+                      {stockWithCase > 0 && (
+                        <span className="block text-xs font-normal mt-1">
+                          {stockWithCase} in stock •{" "}
+                          {formatPrice(game.gamePrice)}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setSelectedVariant("cartridgeOnly")}
+                      disabled={stockCartridgeOnly === 0}
+                      className={`flex-1 px-4 py-3 rounded-xl border-2 font-semibold transition-all ${
+                        selectedVariant === "cartridgeOnly"
+                          ? "border-funBlue bg-funBlue/10 text-funBlue"
+                          : stockCartridgeOnly === 0
+                            ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      Cartridge Only
+                      {stockCartridgeOnly > 0 && (
+                        <span className="block text-xs font-normal mt-1">
+                          {stockCartridgeOnly} in stock •{" "}
+                          {formatPrice(
+                            game.cartridgeOnlyPrice || game.gamePrice - 100,
+                          )}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-100">
                 {game.isOnSale && game.salePrice ? (
                   <>
@@ -202,7 +290,7 @@ const GameDetailPage: React.FC = () => {
                         {formatPrice(game.salePrice)}
                       </div>
                       <div className="text-base sm:text-lg md:text-xl text-gray-500 line-through">
-                        {formatPrice(game.gamePrice)}
+                        {formatPrice(variantPrice)}
                       </div>
                     </div>
                     <div className="text-xs sm:text-sm font-bold text-green-600 mb-2">
@@ -217,7 +305,7 @@ const GameDetailPage: React.FC = () => {
                   <>
                     <div className="flex items-baseline gap-2 sm:gap-3 mb-2">
                       <div className="text-2xl sm:text-3xl md:text-4xl font-black text-funBlue">
-                        {formatPrice(game.gamePrice)}
+                        {formatPrice(variantPrice)}
                       </div>
                       {savings.percentage > 0 && (
                         <div className="text-base sm:text-lg md:text-xl text-gray-500 line-through">
@@ -238,7 +326,7 @@ const GameDetailPage: React.FC = () => {
                 )}
               </div>
 
-              {game.gameAvailableStocks > 0 && (
+              {variantStock > 0 && (
                 <div className="flex items-center gap-4 text-black">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
@@ -258,22 +346,17 @@ const GameDetailPage: React.FC = () => {
                           setQuantity(
                             Math.max(
                               1,
-                              Math.min(
-                                game.gameAvailableStocks,
-                                Number(e.target.value),
-                              ),
+                              Math.min(variantStock, Number(e.target.value)),
                             ),
                           )
                         }
                         className="w-14 h-9 sm:w-16 sm:h-10 text-center border border-gray-300 rounded-lg font-semibold text-sm sm:text-base"
                         min={1}
-                        max={game.gameAvailableStocks}
+                        max={variantStock}
                       />
                       <button
                         onClick={() =>
-                          setQuantity(
-                            Math.min(game.gameAvailableStocks, quantity + 1),
-                          )
+                          setQuantity(Math.min(variantStock, quantity + 1))
                         }
                         className="min-w-[44px] min-h-[44px] w-9 h-9 sm:w-10 sm:h-10 border border-gray-300 rounded-lg hover:bg-gray-50 font-bold transition-colors text-sm sm:text-base"
                       >
@@ -290,23 +373,21 @@ const GameDetailPage: React.FC = () => {
                     if (cart.items.length === 0 || !cart.type) {
                       setShowCartTypeModal(true);
                     } else if (cart.type === "purchase") {
-                      addToCart(game, quantity, "purchase");
+                      addToCart(game, quantity, "purchase", selectedVariant);
                       router.push("/cart");
                     } else {
-                      addToCart(game, quantity, "rental");
+                      addToCart(game, quantity, "rental", selectedVariant);
                       router.push("/cart");
                     }
                   }}
-                  disabled={game.gameAvailableStocks === 0}
+                  disabled={variantStock === 0}
                   className={`flex-1 min-h-[44px] py-3 px-4 sm:py-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg transition-all ${
                     game.gameAvailableStocks === 0
                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                       : "bg-gradient-to-r from-funBlue to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 shadow-lg hover:shadow-xl"
                   }`}
                 >
-                  {game.gameAvailableStocks === 0
-                    ? "Out of Stock"
-                    : "Add to Cart"}
+                  {variantStock === 0 ? "Out of Stock" : "Add to Cart"}
                 </button>
 
                 <button
@@ -398,16 +479,16 @@ const GameDetailPage: React.FC = () => {
                   <button
                     onClick={() => {
                       if (cart.items.length === 0 || !cart.type) {
-                        addToCart(game, 1, "rental");
+                        addToCart(game, 1, "rental", selectedVariant);
                       } else if (cart.type === "rental") {
-                        addToCart(game, 1, "rental");
+                        addToCart(game, 1, "rental", selectedVariant);
                       } else {
                         if (
                           confirm(
                             "Your cart contains purchase items. Switch to rental? This will clear your cart.",
                           )
                         ) {
-                          addToCart(game, 1, "rental");
+                          addToCart(game, 1, "rental", selectedVariant);
                         } else {
                           return;
                         }
@@ -501,7 +582,7 @@ const GameDetailPage: React.FC = () => {
             <div className="flex flex-col gap-4">
               <button
                 onClick={() => {
-                  addToCart(game, quantity, "purchase");
+                  addToCart(game, quantity, "purchase", selectedVariant);
                   setShowCartTypeModal(false);
                   router.push("/cart");
                 }}
@@ -511,7 +592,7 @@ const GameDetailPage: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  addToCart(game, quantity, "rental");
+                  addToCart(game, quantity, "rental", selectedVariant);
                   setShowCartTypeModal(false);
                   router.push("/cart");
                 }}
@@ -521,7 +602,7 @@ const GameDetailPage: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  addToCart(game, quantity, "trade");
+                  addToCart(game, quantity, "trade", selectedVariant);
                   setShowCartTypeModal(false);
                   router.push("/cart");
                 }}

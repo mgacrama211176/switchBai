@@ -71,6 +71,9 @@ export async function PUT(
             gameBarcode: game.gameBarcode,
           });
 
+          // Get variant (default to "withCase" when adding inventory)
+          const variant = game.variant || "withCase";
+
           if (!existingGame) {
             // Create new game with initial stock and cost price
             await GameModel.create({
@@ -83,7 +86,9 @@ export async function PUT(
               gameCategory: game.newGameDetails?.gameCategory || "Other",
               gameReleaseDate: game.newGameDetails?.gameReleaseDate || "",
               gamePrice: game.sellingPrice,
-              gameAvailableStocks: game.quantity,
+              stockWithCase: variant === "withCase" ? game.quantity : 0,
+              stockCartridgeOnly:
+                variant === "cartridgeOnly" ? game.quantity : 0,
               costPrice: gameCostPrice,
               tradable: game.newGameDetails?.tradable ?? true,
               rentalAvailable: game.newGameDetails?.rentalAvailable ?? false,
@@ -92,7 +97,9 @@ export async function PUT(
             });
           } else {
             // Game exists, update stock and cost price using weighted average
-            const existingStock = existingGame.gameAvailableStocks || 0;
+            const existingStock =
+              (existingGame.stockWithCase || 0) +
+              (existingGame.stockCartridgeOnly || 0);
             const existingCost = existingGame.costPrice || 0;
             const newStock = existingStock + game.quantity;
 
@@ -103,10 +110,15 @@ export async function PUT(
                 newStock;
             }
 
+            // Increment variant-specific stock
+            const updateField =
+              variant === "cartridgeOnly"
+                ? "stockCartridgeOnly"
+                : "stockWithCase";
             await GameModel.findOneAndUpdate(
               { gameBarcode: game.gameBarcode },
               {
-                $inc: { gameAvailableStocks: game.quantity },
+                $inc: { [updateField]: game.quantity },
                 $set: { costPrice: newCostPrice },
               },
             );
@@ -117,8 +129,13 @@ export async function PUT(
             gameBarcode: game.gameBarcode,
           });
 
+          // Get variant (default to "withCase" when adding inventory)
+          const variant = game.variant || "withCase";
+
           if (existingGame) {
-            const existingStock = existingGame.gameAvailableStocks || 0;
+            const existingStock =
+              (existingGame.stockWithCase || 0) +
+              (existingGame.stockCartridgeOnly || 0);
             const existingCost = existingGame.costPrice || 0;
             const newStock = existingStock + game.quantity;
 
@@ -129,10 +146,15 @@ export async function PUT(
                 newStock;
             }
 
+            // Increment variant-specific stock
+            const updateField =
+              variant === "cartridgeOnly"
+                ? "stockCartridgeOnly"
+                : "stockWithCase";
             await GameModel.findOneAndUpdate(
               { gameBarcode: game.gameBarcode },
               {
-                $inc: { gameAvailableStocks: game.quantity },
+                $inc: { [updateField]: game.quantity },
                 $set: { costPrice: newCostPrice },
               },
             );
@@ -144,6 +166,10 @@ export async function PUT(
     // If status is changing from "completed" to something else, reverse stock
     if (oldStatus === "completed" && newStatus !== "completed") {
       for (const game of purchase.games) {
+        const variant = game.variant || "withCase";
+        const updateField =
+          variant === "cartridgeOnly" ? "stockCartridgeOnly" : "stockWithCase";
+
         if (game.isNewGame) {
           // For new games, we might want to delete them or just decrement
           // For safety, we'll just decrement stock if game exists
@@ -152,18 +178,22 @@ export async function PUT(
           });
 
           if (existingGame) {
-            const newStock = existingGame.gameAvailableStocks - game.quantity;
+            const currentStock =
+              variant === "cartridgeOnly"
+                ? existingGame.stockCartridgeOnly || 0
+                : existingGame.stockWithCase || 0;
+            const newStock = currentStock - game.quantity;
+
             if (newStock <= 0) {
-              // If stock would be negative or zero, we could delete the game
-              // But for safety, we'll just set it to 0
+              // If stock would be negative or zero, set it to 0
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $set: { gameAvailableStocks: 0 } },
+                { $set: { [updateField]: 0 } },
               );
             } else {
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $inc: { gameAvailableStocks: -game.quantity } },
+                { $inc: { [updateField]: -game.quantity } },
               );
             }
           }
@@ -174,17 +204,22 @@ export async function PUT(
           });
 
           if (existingGame) {
-            const newStock = existingGame.gameAvailableStocks - game.quantity;
+            const currentStock =
+              variant === "cartridgeOnly"
+                ? existingGame.stockCartridgeOnly || 0
+                : existingGame.stockWithCase || 0;
+            const newStock = currentStock - game.quantity;
+
             if (newStock < 0) {
               // Stock can't go negative, set to 0
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $set: { gameAvailableStocks: 0 } },
+                { $set: { [updateField]: 0 } },
               );
             } else {
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $inc: { gameAvailableStocks: -game.quantity } },
+                { $inc: { [updateField]: -game.quantity } },
               );
             }
           }
@@ -268,6 +303,10 @@ export async function DELETE(
     // If purchase was completed, reverse stock changes
     if (purchase.status === "completed") {
       for (const game of purchase.games) {
+        const variant = game.variant || "withCase";
+        const updateField =
+          variant === "cartridgeOnly" ? "stockCartridgeOnly" : "stockWithCase";
+
         if (game.isNewGame) {
           // For new games, we might want to delete them or just decrement
           const existingGame = await GameModel.findOne({
@@ -275,18 +314,22 @@ export async function DELETE(
           });
 
           if (existingGame) {
-            const newStock = existingGame.gameAvailableStocks - game.quantity;
+            const currentStock =
+              variant === "cartridgeOnly"
+                ? existingGame.stockCartridgeOnly || 0
+                : existingGame.stockWithCase || 0;
+            const newStock = currentStock - game.quantity;
+
             if (newStock <= 0) {
-              // If stock would be zero or negative, we could delete the game
-              // But for safety, we'll just set it to 0
+              // If stock would be zero or negative, set it to 0
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $set: { gameAvailableStocks: 0 } },
+                { $set: { [updateField]: 0 } },
               );
             } else {
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $inc: { gameAvailableStocks: -game.quantity } },
+                { $inc: { [updateField]: -game.quantity } },
               );
             }
           }
@@ -297,17 +340,22 @@ export async function DELETE(
           });
 
           if (existingGame) {
-            const newStock = existingGame.gameAvailableStocks - game.quantity;
+            const currentStock =
+              variant === "cartridgeOnly"
+                ? existingGame.stockCartridgeOnly || 0
+                : existingGame.stockWithCase || 0;
+            const newStock = currentStock - game.quantity;
+
             if (newStock < 0) {
               // Stock can't go negative, set to 0
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $set: { gameAvailableStocks: 0 } },
+                { $set: { [updateField]: 0 } },
               );
             } else {
               await GameModel.findOneAndUpdate(
                 { gameBarcode: game.gameBarcode },
-                { $inc: { gameAvailableStocks: -game.quantity } },
+                { $inc: { [updateField]: -game.quantity } },
               );
             }
           }

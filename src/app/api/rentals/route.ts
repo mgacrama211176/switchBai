@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       gameBarcode: body.gameBarcode,
       gameTitle: body.gameTitle,
       gamePrice: body.gamePrice,
+      variant: body.variant || undefined,
 
       // Rental details
       startDate: body.startDate,

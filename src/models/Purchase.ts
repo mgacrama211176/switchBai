@@ -16,6 +16,7 @@ export interface IPurchase extends Document {
     gameTitle: string;
     gamePrice: number;
     quantity: number;
+    variant?: "withCase" | "cartridgeOnly";
   }>;
 
   // Delivery details
@@ -147,6 +148,11 @@ const PurchaseSchema = new Schema<IPurchase>(
             required: [true, "Quantity is required"],
             min: [1, "Quantity must be at least 1"],
             max: [10, "Maximum quantity is 10"],
+          },
+          variant: {
+            type: String,
+            enum: ["withCase", "cartridgeOnly"],
+            required: false,
           },
         },
       ],

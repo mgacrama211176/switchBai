@@ -7,6 +7,8 @@ export interface Game {
   gameDescription: string;
   gameImageURL: string;
   gameAvailableStocks: number;
+  stockWithCase?: number;
+  stockCartridgeOnly?: number;
   gamePrice: number;
   gameCategory: string;
   gameReleaseDate: string;
@@ -20,6 +22,7 @@ export interface Game {
   isOnSale?: boolean;
   salePrice?: number;
   costPrice?: number;
+  cartridgeOnlyPrice?: number; // Virtual field: gamePrice - 100
 }
 
 export interface BuyingGame {
@@ -27,6 +30,7 @@ export interface BuyingGame {
   gameTitle: string;
   sellingPrice: number;
   quantity: number;
+  variant?: "withCase" | "cartridgeOnly"; // Variant when adding inventory
   isNewGame: boolean;
   newGameDetails?: {
     gamePlatform: string | string[];

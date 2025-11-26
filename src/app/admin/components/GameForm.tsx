@@ -54,6 +54,9 @@ export default function GameForm({
     gameDescription: initialData?.gameDescription || "",
     gameImageURL: initialData?.gameImageURL || "",
     gameAvailableStocks: initialData?.gameAvailableStocks || 0,
+    stockWithCase:
+      initialData?.stockWithCase ?? (initialData?.gameAvailableStocks || 0),
+    stockCartridgeOnly: initialData?.stockCartridgeOnly || 0,
     gamePrice: initialData?.gamePrice || 0,
     gameCategory: initialData?.gameCategory || "",
     gameReleaseDate: initialData?.gameReleaseDate || "",
@@ -245,6 +248,11 @@ export default function GameForm({
     setIsLoading(true);
     try {
       let finalFormData = { ...formData };
+
+      // Compute gameAvailableStocks from variant stocks
+      finalFormData.gameAvailableStocks =
+        (finalFormData.stockWithCase || 0) +
+        (finalFormData.stockCartridgeOnly || 0);
 
       // Upload image if a new one was selected
       if (selectedImageFile) {
@@ -580,8 +588,8 @@ export default function GameForm({
           )}
         </div>
 
-        {/* Grid for Price, Stock, Release Date */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Grid for Price, Release Date */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Price */}
           <div>
             <label
@@ -608,34 +616,90 @@ export default function GameForm({
             )}
           </div>
 
-          {/* Available Stocks */}
-          <div>
-            <label
-              htmlFor="gameAvailableStocks"
-              className="block text-sm font-semibold text-gray-700 mb-2"
-            >
-              Available Stocks *
+          {/* Stock Variants */}
+          <div className="col-span-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Stock Management *
             </label>
-            <input
-              id="gameAvailableStocks"
-              name="gameAvailableStocks"
-              type="number"
-              value={formData.gameAvailableStocks}
-              onChange={handleInputChange}
-              min="0"
-              step="1"
-              className={`w-full px-4 py-3 rounded-xl border-2 ${
-                errors.gameAvailableStocks
-                  ? "border-lameRed"
-                  : "border-gray-200"
-              } focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300 text-black`}
-              placeholder="10"
-            />
-            {errors.gameAvailableStocks && (
-              <p className="text-sm text-lameRed mt-1">
-                {errors.gameAvailableStocks}
-              </p>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Stock With Case */}
+              <div>
+                <label
+                  htmlFor="stockWithCase"
+                  className="block text-xs font-medium text-gray-600 mb-1"
+                >
+                  Stock (With Case) *
+                </label>
+                <input
+                  id="stockWithCase"
+                  name="stockWithCase"
+                  type="number"
+                  value={formData.stockWithCase}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="1"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    errors.stockWithCase ? "border-lameRed" : "border-gray-200"
+                  } focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300 text-black`}
+                  placeholder="0"
+                />
+                {errors.stockWithCase && (
+                  <p className="text-sm text-lameRed mt-1">
+                    {errors.stockWithCase}
+                  </p>
+                )}
+              </div>
+
+              {/* Stock Cartridge Only */}
+              <div>
+                <label
+                  htmlFor="stockCartridgeOnly"
+                  className="block text-xs font-medium text-gray-600 mb-1"
+                >
+                  Stock (Cartridge Only) *
+                </label>
+                <input
+                  id="stockCartridgeOnly"
+                  name="stockCartridgeOnly"
+                  type="number"
+                  value={formData.stockCartridgeOnly}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="1"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    errors.stockCartridgeOnly
+                      ? "border-lameRed"
+                      : "border-gray-200"
+                  } focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all duration-300 text-black`}
+                  placeholder="0"
+                />
+                {errors.stockCartridgeOnly && (
+                  <p className="text-sm text-lameRed mt-1">
+                    {errors.stockCartridgeOnly}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Combined Total and Cartridge Price Display */}
+            <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-700">Total Stock:</span>
+                <span className="font-bold text-gray-900">
+                  {formData.stockWithCase + formData.stockCartridgeOnly} units
+                </span>
+              </div>
+              {formData.gamePrice > 0 && (
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-700">
+                    Cartridge Only Price:
+                  </span>
+                  <span className="font-bold text-funBlue">
+                    ₱{(formData.gamePrice - 100).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Release Date */}

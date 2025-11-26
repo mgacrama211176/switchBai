@@ -11,6 +11,9 @@ interface GameRow {
   gamePrice: number;
   quantity: number;
   availableStock: number;
+  variant?: "withCase" | "cartridgeOnly";
+  stockWithCase?: number;
+  stockCartridgeOnly?: number;
 }
 
 interface GameSearchState {
@@ -63,12 +66,10 @@ export default function AddOrderModal({
   const [debouncedSearchTerms, setDebouncedSearchTerms] = useState<
     Record<number, string>
   >({});
-  const [searchResults, setSearchResults] = useState<
-    Record<number, Game[]>
-  >({});
-  const [isSearching, setIsSearching] = useState<
-    Record<number, boolean>
-  >({});
+  const [searchResults, setSearchResults] = useState<Record<number, Game[]>>(
+    {},
+  );
+  const [isSearching, setIsSearching] = useState<Record<number, boolean>>({});
   const searchInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const searchResultsRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const debounceTimeouts = useRef<Record<number, NodeJS.Timeout>>({});
@@ -78,7 +79,9 @@ export default function AddOrderModal({
     async function fetchInitialGames() {
       setIsLoadingGames(true);
       try {
-        const response = await fetch("/api/games?inStock=true&limit=100&sort=updatedAt&order=desc");
+        const response = await fetch(
+          "/api/games?inStock=true&limit=100&sort=updatedAt&order=desc",
+        );
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -117,7 +120,7 @@ export default function AddOrderModal({
 
         try {
           const response = await fetch(
-            `/api/games?search=${encodeURIComponent(searchTerm)}&inStock=true&limit=10000`
+            `/api/games?search=${encodeURIComponent(searchTerm)}&inStock=true&limit=10000`,
           );
           const data = await response.json();
           setSearchResults((prev) => ({
@@ -137,7 +140,7 @@ export default function AddOrderModal({
             return updated;
           });
         }
-      }
+      },
     );
 
     Promise.all(searchPromises);
@@ -189,6 +192,9 @@ export default function AddOrderModal({
       gamePrice:
         game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice,
       availableStock: game.gameAvailableStocks,
+      stockWithCase: game.stockWithCase,
+      stockCartridgeOnly: game.stockCartridgeOnly,
+      variant: "withCase", // Default to "withCase"
       quantity: 1,
     });
     // Close search dropdown and clear search terms
@@ -373,6 +379,7 @@ export default function AddOrderModal({
           gameTitle: row.gameTitle,
           gamePrice: row.gamePrice,
           quantity: row.quantity,
+          variant: row.variant || "withCase",
         })),
         deliveryAddress: deliveryAddress.trim() || undefined,
         deliveryCity: deliveryCity.trim() || undefined,
@@ -639,6 +646,9 @@ export default function AddOrderModal({
                                     gamePrice: 0,
                                     quantity: 1,
                                     availableStock: 0,
+                                    variant: undefined,
+                                    stockWithCase: undefined,
+                                    stockCartridgeOnly: undefined,
                                   });
                                   setGameSearchStates((prev) => ({
                                     ...prev,
@@ -731,6 +741,42 @@ export default function AddOrderModal({
                               </div>
                             )}
                         </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Variant
+                        </label>
+                        <select
+                          value={row.variant || "withCase"}
+                          onChange={(e) => {
+                            const variant = e.target.value as
+                              | "withCase"
+                              | "cartridgeOnly";
+                            const variantStock =
+                              variant === "cartridgeOnly"
+                                ? row.stockCartridgeOnly || 0
+                                : row.stockWithCase || 0;
+                            const variantPrice =
+                              variant === "cartridgeOnly" && row.gamePrice
+                                ? Math.max(0, row.gamePrice - 100)
+                                : row.gamePrice;
+                            updateGameRow(index, {
+                              variant,
+                              availableStock: variantStock,
+                              gamePrice: variantPrice,
+                              quantity: Math.min(row.quantity, variantStock),
+                            });
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+                        >
+                          <option value="withCase">
+                            With Case ({row.stockWithCase || 0} available)
+                          </option>
+                          <option value="cartridgeOnly">
+                            Cartridge Only ({row.stockCartridgeOnly || 0}{" "}
+                            available)
+                          </option>
+                        </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">

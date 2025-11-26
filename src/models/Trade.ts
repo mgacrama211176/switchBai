@@ -16,6 +16,7 @@ export interface ITrade extends Document {
     gameTitle: string;
     gamePrice: number;
     quantity: number;
+    variant?: "withCase" | "cartridgeOnly"; // Variant when adding to inventory (defaults to withCase)
     isNewGame?: boolean; // If true, game needs to be created
     newGameDetails?: {
       // Full game details if creating new game
@@ -34,6 +35,7 @@ export interface ITrade extends Document {
     gameTitle: string;
     gamePrice: number;
     quantity: number;
+    variant?: "withCase" | "cartridgeOnly";
   }>;
 
   // Trade details
@@ -143,6 +145,11 @@ const TradeSchema = new Schema<ITrade>(
             required: [true, "Quantity is required"],
             min: [1, "Quantity must be at least 1"],
           },
+          variant: {
+            type: String,
+            enum: ["withCase", "cartridgeOnly"],
+            required: false,
+          },
           isNewGame: {
             type: Boolean,
             default: false,
@@ -192,6 +199,11 @@ const TradeSchema = new Schema<ITrade>(
             type: Number,
             required: [true, "Quantity is required"],
             min: [1, "Quantity must be at least 1"],
+          },
+          variant: {
+            type: String,
+            enum: ["withCase", "cartridgeOnly"],
+            required: false,
           },
         },
       ],

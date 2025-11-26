@@ -513,16 +513,29 @@ export async function GET(request: NextRequest) {
     let inventoryValue = 0;
     let potentialRevenue = 0;
 
-    games.forEach((game) => {
+    games.forEach((game: any) => {
       if (!matchesPlatformFilter(game.gamePlatform)) return;
 
-      const stock = game.gameAvailableStocks || 0;
+      const stockWithCase = game.stockWithCase || 0;
+      const stockCartridgeOnly = game.stockCartridgeOnly || 0;
       const costPrice = game.costPrice || 0;
-      const sellingPrice =
-        game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice;
 
-      inventoryValue += stock * costPrice;
-      potentialRevenue += stock * sellingPrice;
+      // Calculate inventory value using variant-specific pricing
+      const priceWithCase =
+        game.isOnSale && game.salePrice ? game.salePrice : game.gamePrice;
+      const priceCartridgeOnly =
+        game.cartridgeOnlyPrice || Math.max(0, (game.gamePrice || 0) - 100);
+      const sellingPriceCartridgeOnly =
+        game.isOnSale && game.salePrice
+          ? Math.max(0, game.salePrice - 100)
+          : priceCartridgeOnly;
+
+      // Inventory value (cost price * total stock)
+      inventoryValue += (stockWithCase + stockCartridgeOnly) * costPrice;
+
+      // Potential revenue (variant-specific selling prices)
+      potentialRevenue += stockWithCase * priceWithCase;
+      potentialRevenue += stockCartridgeOnly * sellingPriceCartridgeOnly;
     });
 
     const potentialProfit = potentialRevenue - inventoryValue;
@@ -588,7 +601,8 @@ export async function GET(request: NextRequest) {
     const currentInventory = games
       .filter((game: any) => matchesPlatformFilter(game.gamePlatform))
       .reduce(
-        (sum: number, game: any) => sum + (game.gameAvailableStocks || 0),
+        (sum: number, game: any) =>
+          sum + (game.stockWithCase || 0) + (game.stockCartridgeOnly || 0),
         0,
       );
 

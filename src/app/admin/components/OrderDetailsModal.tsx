@@ -21,6 +21,7 @@ interface OrderGame {
   gameTitle: string;
   gamePrice: number;
   quantity: number;
+  variant?: "withCase" | "cartridgeOnly";
 }
 
 interface Order {
@@ -574,6 +575,15 @@ export default function OrderDetailsModal({
                       <tr key={index} className="bg-white">
                         <td className="px-4 py-3 text-sm text-gray-900">
                           {game.gameTitle}
+                          {game.variant && (
+                            <span className="ml-2 text-xs text-gray-500">
+                              (
+                              {game.variant === "cartridgeOnly"
+                                ? "Cartridge Only"
+                                : "With Case"}
+                              )
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 font-mono">
                           {game.gameBarcode}

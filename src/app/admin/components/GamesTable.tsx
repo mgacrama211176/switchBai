@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Game } from "@/app/types/games";
 import { formatPrice } from "@/lib/game-utils";
 import Image from "next/image";
-import { HiPencil, HiTrash, HiSearch } from "react-icons/hi";
+import { HiPencil, HiTrash, HiSearch, HiRefresh } from "react-icons/hi";
 import EditGameModal from "./EditGameModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import Toast from "./Toast";
@@ -35,6 +35,7 @@ export default function GamesTable({
 
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [deletingGame, setDeletingGame] = useState<Game | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -138,6 +139,48 @@ export default function GamesTable({
     onGameDeleted();
   }
 
+  async function handleMigrateStocks() {
+    if (
+      !confirm(
+        "This will migrate all games to the new stock schema and fix any stock inconsistencies. Continue?",
+      )
+    ) {
+      return;
+    }
+
+    setIsMigrating(true);
+    try {
+      const response = await fetch("/api/admin/migrate-stocks", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Migration failed");
+      }
+
+      setToast({
+        message: `Migration complete! Migrated: ${data.summary.migrated}, Fixed: ${data.summary.fixed}, Already correct: ${data.summary.alreadyCorrect}`,
+        type: "success",
+      });
+
+      // Refresh games list
+      onGameUpdated();
+    } catch (error) {
+      console.error("Migration error:", error);
+      setToast({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to run migration",
+        type: "error",
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  }
+
   return (
     <div className="space-y-6 text-black">
       {toast && (
@@ -229,31 +272,41 @@ export default function GamesTable({
         </select>
       </div>
 
-      {/* Results Count */}
+      {/* Results Count and Migration */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
           {games.length > 0
             ? `Showing ${games.length} games`
             : "No games found"}
         </p>
-        {(searchTerm ||
-          platformFilter ||
-          categoryFilter ||
-          stockSort ||
-          activeFilter) && (
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => {
-              setSearchTerm("");
-              setPlatformFilter("");
-              setCategoryFilter("");
-              setStockSort(null);
-              onFilterClear?.();
-            }}
-            className="text-sm text-funBlue hover:text-funBlue/80 font-medium"
+            onClick={handleMigrateStocks}
+            disabled={isMigrating}
+            className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white rounded-lg font-medium text-sm transition-colors"
           >
-            Clear Filters
+            <HiRefresh className={`w-4 h-4 ${isMigrating ? "animate-spin" : ""}`} />
+            {isMigrating ? "Migrating..." : "Migrate Stocks"}
           </button>
-        )}
+          {(searchTerm ||
+            platformFilter ||
+            categoryFilter ||
+            stockSort ||
+            activeFilter) && (
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setPlatformFilter("");
+                setCategoryFilter("");
+                setStockSort(null);
+                onFilterClear?.();
+              }}
+              className="text-sm text-funBlue hover:text-funBlue/80 font-medium"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -352,17 +405,26 @@ export default function GamesTable({
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          game.gameAvailableStocks === 0
-                            ? "bg-red-100 text-red-700"
-                            : game.gameAvailableStocks < 5
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {game.gameAvailableStocks}
-                      </span>
+                      <div className="flex flex-col items-start space-y-1">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            game.gameAvailableStocks === 0
+                              ? "bg-red-100 text-red-700"
+                              : game.gameAvailableStocks < 5
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {game.gameAvailableStocks}
+                        </span>
+                        {(game.stockWithCase !== undefined ||
+                          game.stockCartridgeOnly !== undefined) && (
+                          <span className="text-xs text-gray-500">
+                            WC: {game.stockWithCase ?? 0} | CO:{" "}
+                            {game.stockCartridgeOnly ?? 0}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm text-gray-700">

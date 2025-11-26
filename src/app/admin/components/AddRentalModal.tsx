@@ -32,6 +32,9 @@ export default function AddRentalModal({
   const [isGameSearchOpen, setIsGameSearchOpen] = useState(false);
   const [selectedGameIndex, setSelectedGameIndex] = useState(0);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<
+    "withCase" | "cartridgeOnly"
+  >("withCase");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const searchResultsRef = useRef<HTMLDivElement | null>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -55,9 +58,15 @@ export default function AddRentalModal({
 
   // Calculate rental days and pricing
   const rentalDays = calculateDays(startDate, endDate);
+  const variantPrice =
+    selectedGame &&
+    selectedVariant === "cartridgeOnly" &&
+    selectedGame.cartridgeOnlyPrice
+      ? selectedGame.cartridgeOnlyPrice
+      : selectedGame?.gamePrice || 0;
   const baseRentalCalculation =
     selectedGame && rentalDays > 0
-      ? calculateRentalPrice(selectedGame.gamePrice, rentalDays)
+      ? calculateRentalPrice(variantPrice, rentalDays)
       : null;
 
   // Calculate discount
@@ -86,13 +95,13 @@ export default function AddRentalModal({
   // Calculate adjusted deposit (game price - discounted rental fee)
   function calculateAdjustedDeposit() {
     if (!selectedGame || !baseRentalCalculation) return 0;
-    return selectedGame.gamePrice - calculateAdjustedRentalFee();
+    return variantPrice - calculateAdjustedRentalFee();
   }
 
-  // Total due remains game price
+  // Total due remains game price (variant-specific)
   function getTotalDue() {
     if (!selectedGame) return 0;
-    return selectedGame.gamePrice;
+    return variantPrice;
   }
 
   // Fetch initial games (100 most recent) when modal opens
@@ -100,7 +109,9 @@ export default function AddRentalModal({
     async function fetchInitialGames() {
       setIsLoadingGames(true);
       try {
-        const response = await fetch("/api/games?limit=100&sort=updatedAt&order=desc");
+        const response = await fetch(
+          "/api/games?limit=100&sort=updatedAt&order=desc",
+        );
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -127,7 +138,7 @@ export default function AddRentalModal({
       setIsSearching(true);
       try {
         const response = await fetch(
-          `/api/games?search=${encodeURIComponent(debouncedSearchTerm)}&limit=10000`
+          `/api/games?search=${encodeURIComponent(debouncedSearchTerm)}&limit=10000`,
         );
         const data = await response.json();
         setSearchResults(data.games || []);
@@ -201,6 +212,14 @@ export default function AddRentalModal({
     setGameSearchTerm(game.gameTitle);
     setIsGameSearchOpen(false);
     setSelectedGameIndex(0);
+    // Auto-select available variant
+    if (game.stockWithCase && game.stockWithCase > 0) {
+      setSelectedVariant("withCase");
+    } else if (game.stockCartridgeOnly && game.stockCartridgeOnly > 0) {
+      setSelectedVariant("cartridgeOnly");
+    } else {
+      setSelectedVariant("withCase"); // Default
+    }
   }
 
   function handleSearchChange(value: string) {
@@ -317,7 +336,8 @@ export default function AddRentalModal({
           customerIdImageUrl: customerIdImageUrl.trim(),
           gameBarcode: selectedGame.gameBarcode,
           gameTitle: selectedGame.gameTitle,
-          gamePrice: selectedGame.gamePrice,
+          gamePrice: variantPrice,
+          variant: selectedVariant,
           startDate,
           endDate,
           rentalDays,
@@ -450,13 +470,53 @@ export default function AddRentalModal({
                 )}
               </div>
               {selectedGame && (
-                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                  <div className="font-medium text-gray-900">
-                    {selectedGame.gameTitle}
+                <div className="mt-2 space-y-2">
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="font-medium text-gray-900">
+                      {selectedGame.gameTitle}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Price: ₱{selectedGame.gamePrice.toLocaleString()}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Price: ₱{selectedGame.gamePrice.toLocaleString()}
-                  </div>
+                  {(selectedGame.stockWithCase ||
+                    selectedGame.stockCartridgeOnly) && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Variant
+                      </label>
+                      <select
+                        value={selectedVariant}
+                        onChange={(e) => {
+                          const variant = e.target.value as
+                            | "withCase"
+                            | "cartridgeOnly";
+                          setSelectedVariant(variant);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+                      >
+                        <option
+                          value="withCase"
+                          disabled={(selectedGame.stockWithCase || 0) === 0}
+                        >
+                          With Case ({selectedGame.stockWithCase || 0}{" "}
+                          available)
+                        </option>
+                        <option
+                          value="cartridgeOnly"
+                          disabled={
+                            (selectedGame.stockCartridgeOnly || 0) === 0
+                          }
+                        >
+                          Cartridge Only ({selectedGame.stockCartridgeOnly || 0}{" "}
+                          available)
+                        </option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Selected price: ₱{variantPrice.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

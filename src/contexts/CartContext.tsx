@@ -17,6 +17,7 @@ export interface CartItem {
   gamePrice: number;
   quantity: number;
   maxStock: number;
+  variant?: "withCase" | "cartridgeOnly";
   salePrice?: number;
   isOnSale?: boolean;
   tradable?: boolean;
@@ -34,11 +35,13 @@ interface CartContextType {
     game: Game,
     quantity: number,
     type: "purchase" | "rental" | "trade",
+    variant?: "withCase" | "cartridgeOnly",
   ) => void;
   addToTradeCart: (
     game: Game,
     quantity: number,
     side: "received" | "given",
+    variant?: "withCase" | "cartridgeOnly",
   ) => void;
   removeFromCart: (barcode: string) => void;
   removeFromTradeCart: (barcode: string, side: "received" | "given") => void;
@@ -178,7 +181,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [cart, isHydrated]);
 
   const addToTradeCart = useCallback(
-    (game: Game, quantity: number, side: "received" | "given") => {
+    (
+      game: Game,
+      quantity: number,
+      side: "received" | "given",
+      variant: "withCase" | "cartridgeOnly" = "withCase",
+    ) => {
+      // Get variant-specific stock and price for received games
+      const variantStock =
+        side === "received"
+          ? variant === "cartridgeOnly"
+            ? (game.stockCartridgeOnly ?? 0)
+            : (game.stockWithCase ?? 0)
+          : 999; // No limit for games given
+      const variantPrice =
+        side === "received" &&
+        variant === "cartridgeOnly" &&
+        game.cartridgeOnlyPrice
+          ? game.cartridgeOnlyPrice
+          : game.gamePrice;
+
       setCart((prevCart) => {
         // Ensure cart type is trade
         const cartType = prevCart.type || "trade";
@@ -192,12 +214,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       gameBarcode: game.gameBarcode,
                       gameTitle: game.gameTitle,
                       gameImageURL: game.gameImageURL,
-                      gamePrice: game.gamePrice,
-                      quantity: Math.min(
-                        quantity,
-                        game.gameAvailableStocks || 999,
-                      ),
-                      maxStock: game.gameAvailableStocks || 999,
+                      gamePrice: variantPrice,
+                      quantity: Math.min(quantity, variantStock),
+                      maxStock: variantStock,
+                      variant: side === "received" ? variant : undefined,
                       salePrice: game.salePrice,
                       isOnSale: game.isOnSale,
                       tradable: game.tradable,
@@ -227,7 +247,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const targetArray =
           side === "received" ? prevCart.items : prevCart.gamesGiven || [];
         const existingIndex = targetArray.findIndex(
-          (item) => item.gameBarcode === game.gameBarcode,
+          (item) =>
+            item.gameBarcode === game.gameBarcode &&
+            (side === "given" || item.variant === variant),
         );
 
         if (existingIndex >= 0) {
@@ -257,8 +279,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           updatedItems[existingIndex] = {
             ...existingItem,
             quantity: newQuantity,
-            maxStock:
-              side === "received" ? game.gameAvailableStocks || 999 : 999,
+            maxStock: side === "received" ? variantStock : 999,
             tradable: game.tradable,
           };
 
@@ -280,12 +301,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           gameBarcode: game.gameBarcode,
           gameTitle: game.gameTitle,
           gameImageURL: game.gameImageURL,
-          gamePrice: game.gamePrice,
+          gamePrice: variantPrice,
           quantity:
-            side === "received"
-              ? Math.min(quantity, game.gameAvailableStocks || 999)
-              : quantity,
-          maxStock: side === "received" ? game.gameAvailableStocks || 999 : 999,
+            side === "received" ? Math.min(quantity, variantStock) : quantity,
+          maxStock: side === "received" ? variantStock : 999,
+          variant: side === "received" ? variant : undefined,
           salePrice: game.salePrice,
           isOnSale: game.isOnSale,
           tradable: game.tradable,
@@ -310,16 +330,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addToCart = useCallback(
-    (game: Game, quantity: number, type: "purchase" | "rental" | "trade") => {
+    (
+      game: Game,
+      quantity: number,
+      type: "purchase" | "rental" | "trade",
+      variant: "withCase" | "cartridgeOnly" = "withCase",
+    ) => {
       // For trade type, use addToTradeCart instead
       if (type === "trade") {
-        addToTradeCart(game, quantity, "received");
+        addToTradeCart(game, quantity, "received", variant);
         return;
       }
 
-      if (game.gameAvailableStocks === 0) {
+      // Get variant-specific stock
+      const variantStock =
+        variant === "cartridgeOnly"
+          ? (game.stockCartridgeOnly ?? 0)
+          : (game.stockWithCase ?? 0);
+
+      if (variantStock === 0) {
         return;
       }
+
+      // Get variant-specific price
+      const variantPrice =
+        variant === "cartridgeOnly" && game.cartridgeOnlyPrice
+          ? game.cartridgeOnlyPrice
+          : game.gamePrice;
 
       setCart((prevCart) => {
         // If cart has items and type is different, clear cart first
@@ -330,9 +367,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 gameBarcode: game.gameBarcode,
                 gameTitle: game.gameTitle,
                 gameImageURL: game.gameImageURL,
-                gamePrice: game.gamePrice,
-                quantity: Math.min(quantity, game.gameAvailableStocks),
-                maxStock: game.gameAvailableStocks,
+                gamePrice: variantPrice,
+                quantity: Math.min(quantity, variantStock),
+                maxStock: variantStock,
+                variant,
                 salePrice: game.salePrice,
                 isOnSale: game.isOnSale,
               },
@@ -342,9 +380,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           };
         }
 
-        // Check if item already exists
+        // Check if item already exists (same barcode AND variant)
         const existingIndex = prevCart.items.findIndex(
-          (item) => item.gameBarcode === game.gameBarcode,
+          (item) =>
+            item.gameBarcode === game.gameBarcode && item.variant === variant,
         );
 
         if (existingIndex >= 0) {
@@ -352,7 +391,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           const existingItem = prevCart.items[existingIndex];
           const newQuantity = Math.min(
             existingItem.quantity + quantity,
-            game.gameAvailableStocks,
+            variantStock,
           );
 
           if (newQuantity <= 0) return prevCart;
@@ -361,7 +400,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           updatedItems[existingIndex] = {
             ...existingItem,
             quantity: newQuantity,
-            maxStock: game.gameAvailableStocks,
+            maxStock: variantStock,
           };
 
           return {
@@ -379,9 +418,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               gameBarcode: game.gameBarcode,
               gameTitle: game.gameTitle,
               gameImageURL: game.gameImageURL,
-              gamePrice: game.gamePrice,
-              quantity: Math.min(quantity, game.gameAvailableStocks),
-              maxStock: game.gameAvailableStocks,
+              gamePrice: variantPrice,
+              quantity: Math.min(quantity, variantStock),
+              maxStock: variantStock,
+              variant,
               salePrice: game.salePrice,
               isOnSale: game.isOnSale,
             },

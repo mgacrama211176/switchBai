@@ -8,6 +8,8 @@ export interface IGame extends Document {
   gameDescription: string;
   gameImageURL: string;
   gameAvailableStocks: number;
+  stockWithCase: number;
+  stockCartridgeOnly: number;
   gamePrice: number;
   gameCategory: string;
   gameReleaseDate: string;
@@ -82,9 +84,23 @@ const GameSchema = new Schema<IGame>(
     },
     gameAvailableStocks: {
       type: Number,
-      required: [true, "Available stocks is required"],
+      required: false, // Now computed from stockWithCase + stockCartridgeOnly
       min: [0, "Available stocks cannot be negative"],
       max: [9999, "Available stocks cannot exceed 9999"],
+    },
+    stockWithCase: {
+      type: Number,
+      required: [true, "Stock with case is required"],
+      default: 0,
+      min: [0, "Stock with case cannot be negative"],
+      max: [9999, "Stock with case cannot exceed 9999"],
+    },
+    stockCartridgeOnly: {
+      type: Number,
+      required: [true, "Stock cartridge only is required"],
+      default: 0,
+      min: [0, "Stock cartridge only cannot be negative"],
+      max: [9999, "Stock cartridge only cannot exceed 9999"],
     },
     gamePrice: {
       type: Number,
@@ -223,12 +239,20 @@ GameSchema.index({ rentalAvailable: 1 });
 GameSchema.index({ isOnSale: 1 });
 GameSchema.index({ createdAt: -1 });
 
-// Pre-save middleware to ensure platform is always an array
+// Pre-save middleware to ensure platform is always an array and compute gameAvailableStocks
 GameSchema.pre("save", function (next) {
   if (typeof this.gamePlatform === "string") {
     this.gamePlatform = [this.gamePlatform];
   }
+  // Compute gameAvailableStocks from variant stocks
+  this.gameAvailableStocks =
+    (this.stockWithCase || 0) + (this.stockCartridgeOnly || 0);
   next();
+});
+
+// Virtual for cartridge only price
+GameSchema.virtual("cartridgeOnlyPrice").get(function () {
+  return Math.max(0, (this.gamePrice || 0) - 100);
 });
 
 const GameModel =

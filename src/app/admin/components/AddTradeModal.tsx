@@ -31,6 +31,9 @@ interface GameRowReceived {
   gamePrice: number;
   quantity: number;
   availableStock: number;
+  variant?: "withCase" | "cartridgeOnly";
+  stockWithCase?: number;
+  stockCartridgeOnly?: number;
 }
 
 interface GameSearchState {
@@ -135,7 +138,9 @@ export default function AddTradeModal({
     async function fetchInitialGames() {
       setIsLoadingGames(true);
       try {
-        const response = await fetch("/api/games?limit=100&sort=updatedAt&order=desc");
+        const response = await fetch(
+          "/api/games?limit=100&sort=updatedAt&order=desc",
+        );
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -174,7 +179,7 @@ export default function AddTradeModal({
 
         try {
           const response = await fetch(
-            `/api/games?search=${encodeURIComponent(searchTerm)}&inStock=true&limit=10000`
+            `/api/games?search=${encodeURIComponent(searchTerm)}&inStock=true&limit=10000`,
           );
           const data = await response.json();
           setSearchResultsReceived((prev) => ({
@@ -182,7 +187,10 @@ export default function AddTradeModal({
             [index]: data.games || [],
           }));
         } catch (error) {
-          console.error(`Error searching games received for row ${index}:`, error);
+          console.error(
+            `Error searching games received for row ${index}:`,
+            error,
+          );
           setSearchResultsReceived((prev) => ({
             ...prev,
             [index]: [],
@@ -194,7 +202,7 @@ export default function AddTradeModal({
             return updated;
           });
         }
-      }
+      },
     );
 
     Promise.all(searchPromises);
@@ -225,7 +233,7 @@ export default function AddTradeModal({
 
         try {
           const response = await fetch(
-            `/api/games?search=${encodeURIComponent(searchTerm)}&limit=10000`
+            `/api/games?search=${encodeURIComponent(searchTerm)}&limit=10000`,
           );
           const data = await response.json();
           setSearchResultsGiven((prev) => ({
@@ -245,7 +253,7 @@ export default function AddTradeModal({
             return updated;
           });
         }
-      }
+      },
     );
 
     Promise.all(searchPromises);
@@ -364,6 +372,9 @@ export default function AddTradeModal({
       gameTitle: game.gameTitle,
       gamePrice: game.gamePrice,
       availableStock: game.gameAvailableStocks,
+      stockWithCase: game.stockWithCase,
+      stockCartridgeOnly: game.stockCartridgeOnly,
+      variant: "withCase", // Default to "withCase"
       quantity: 1,
     });
     // Close search dropdown
@@ -611,6 +622,7 @@ export default function AddTradeModal({
           gameTitle: game.gameTitle,
           gamePrice: game.gamePrice,
           quantity: game.quantity,
+          variant: "withCase" as const, // Default to "withCase" for games given
           isNewGame: game.isNewGame,
           newGameDetails: game.isNewGame ? game.newGameDetails : undefined,
         })),
@@ -619,6 +631,7 @@ export default function AddTradeModal({
           gameTitle: game.gameTitle,
           gamePrice: game.gamePrice,
           quantity: game.quantity,
+          variant: game.variant || "withCase",
         })),
         tradeLocation: tradeLocation.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -871,7 +884,8 @@ export default function AddTradeModal({
                                     <div className="p-4 text-sm text-gray-500">
                                       Searching...
                                     </div>
-                                  ) : getFilteredGamesGiven(index).length > 0 ? (
+                                  ) : getFilteredGamesGiven(index).length >
+                                    0 ? (
                                     getFilteredGamesGiven(index).map((g) => (
                                       <button
                                         key={g.gameBarcode}
@@ -1320,7 +1334,7 @@ export default function AddTradeModal({
                           </button>
                         )}
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <div className="md:col-span-2 relative">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Game <span className="text-red-500">*</span>
@@ -1379,6 +1393,9 @@ export default function AddTradeModal({
                                       gamePrice: 0,
                                       quantity: 1,
                                       availableStock: 0,
+                                      variant: undefined,
+                                      stockWithCase: undefined,
+                                      stockCartridgeOnly: undefined,
                                     });
                                     setGameSearchStatesReceived((prev) => ({
                                       ...prev,
@@ -1418,7 +1435,7 @@ export default function AddTradeModal({
                                       Searching...
                                     </div>
                                   ) : getFilteredGamesReceived(index).length >
-                                  0 ? (
+                                    0 ? (
                                     getFilteredGamesReceived(index).map((g) => (
                                       <button
                                         key={g.gameBarcode}
@@ -1456,6 +1473,41 @@ export default function AddTradeModal({
                                 </div>
                               )}
                           </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Variant
+                          </label>
+                          <select
+                            value={game.variant || "withCase"}
+                            onChange={(e) => {
+                              const variant = e.target.value as
+                                | "withCase"
+                                | "cartridgeOnly";
+                              const variantStock =
+                                variant === "cartridgeOnly"
+                                  ? game.stockCartridgeOnly || 0
+                                  : game.stockWithCase || 0;
+                              const variantPrice =
+                                variant === "cartridgeOnly" && game.gamePrice
+                                  ? Math.max(0, game.gamePrice - 100)
+                                  : game.gamePrice;
+                              updateGameReceived(index, {
+                                variant,
+                                availableStock: variantStock,
+                                gamePrice: variantPrice,
+                                quantity: Math.min(game.quantity, variantStock),
+                              });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-funBlue focus:border-transparent"
+                          >
+                            <option value="withCase">
+                              With Case ({game.stockWithCase || 0})
+                            </option>
+                            <option value="cartridgeOnly">
+                              Cartridge Only ({game.stockCartridgeOnly || 0})
+                            </option>
+                          </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -23,6 +23,13 @@ export async function GET(
     }
 
     // Convert to Game interface
+    const stockWithCase = game.stockWithCase ?? 0;
+    const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
+    const computedStock = stockWithCase + stockCartridgeOnly;
+    const cartridgeOnlyPrice = game.gamePrice
+      ? Math.max(0, game.gamePrice - 100)
+      : 0;
+
     const formattedGame: Game = {
       _id: game._id.toString(),
       gameTitle: game.gameTitle,
@@ -31,7 +38,9 @@ export async function GET(
       gameBarcode: game.gameBarcode,
       gameDescription: game.gameDescription,
       gameImageURL: game.gameImageURL,
-      gameAvailableStocks: game.gameAvailableStocks,
+      gameAvailableStocks: computedStock,
+      stockWithCase,
+      stockCartridgeOnly,
       gamePrice: game.gamePrice,
       gameCategory: game.gameCategory,
       gameReleaseDate: game.gameReleaseDate,
@@ -44,6 +53,8 @@ export async function GET(
       tradable: game.tradable,
       isOnSale: game.isOnSale,
       salePrice: game.salePrice,
+      costPrice: game.costPrice,
+      cartridgeOnlyPrice,
     };
 
     return NextResponse.json({ game: formattedGame });
@@ -102,6 +113,11 @@ export async function PUT(
     }
 
     // Update game document
+    const stockWithCase = body.stockWithCase ?? existingGame.stockWithCase ?? 0;
+    const stockCartridgeOnly =
+      body.stockCartridgeOnly ?? existingGame.stockCartridgeOnly ?? 0;
+    const computedStock = stockWithCase + stockCartridgeOnly;
+
     const updatedGame = await GameModel.findOneAndUpdate(
       { gameBarcode: barcode },
       {
@@ -111,7 +127,9 @@ export async function PUT(
         gameBarcode: body.gameBarcode,
         gameDescription: body.gameDescription,
         gameImageURL: body.gameImageURL,
-        gameAvailableStocks: body.gameAvailableStocks,
+        stockWithCase,
+        stockCartridgeOnly,
+        gameAvailableStocks: computedStock,
         gamePrice: body.gamePrice,
         gameCategory: body.gameCategory,
         gameReleaseDate: body.gameReleaseDate,
@@ -138,11 +156,19 @@ export async function PUT(
               ? body.salePrice
               : undefined
             : existingGame.salePrice,
+        costPrice:
+          body.costPrice !== undefined
+            ? body.costPrice
+            : existingGame.costPrice,
       },
       { new: true, runValidators: true },
     );
 
     // Convert to Game interface
+    const cartridgeOnlyPrice = updatedGame.gamePrice
+      ? Math.max(0, updatedGame.gamePrice - 100)
+      : 0;
+
     const formattedGame: Game = {
       _id: updatedGame._id.toString(),
       gameTitle: updatedGame.gameTitle,
@@ -152,6 +178,8 @@ export async function PUT(
       gameDescription: updatedGame.gameDescription,
       gameImageURL: updatedGame.gameImageURL,
       gameAvailableStocks: updatedGame.gameAvailableStocks,
+      stockWithCase: updatedGame.stockWithCase,
+      stockCartridgeOnly: updatedGame.stockCartridgeOnly,
       gamePrice: updatedGame.gamePrice,
       gameCategory: updatedGame.gameCategory,
       gameReleaseDate: updatedGame.gameReleaseDate,
@@ -164,6 +192,8 @@ export async function PUT(
       tradable: updatedGame.tradable,
       isOnSale: updatedGame.isOnSale,
       salePrice: updatedGame.salePrice,
+      costPrice: updatedGame.costPrice,
+      cartridgeOnlyPrice,
     };
 
     return NextResponse.json({ success: true, game: formattedGame });
@@ -215,6 +245,10 @@ export async function DELETE(
     await GameModel.findOneAndDelete({ gameBarcode: barcode });
 
     // Convert to Game interface for response
+    const stockWithCase = gameToDelete.stockWithCase ?? 0;
+    const stockCartridgeOnly = gameToDelete.stockCartridgeOnly ?? 0;
+    const computedStock = stockWithCase + stockCartridgeOnly;
+
     const deletedGame: Game = {
       _id: gameToDelete._id.toString(),
       gameTitle: gameToDelete.gameTitle,
@@ -223,7 +257,9 @@ export async function DELETE(
       gameBarcode: gameToDelete.gameBarcode,
       gameDescription: gameToDelete.gameDescription,
       gameImageURL: gameToDelete.gameImageURL,
-      gameAvailableStocks: gameToDelete.gameAvailableStocks,
+      gameAvailableStocks: computedStock,
+      stockWithCase,
+      stockCartridgeOnly,
       gamePrice: gameToDelete.gamePrice,
       gameCategory: gameToDelete.gameCategory,
       gameReleaseDate: gameToDelete.gameReleaseDate,
