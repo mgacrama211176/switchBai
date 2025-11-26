@@ -89,9 +89,10 @@ export default function PriceUpdatesTable({
       }
 
       setToast({
-        message: newCostPrice !== undefined 
-          ? "Price and cost price updated successfully!" 
-          : "Price updated successfully!",
+        message:
+          newCostPrice !== undefined
+            ? "Price and cost price updated successfully!"
+            : "Price updated successfully!",
         type: "success",
       });
 

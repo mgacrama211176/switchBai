@@ -15,12 +15,14 @@ import {
   HiShoppingBag,
   HiCurrencyDollar,
   HiTag,
+  HiSparkles,
 } from "react-icons/hi";
 import OrdersTable from "./components/OrdersTable";
 import TradesTable from "./components/TradesTable";
 import BuyingTable from "./components/BuyingTable";
 import FinancialsTable from "./components/FinancialsTable";
 import PriceUpdatesTable from "./components/PriceUpdatesTable";
+import KnowledgeBaseTable from "./components/KnowledgeBaseTable";
 
 type TabType =
   | "games"
@@ -30,6 +32,7 @@ type TabType =
   | "buying"
   | "financials"
   | "price-updates"
+  | "ai"
   | "add-game";
 
 export default function AdminPage() {
@@ -69,6 +72,10 @@ export default function AdminPage() {
   }
 
   function handleFinancialsUpdated() {
+    setRefreshTrigger((prev) => prev + 1);
+  }
+
+  function handleKnowledgeBaseUpdated() {
     setRefreshTrigger((prev) => prev + 1);
   }
 
@@ -195,6 +202,17 @@ export default function AdminPage() {
                 <span>Price Updates</span>
               </button>
               <button
+                onClick={() => handleTabChange("ai")}
+                className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
+                  activeTab === "ai"
+                    ? "text-funBlue border-b-2 border-funBlue bg-funBlue/5"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <HiSparkles className="w-5 h-5" />
+                <span>AI</span>
+              </button>
+              <button
                 onClick={() => handleTabChange("add-game")}
                 className={`flex items-center space-x-2 px-6 py-4 font-semibold transition-all duration-300 ${
                   activeTab === "add-game"
@@ -250,6 +268,12 @@ export default function AdminPage() {
               <PriceUpdatesTable
                 refreshTrigger={refreshTrigger}
                 onPriceUpdated={handleGameUpdated}
+              />
+            )}
+            {activeTab === "ai" && (
+              <KnowledgeBaseTable
+                refreshTrigger={refreshTrigger}
+                onEntryUpdated={handleKnowledgeBaseUpdated}
               />
             )}
             {activeTab === "add-game" && (

@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
 
         return {
           barcode: update.barcode,
-          success: true,
+          success: true as const,
           newPrice: game.gamePrice,
         };
       }),

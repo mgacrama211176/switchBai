@@ -232,7 +232,7 @@ const GamesPageContent = () => {
         } else {
           // Append new games, filtering out duplicates
           setGames((prev) => {
-            const newGames = response.data.games.filter(
+            const newGames = (response.data?.games || []).filter(
               (newGame: Game) =>
                 !prev.some((g) => g.gameBarcode === newGame.gameBarcode),
             );
@@ -241,7 +241,7 @@ const GamesPageContent = () => {
         }
 
         // Check if there are more games to load
-        setHasMore(response.data.games.length === itemsPerPage);
+        setHasMore((response.data?.games?.length || 0) === itemsPerPage);
 
         // Use API pagination data for display
         setTotalPages(response.data.pagination.pages);
@@ -1321,7 +1321,7 @@ const GamesPageContent = () => {
                   </div>
                   <p className="text-red-600 font-semibold mb-4">{error}</p>
                   <button
-                    onClick={loadGames}
+                    onClick={() => loadGames(1, true)}
                     className="bg-funBlue text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
                   >
                     Try Again

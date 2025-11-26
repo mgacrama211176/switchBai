@@ -353,15 +353,10 @@ export default function GameForm({
     }
 
     // Check for price warnings when costPrice is available
-    const costPrice = formData.costPrice > 0 ? formData.costPrice : (initialData?.costPrice || 0);
-    if (
-      costPrice > 0 &&
-      formData.gamePrice !== (initialData?.gamePrice || 0)
-    ) {
-      const metrics = calculateProfitMetrics(
-        formData.gamePrice,
-        costPrice,
-      );
+    const costPrice =
+      formData.costPrice > 0 ? formData.costPrice : initialData?.costPrice || 0;
+    if (costPrice > 0 && formData.gamePrice !== (initialData?.gamePrice || 0)) {
+      const metrics = calculateProfitMetrics(formData.gamePrice, costPrice);
       if (metrics.status !== "safe") {
         setPendingSubmit(true);
         setShowPriceWarning(true);
@@ -458,25 +453,27 @@ export default function GameForm({
         />
       )}
 
-      {showPriceWarning && initialData && (() => {
-        const costPrice = formData.costPrice > 0 ? formData.costPrice : (initialData?.costPrice || 0);
-        if (costPrice > 0) {
-          return (
-            <PriceUpdateWarningModal
-              game={initialData}
-              currentPrice={initialData.gamePrice}
-              newPrice={formData.gamePrice}
-              metrics={calculateProfitMetrics(
-                formData.gamePrice,
-                costPrice,
-              )}
-              onConfirm={handleWarningConfirm}
-              onCancel={handleWarningCancel}
-            />
-          );
-        }
-        return null;
-      })()}
+      {showPriceWarning &&
+        initialData &&
+        (() => {
+          const costPrice =
+            formData.costPrice > 0
+              ? formData.costPrice
+              : initialData?.costPrice || 0;
+          if (costPrice > 0) {
+            return (
+              <PriceUpdateWarningModal
+                game={initialData}
+                currentPrice={initialData.gamePrice}
+                newPrice={formData.gamePrice}
+                metrics={calculateProfitMetrics(formData.gamePrice, costPrice)}
+                onConfirm={handleWarningConfirm}
+                onCancel={handleWarningCancel}
+              />
+            );
+          }
+          return null;
+        })()}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Image Upload */}
@@ -798,9 +795,7 @@ export default function GameForm({
             {errors.costPrice && (
               <p className="text-sm text-lameRed mt-1">{errors.costPrice}</p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
-              Purchase cost per unit
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Purchase cost per unit</p>
           </div>
 
           {/* Stock Variants */}
@@ -916,13 +911,20 @@ export default function GameForm({
         </div>
 
         {/* Profit Calculation Display - Show when costPrice is available */}
-        {((mode === "edit" && (formData.costPrice > 0 || (initialData?.costPrice !== undefined && initialData.costPrice > 0))) ||
+        {((mode === "edit" &&
+          (formData.costPrice > 0 ||
+            (initialData?.costPrice !== undefined &&
+              initialData.costPrice > 0))) ||
           (mode === "create" && formData.costPrice > 0)) && (
           <div className="mt-4">
             <ProfitDisplay
-              currentPrice={mode === "edit" ? (initialData?.gamePrice || 0) : 0}
+              currentPrice={mode === "edit" ? initialData?.gamePrice || 0 : 0}
               newPrice={formData.gamePrice}
-              costPrice={formData.costPrice > 0 ? formData.costPrice : (initialData?.costPrice || 0)}
+              costPrice={
+                formData.costPrice > 0
+                  ? formData.costPrice
+                  : initialData?.costPrice || 0
+              }
               stock={formData.stockWithCase + formData.stockCartridgeOnly}
             />
           </div>

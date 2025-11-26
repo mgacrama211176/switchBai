@@ -23,18 +23,21 @@ export default function EditPriceModal({
   onSave,
 }: EditPriceModalProps) {
   const [newPrice, setNewPrice] = useState<number | "">(game.gamePrice);
-  const [newCostPrice, setNewCostPrice] = useState<number | "">(game.costPrice || 0);
+  const [newCostPrice, setNewCostPrice] = useState<number | "">(
+    game.costPrice || 0,
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const costPrice = game.costPrice || 0;
   const currentPrice = game.gamePrice;
   const currentMetrics = calculateProfitMetrics(currentPrice, costPrice);
-  
+
   // Use newCostPrice if it's been changed, otherwise use original costPrice
-  const effectiveCostPrice = typeof newCostPrice === "number" && newCostPrice >= 0 
-    ? newCostPrice 
-    : costPrice;
-  
+  const effectiveCostPrice =
+    typeof newCostPrice === "number" && newCostPrice >= 0
+      ? newCostPrice
+      : costPrice;
+
   const metrics =
     typeof newPrice === "number" && newPrice >= 0
       ? calculateProfitMetrics(newPrice, effectiveCostPrice)
@@ -80,7 +83,10 @@ export default function EditPriceModal({
       return;
     }
 
-    const costPriceChanged = typeof newCostPrice === "number" && newCostPrice >= 0 && newCostPrice !== costPrice;
+    const costPriceChanged =
+      typeof newCostPrice === "number" &&
+      newCostPrice >= 0 &&
+      newCostPrice !== costPrice;
     const priceChanged = newPrice !== currentPrice;
 
     if (!priceChanged && !costPriceChanged) {
@@ -112,7 +118,9 @@ export default function EditPriceModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b-2 border-gray-200">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Edit Price & Cost</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              Edit Price & Cost
+            </h2>
             <p className="text-sm text-gray-600 mt-1">{game.gameTitle}</p>
           </div>
           <button
@@ -209,16 +217,16 @@ export default function EditPriceModal({
               type="number"
               value={newCostPrice}
               onChange={(e) =>
-                setNewCostPrice(e.target.value === "" ? "" : Number(e.target.value))
+                setNewCostPrice(
+                  e.target.value === "" ? "" : Number(e.target.value),
+                )
               }
               min="0"
               step="1"
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-funBlue focus:ring-2 focus:ring-funBlue/20 outline-none transition-all text-lg font-semibold"
               placeholder="Enter cost price"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Purchase cost per unit
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Purchase cost per unit</p>
           </div>
 
           {/* Profit Calculation Display */}
