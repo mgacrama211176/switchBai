@@ -14,6 +14,10 @@ export interface ChatHeaderProps {
 export interface ChatMessagesProps {
   messages: Message[];
   isTyping?: boolean;
+  onFeedbackRequested?: (messageIndex: number) => void;
+  showFeedbackFor?: number | null;
+  chatId?: string;
+  conversationEnded?: boolean;
 }
 
 export interface ChatInputProps {

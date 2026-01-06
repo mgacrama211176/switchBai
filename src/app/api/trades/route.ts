@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
             gameTitle: game.gameTitle,
             gamePrice: priceToUse,
             quantity: game.quantity,
+            variant: game.variant || "withCase", // Include variant from request
           };
         }),
       ),

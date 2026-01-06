@@ -18,6 +18,7 @@ function TradeFormContent() {
   const router = useRouter();
   const { cart, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Form data
@@ -132,6 +133,7 @@ function TradeFormContent() {
           // For trade transactions, always use original price, not sale price
           gamePrice: game.gamePrice,
           quantity: game.quantity,
+          variant: game.variant || "withCase", // Include variant from cart
         })),
         tradeLocation: formData.tradeLocation.trim() || undefined,
         notes: formData.notes.trim() || undefined,
@@ -152,10 +154,16 @@ function TradeFormContent() {
         throw new Error(data.error || "Failed to create trade");
       }
 
-      clearCart();
-      router.push(
-        `/trade-confirmation?tradeId=${data.tradeId}&reference=${data.tradeReference}`,
-      );
+      // Show success feedback before redirect
+      setIsSuccess(true);
+
+      // Clear cart and redirect after brief delay to show success message
+      setTimeout(() => {
+        clearCart();
+        router.push(
+          `/trade-confirmation?tradeId=${data.tradeId}&reference=${data.tradeReference}`,
+        );
+      }, 1500);
     } catch (error) {
       console.error("Error creating trade:", error);
       setErrors({
@@ -337,14 +345,24 @@ function TradeFormContent() {
                     </div>
                   )}
 
+                  {isSuccess && (
+                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-green-600 font-semibold">
+                        ✓ Trade request saved successfully! Redirecting...
+                      </p>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isSuccess}
                     className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting
-                      ? "Submitting Trade..."
-                      : "Submit Trade Request"}
+                      ? "Submitting Trade Request..."
+                      : isSuccess
+                        ? "Trade Request Saved!"
+                        : "Submit Trade Request"}
                   </button>
 
                   <p className="text-sm text-gray-600 text-center mt-4">

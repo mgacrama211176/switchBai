@@ -51,6 +51,13 @@ interface CartContextType {
     quantity: number,
     side: "received" | "given",
   ) => void;
+  updateTradeVariant: (
+    barcode: string,
+    oldVariant: "withCase" | "cartridgeOnly",
+    newVariant: "withCase" | "cartridgeOnly",
+    side: "received" | "given",
+    game: Game,
+  ) => void;
   setCartType: (type: "purchase" | "rental" | "trade" | null) => void;
   clearCart: () => void;
   getCartItemCount: () => number;
@@ -187,7 +194,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       side: "received" | "given",
       variant: "withCase" | "cartridgeOnly" = "withCase",
     ) => {
-      // Get variant-specific stock and price for received games
+      // Get variant-specific stock and price
       const variantStock =
         side === "received"
           ? variant === "cartridgeOnly"
@@ -195,10 +202,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             : (game.stockWithCase ?? 0)
           : 999; // No limit for games given
       const variantPrice =
-        side === "received" &&
-        variant === "cartridgeOnly" &&
-        game.cartridgeOnlyPrice
-          ? game.cartridgeOnlyPrice
+        variant === "cartridgeOnly"
+          ? game.cartridgeOnlyPrice || Math.max(0, game.gamePrice - 100)
           : game.gamePrice;
 
       setCart((prevCart) => {
@@ -231,9 +236,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       gameBarcode: game.gameBarcode,
                       gameTitle: game.gameTitle,
                       gameImageURL: game.gameImageURL,
-                      gamePrice: game.gamePrice,
+                      gamePrice: variantPrice,
                       quantity,
                       maxStock: 999, // No stock limit for games being traded in
+                      variant: variant, // Store variant for games given
                       salePrice: game.salePrice,
                       isOnSale: game.isOnSale,
                       tradable: game.tradable,
@@ -249,7 +255,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const existingIndex = targetArray.findIndex(
           (item) =>
             item.gameBarcode === game.gameBarcode &&
-            (side === "given" || item.variant === variant),
+            (item.variant || "withCase") === variant,
         );
 
         if (existingIndex >= 0) {
@@ -305,7 +311,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           quantity:
             side === "received" ? Math.min(quantity, variantStock) : quantity,
           maxStock: side === "received" ? variantStock : 999,
-          variant: side === "received" ? variant : undefined,
+          variant: variant, // Store variant for both received and given
           salePrice: game.salePrice,
           isOnSale: game.isOnSale,
           tradable: game.tradable,
@@ -598,6 +604,79 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [removeFromTradeCart],
   );
 
+  const updateTradeVariant = useCallback(
+    (
+      barcode: string,
+      oldVariant: "withCase" | "cartridgeOnly",
+      newVariant: "withCase" | "cartridgeOnly",
+      side: "received" | "given",
+      game: Game,
+    ) => {
+      setCart((prevCart) => {
+        if (side === "received") {
+          const itemIndex = prevCart.items.findIndex(
+            (item) =>
+              item.gameBarcode === barcode &&
+              (item.variant || "withCase") === oldVariant,
+          );
+          if (itemIndex === -1) return prevCart;
+
+          const item = prevCart.items[itemIndex];
+          const newVariantStock =
+            newVariant === "cartridgeOnly"
+              ? (game.stockCartridgeOnly ?? 0)
+              : (game.stockWithCase ?? 0);
+          const newVariantPrice =
+            newVariant === "cartridgeOnly"
+              ? game.cartridgeOnlyPrice || Math.max(0, game.gamePrice - 100)
+              : game.gamePrice;
+          const newQuantity = Math.min(item.quantity, newVariantStock);
+
+          if (newQuantity <= 0) return prevCart;
+
+          const updatedItems = [...prevCart.items];
+          updatedItems[itemIndex] = {
+            ...item,
+            variant: newVariant,
+            gamePrice: newVariantPrice,
+            quantity: newQuantity,
+            maxStock: newVariantStock,
+          };
+
+          return {
+            ...prevCart,
+            items: updatedItems,
+          };
+        } else {
+          const itemIndex = (prevCart.gamesGiven || []).findIndex(
+            (item) =>
+              item.gameBarcode === barcode &&
+              (item.variant || "withCase") === oldVariant,
+          );
+          if (itemIndex === -1) return prevCart;
+
+          const item = (prevCart.gamesGiven || [])[itemIndex];
+          const newVariantPrice =
+            newVariant === "cartridgeOnly"
+              ? game.cartridgeOnlyPrice || Math.max(0, game.gamePrice - 100)
+              : game.gamePrice;
+          const updatedGamesGiven = [...(prevCart.gamesGiven || [])];
+          updatedGamesGiven[itemIndex] = {
+            ...item,
+            variant: newVariant,
+            gamePrice: newVariantPrice,
+          };
+
+          return {
+            ...prevCart,
+            gamesGiven: updatedGamesGiven,
+          };
+        }
+      });
+    },
+    [],
+  );
+
   const setCartType = useCallback(
     (type: "purchase" | "rental" | "trade" | null) => {
       setCart((prevCart) => ({
@@ -643,6 +722,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromTradeCart,
         updateQuantity,
         updateTradeQuantity,
+        updateTradeVariant,
         setCartType,
         clearCart,
         getCartItemCount,

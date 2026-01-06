@@ -19,6 +19,8 @@ export default function SupportChat({ isOpen, onClose }: SupportChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [chatId, setChatId] = useState<string>("");
+  const [showFeedbackFor, setShowFeedbackFor] = useState<number | null>(null);
+  const [conversationEnded, setConversationEnded] = useState(false);
 
   // Initial greeting & ID generation
   useEffect(() => {
@@ -64,6 +66,12 @@ export default function SupportChat({ isOpen, onClose }: SupportChatProps) {
           ...prev,
           { role: "assistant", content: data.message.content },
         ]);
+
+        // Handle conversation end
+        if (data.conversationEnded) {
+          setConversationEnded(true);
+          setShowFeedbackFor(null); // Hide per-message feedback, show end feedback
+        }
       } else if (data.error) {
         setMessages((prev) => [
           ...prev,
@@ -100,14 +108,27 @@ export default function SupportChat({ isOpen, onClose }: SupportChatProps) {
           headerColor="from-green-500 to-emerald-600"
         />
 
-        <ChatMessages messages={messages} isTyping={isTyping} />
+        <ChatMessages
+          messages={messages}
+          isTyping={isTyping}
+          onFeedbackRequested={setShowFeedbackFor}
+          showFeedbackFor={showFeedbackFor}
+          chatId={chatId}
+          conversationEnded={conversationEnded}
+        />
 
         <ChatInput
           value={input}
-          onChange={setInput}
+          onChange={(value) => {
+            setInput(value);
+            // Hide feedback if user starts typing
+            if (showFeedbackFor !== null) {
+              setShowFeedbackFor(null);
+            }
+          }}
           onSubmit={handleSendMessage}
           placeholder="Ask us anything..."
-          disabled={isLoading}
+          disabled={isLoading || conversationEnded}
           buttonColor="bg-green-500 hover:bg-emerald-600"
         />
       </div>

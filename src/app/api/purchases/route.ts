@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const missingFields = requiredFields.filter(
       (field) =>
-        body[field] === undefined || body[field] === null || body[field] === "",
+        body[field] === undefined || body[field] === null || body[field] === ""
     );
     if (missingFields.length > 0) {
       return NextResponse.json(
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
           error: "Missing required fields",
           missingFields,
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Delivery fee must be a number" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(body.games) || body.games.length === 0) {
       return NextResponse.json(
         { error: "At least one game is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       ) {
         return NextResponse.json(
           { error: "Each game must have barcode, title, price, and quantity" },
-          { status: 400 },
+          { status: 400 }
         );
       }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       if (!gameDoc) {
         return NextResponse.json(
           { error: `Game with barcode ${game.gameBarcode} not found` },
-          { status: 404 },
+          { status: 404 }
         );
       }
 
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           {
             error: `Insufficient stock for ${game.gameTitle} (${variant}). Available: ${variantStock}, Requested: ${game.quantity}`,
           },
-          { status: 400 },
+          { status: 400 }
         );
       }
     }
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
             : basePrice;
         return sum + priceToUse * game.quantity;
       },
-      Promise.resolve(0),
+      Promise.resolve(0)
     );
 
     // Calculate discount amount
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         const costPrice = gameDoc?.costPrice || 0;
         return sum + costPrice * game.quantity;
       },
-      Promise.resolve(0),
+      Promise.resolve(0)
     );
 
     // Calculate profit
@@ -182,8 +182,9 @@ export async function POST(request: NextRequest) {
             gameTitle: game.gameTitle,
             gamePrice: priceToUse,
             quantity: game.quantity,
+            variant: game.variant || undefined,
           };
-        }),
+        })
       ),
 
       // Delivery details
@@ -252,7 +253,7 @@ export async function POST(request: NextRequest) {
     console.error("Purchase submission error:", error);
     return NextResponse.json(
       { error: "Failed to submit purchase order" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -336,7 +337,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching purchases:", error);
     return NextResponse.json(
       { error: "Failed to fetch purchases" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

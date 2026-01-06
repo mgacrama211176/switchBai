@@ -2,14 +2,25 @@ import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { retrieveContext } from "@/lib/rag/retriever";
 import { formatContextForPrompt } from "@/lib/rag/context-formatter";
+import connectDB from "@/lib/mongodb";
+import SupportChat from "@/models/SupportChat";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
 export async function POST(request: Request) {
+  const startTime = Date.now();
+  let ragResults: { games: any[]; faqs: any[] } = { games: [], faqs: [] };
+  let modelUsed = "";
+  let responseTime = 0;
+  let chatId: string | undefined;
+  let messages: any[] = [];
+
   try {
-    const { messages, chatId } = await request.json();
+    const body = await request.json();
+    messages = body.messages || [];
+    chatId = body.chatId;
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -57,6 +68,29 @@ export async function POST(request: Request) {
       .filter((msg: any) => msg.role === "user")
       .pop();
 
+    // Detect conversation end signals
+    const endKeywords = [
+      "thanks",
+      "thank you",
+      "bye",
+      "goodbye",
+      "that's all",
+      "no more questions",
+      "all set",
+      "done",
+      "finished",
+      "okay thanks",
+      "ok thanks",
+      "ty",
+      "thank you so much",
+      "thanks a lot",
+    ];
+    const conversationEnded =
+      lastUserMessage?.content &&
+      endKeywords.some((keyword) =>
+        lastUserMessage.content.toLowerCase().includes(keyword),
+      );
+
     // Retrieve relevant context using RAG
     let retrievedContext = "";
     if (lastUserMessage?.content) {
@@ -64,7 +98,8 @@ export async function POST(request: Request) {
         console.log(
           `\n🔍 [RAG] Starting retrieval for query: "${lastUserMessage.content}"`,
         );
-        const { games, faqs } = await retrieveContext(lastUserMessage.content);
+        ragResults = await retrieveContext(lastUserMessage.content);
+        const { games, faqs } = ragResults;
         console.log(
           `📊 [RAG] Retrieved ${games.length} games and ${faqs.length} FAQs`,
         );
@@ -153,7 +188,21 @@ Store Information:
       max_tokens: 1024,
     });
 
+    responseTime = Date.now() - startTime;
+
     if (!result) {
+      // Log failed request
+      logConversation(
+        chatId,
+        messages,
+        ragResults,
+        null,
+        responseTime,
+        "none",
+        retrievedContext.length,
+        false,
+      ).catch((err) => console.error("Error logging conversation:", err));
+
       return NextResponse.json(
         {
           message: {
@@ -168,15 +217,159 @@ Store Information:
 
     const completion = result.completion;
     const responseMessage = completion.choices[0].message;
+    modelUsed = result.model;
+
+    // Log conversation asynchronously (don't block response)
+    logConversation(
+      chatId,
+      [...messages, responseMessage],
+      ragResults,
+      result,
+      responseTime,
+      modelUsed,
+      retrievedContext.length,
+      conversationEnded,
+    ).catch((err) => console.error("Error logging conversation:", err));
 
     return NextResponse.json({
       message: responseMessage,
+      conversationEnded: conversationEnded || false,
     });
   } catch (error) {
     console.error("Error in support API:", error);
+
+    // Try to log error case
+    if (chatId) {
+      logConversation(
+        chatId,
+        messages,
+        { games: [], faqs: [] },
+        null,
+        Date.now() - startTime,
+        "error",
+        0,
+        false,
+      ).catch((err) => console.error("Error logging error conversation:", err));
+    }
+
     return NextResponse.json(
       { error: "Failed to process support request" },
       { status: 500 },
     );
+  }
+}
+
+/**
+ * Log conversation to SupportChat model (non-blocking)
+ */
+async function logConversation(
+  chatId: string | undefined,
+  messages: any[],
+  ragResults: { games: any[]; faqs: any[] },
+  completionResult: any,
+  responseTime: number,
+  modelUsed: string,
+  contextLength: number,
+  conversationEnded: boolean = false,
+) {
+  if (!chatId) {
+    console.warn("⚠️ No chatId provided, skipping conversation log");
+    return;
+  }
+
+  try {
+    await connectDB();
+
+    const { games, faqs } = ragResults;
+
+    // Calculate RAG metrics
+    const avgGameScore =
+      games.length > 0
+        ? games.reduce((sum, g) => sum + (g.score || 0), 0) / games.length
+        : 0;
+    const avgFAQScore =
+      faqs.length > 0
+        ? faqs.reduce((sum, f) => sum + (f.score || 0), 0) / faqs.length
+        : 0;
+
+    // Gap detection: no results OR low confidence
+    const hasNoResults = games.length === 0 && faqs.length === 0;
+    const hasLowConfidence =
+      (games.length > 0 && avgGameScore < 0.5) ||
+      (faqs.length > 0 && avgFAQScore < 0.5) ||
+      (games.length > 0 && faqs.length === 0) ||
+      (games.length === 0 && faqs.length > 0);
+    const needsReview = hasNoResults || hasLowConfidence;
+
+    // Get the last user message for query
+    const lastUserMessage = messages
+      .filter((msg: any) => msg.role === "user")
+      .pop();
+
+    // Find or create chat session
+    const existingChat = await SupportChat.findOne({ chatId });
+
+    const chatMessage = {
+      role: "assistant" as const,
+      content: completionResult
+        ? completionResult.completion.choices[0].message.content
+        : "Error: No response generated",
+      timestamp: new Date(),
+    };
+
+    const ragMetrics = {
+      query: lastUserMessage?.content || "",
+      gamesRetrieved: games.length,
+      faqsRetrieved: faqs.length,
+      avgGameScore,
+      avgFAQScore,
+      hasLowConfidence,
+      contextLength,
+    };
+
+    const responseMetrics = {
+      modelUsed,
+      responseTime,
+      tokenCount: completionResult?.completion?.usage?.total_tokens,
+    };
+
+    if (existingChat) {
+      // Update existing chat
+      existingChat.messages.push(chatMessage);
+      existingChat.ragMetrics = ragMetrics;
+      existingChat.responseMetrics = responseMetrics;
+      existingChat.needsReview = needsReview;
+      existingChat.conversationEnded =
+        conversationEnded || existingChat.conversationEnded;
+      existingChat.metadata = {
+        ...existingChat.metadata,
+        messageCount: existingChat.messages.length,
+      };
+      await existingChat.save();
+    } else {
+      // Create new chat
+      const newChat = new SupportChat({
+        chatId,
+        messages: [...messages, chatMessage],
+        ragMetrics,
+        responseMetrics,
+        needsReview,
+        conversationEnded,
+        metadata: {
+          messageCount: messages.length + 1,
+          sessionStart: new Date(),
+        },
+      });
+      await newChat.save();
+    }
+
+    if (needsReview) {
+      console.log(
+        `📌 [Learning] Flagged chat ${chatId} for review (no results: ${hasNoResults}, low confidence: ${hasLowConfidence})`,
+      );
+    }
+  } catch (error: any) {
+    console.error("Error logging conversation:", error);
+    // Don't throw - logging failures shouldn't break the API
   }
 }
