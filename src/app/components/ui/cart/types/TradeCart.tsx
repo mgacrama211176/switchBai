@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useEffect, useCallback } from "react";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, CartItem } from "@/contexts/CartContext";
 import { Game } from "@/app/types/games";
 import { HiInformationCircle, HiArrowLeft, HiArrowRight } from "react-icons/hi";
 import { useTradeGameSearch } from "@/hooks/cart/useTradeGameSearch";
@@ -26,7 +26,7 @@ export default function TradeCart() {
   const { fetchedGames } = useGameFetching(
     cart.items,
     cart.gamesGiven,
-    tradeGameSearch.availableGames,
+    tradeGameSearch.availableGames
   );
   const tradeSummary = useTradeSummary();
 
@@ -42,11 +42,11 @@ export default function TradeCart() {
     const itemCount = cart.gamesGiven.length;
     const totalQuantity = cart.gamesGiven.reduce(
       (sum, item) => sum + item.quantity,
-      0,
+      0
     );
     const totalValue = cart.gamesGiven.reduce(
       (sum, item) => sum + item.gamePrice * item.quantity,
-      0,
+      0
     );
     return { itemCount, totalQuantity, totalValue };
   }, [cart.gamesGiven]);
@@ -58,11 +58,11 @@ export default function TradeCart() {
     const itemCount = cart.items.length;
     const totalQuantity = cart.items.reduce(
       (sum, item) => sum + item.quantity,
-      0,
+      0
     );
     const totalValue = cart.items.reduce(
       (sum, item) => sum + item.gamePrice * item.quantity,
-      0,
+      0
     );
     return { itemCount, totalQuantity, totalValue };
   }, [cart.items]);
@@ -75,7 +75,7 @@ export default function TradeCart() {
   const handleTradeGameSelect = (
     game: Game,
     side: "received" | "given",
-    variant: "withCase" | "cartridgeOnly" = "withCase",
+    variant: "withCase" | "cartridgeOnly" = "withCase"
   ) => {
     addToTradeCart(game, 1, side, variant);
     tradeGameSearch.closeSearch();
@@ -84,11 +84,11 @@ export default function TradeCart() {
   const handleVariantChange = useCallback(
     (
       item: (typeof cart.items)[0],
-      newVariant: "withCase" | "cartridgeOnly",
+      newVariant: "withCase" | "cartridgeOnly"
     ) => {
       const game =
         tradeGameSearch.availableGames.find(
-          (g) => g.gameBarcode === item.gameBarcode,
+          (g) => g.gameBarcode === item.gameBarcode
         ) || fetchedGames.get(item.gameBarcode);
       if (!game) {
         console.error("Game not found for variant change");
@@ -103,20 +103,17 @@ export default function TradeCart() {
         oldVariant,
         newVariant,
         "received",
-        game,
+        game
       );
     },
-    [tradeGameSearch.availableGames, fetchedGames, updateTradeVariant],
+    [tradeGameSearch.availableGames, fetchedGames, updateTradeVariant]
   );
 
   const handleVariantChangeGiven = useCallback(
-    (
-      item: (typeof cart.gamesGiven)[0],
-      newVariant: "withCase" | "cartridgeOnly",
-    ) => {
+    (item: CartItem, newVariant: "withCase" | "cartridgeOnly") => {
       const game =
         tradeGameSearch.availableGames.find(
-          (g) => g.gameBarcode === item.gameBarcode,
+          (g) => g.gameBarcode === item.gameBarcode
         ) || fetchedGames.get(item.gameBarcode);
       if (!game) {
         console.error("Game not found for variant change");
@@ -131,10 +128,10 @@ export default function TradeCart() {
         oldVariant,
         newVariant,
         "given",
-        game,
+        game
       );
     },
-    [tradeGameSearch.availableGames, fetchedGames, updateTradeVariant],
+    [tradeGameSearch.availableGames, fetchedGames, updateTradeVariant]
   );
 
   // Auto-update variant for games received if current variant has no stock
@@ -143,7 +140,7 @@ export default function TradeCart() {
       cart.items.forEach((item) => {
         const game =
           tradeGameSearch.availableGames.find(
-            (g) => g.gameBarcode === item.gameBarcode,
+            (g) => g.gameBarcode === item.gameBarcode
           ) || fetchedGames.get(item.gameBarcode);
         if (game) {
           const stockWithCase = game.stockWithCase ?? 0;
@@ -196,7 +193,7 @@ export default function TradeCart() {
       cart.gamesGiven.forEach((item) => {
         const game =
           tradeGameSearch.availableGames.find(
-            (g) => g.gameBarcode === item.gameBarcode,
+            (g) => g.gameBarcode === item.gameBarcode
           ) || fetchedGames.get(item.gameBarcode);
         if (game) {
           const stockWithCase = game.stockWithCase ?? 0;

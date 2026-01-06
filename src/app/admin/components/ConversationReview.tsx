@@ -12,7 +12,10 @@ import {
   HiX,
 } from "react-icons/hi";
 import Toast from "./Toast";
-import KnowledgeBaseForm, { KnowledgeBaseEntry } from "./KnowledgeBaseForm";
+import KnowledgeBaseForm, {
+  KnowledgeBaseEntry,
+  KnowledgeBaseEntryInput,
+} from "./KnowledgeBaseForm";
 
 interface Conversation {
   _id: string;
@@ -65,14 +68,12 @@ export default function ConversationReview({
   const [isLoading, setIsLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [filter, setFilter] = useState<"all" | "needsReview" | "reviewed">(
-    "needsReview",
+    "needsReview"
   );
   const [showKBForm, setShowKBForm] = useState(false);
-  const [kbFormData, setKbFormData] = useState<{
-    question: string;
-    answer: string;
-    category: string;
-  } | null>(null);
+  const [kbFormData, setKbFormData] = useState<KnowledgeBaseEntryInput | null>(
+    null
+  );
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -91,7 +92,7 @@ export default function ConversationReview({
       }
 
       const response = await fetch(
-        `/api/support/conversations?${params.toString()}`,
+        `/api/support/conversations?${params.toString()}`
       );
       const data = await response.json();
 
@@ -200,7 +201,8 @@ export default function ConversationReview({
   function handleCreateKBEntry(userMessage: string, assistantMessage: string) {
     // Simple category detection
     const lowerMessage = userMessage.toLowerCase();
-    let category = "general";
+    let category: "payment" | "rental" | "trade" | "shipping" | "general" =
+      "general";
     if (
       lowerMessage.includes("payment") ||
       lowerMessage.includes("pay") ||
@@ -475,7 +477,7 @@ export default function ConversationReview({
                       <div>
                         <span className="text-gray-600">Game Score:</span>{" "}
                         {selectedConversation.ragMetrics.avgGameScore.toFixed(
-                          3,
+                          3
                         )}
                       </div>
                       <div>
@@ -523,7 +525,7 @@ export default function ConversationReview({
                               if (assistantMsg.role === "assistant") {
                                 handleCreateKBEntry(
                                   msg.content,
-                                  assistantMsg.content,
+                                  assistantMsg.content
                                 );
                               }
                             }}
@@ -542,7 +544,7 @@ export default function ConversationReview({
                     onClick={() =>
                       markAsReviewed(
                         selectedConversation.chatId,
-                        !selectedConversation.reviewed,
+                        !selectedConversation.reviewed
                       )
                     }
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -575,7 +577,7 @@ export default function ConversationReview({
                     onChange={(e) =>
                       updateAdminNotes(
                         selectedConversation.chatId,
-                        e.target.value,
+                        e.target.value
                       )
                     }
                     rows={3}
