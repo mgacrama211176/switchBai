@@ -109,14 +109,49 @@ export async function PATCH(
           );
         }
 
-        // Get variant (default to "withCase" for backward compatibility)
-        const variant = gameItem.variant || "withCase";
-        const variantStock =
-          variant === "cartridgeOnly"
-            ? (game.stockCartridgeOnly ?? 0)
-            : (game.stockWithCase ?? 0);
+        // Determine variant - if missing, check both stock types to infer the correct variant
+        let variant: "withCase" | "cartridgeOnly";
+        let variantStock: number;
 
-        // Check if stock is sufficient
+        if (gameItem.variant) {
+          // Variant is specified, use it
+          variant = gameItem.variant;
+          variantStock =
+            variant === "cartridgeOnly"
+              ? (game.stockCartridgeOnly ?? 0)
+              : (game.stockWithCase ?? 0);
+        } else {
+          // Variant is missing - check both stock types to determine which one to use
+          const stockWithCase = game.stockWithCase ?? 0;
+          const stockCartridgeOnly = game.stockCartridgeOnly ?? 0;
+          const hasEnoughWithCase = stockWithCase >= gameItem.quantity;
+          const hasEnoughCartridgeOnly =
+            stockCartridgeOnly >= gameItem.quantity;
+
+          if (hasEnoughWithCase && hasEnoughCartridgeOnly) {
+            // Both have sufficient stock - prefer "withCase" for backward compatibility
+            variant = "withCase";
+            variantStock = stockWithCase;
+          } else if (hasEnoughCartridgeOnly) {
+            // Only cartridge-only has sufficient stock
+            variant = "cartridgeOnly";
+            variantStock = stockCartridgeOnly;
+          } else if (hasEnoughWithCase) {
+            // Only with-case has sufficient stock
+            variant = "withCase";
+            variantStock = stockWithCase;
+          } else {
+            // Neither has sufficient stock
+            return NextResponse.json(
+              {
+                error: `Insufficient stock for ${gameItem.gameTitle}. Available: withCase=${stockWithCase}, cartridgeOnly=${stockCartridgeOnly}, Required: ${gameItem.quantity}`,
+              },
+              { status: 400 },
+            );
+          }
+        }
+
+        // Check if stock is sufficient (redundant check but kept for safety)
         if (variantStock < gameItem.quantity) {
           return NextResponse.json(
             {

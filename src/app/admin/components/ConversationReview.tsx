@@ -68,11 +68,11 @@ export default function ConversationReview({
   const [isLoading, setIsLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [filter, setFilter] = useState<"all" | "needsReview" | "reviewed">(
-    "needsReview"
+    "needsReview",
   );
   const [showKBForm, setShowKBForm] = useState(false);
   const [kbFormData, setKbFormData] = useState<KnowledgeBaseEntryInput | null>(
-    null
+    null,
   );
   const [toast, setToast] = useState<{
     message: string;
@@ -92,7 +92,7 @@ export default function ConversationReview({
       }
 
       const response = await fetch(
-        `/api/support/conversations?${params.toString()}`
+        `/api/support/conversations?${params.toString()}`,
       );
       const data = await response.json();
 
@@ -477,7 +477,7 @@ export default function ConversationReview({
                       <div>
                         <span className="text-gray-600">Game Score:</span>{" "}
                         {selectedConversation.ragMetrics.avgGameScore.toFixed(
-                          3
+                          3,
                         )}
                       </div>
                       <div>
@@ -525,7 +525,7 @@ export default function ConversationReview({
                               if (assistantMsg.role === "assistant") {
                                 handleCreateKBEntry(
                                   msg.content,
-                                  assistantMsg.content
+                                  assistantMsg.content,
                                 );
                               }
                             }}
@@ -544,7 +544,7 @@ export default function ConversationReview({
                     onClick={() =>
                       markAsReviewed(
                         selectedConversation.chatId,
-                        !selectedConversation.reviewed
+                        !selectedConversation.reviewed,
                       )
                     }
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -577,7 +577,7 @@ export default function ConversationReview({
                     onChange={(e) =>
                       updateAdminNotes(
                         selectedConversation.chatId,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     rows={3}
