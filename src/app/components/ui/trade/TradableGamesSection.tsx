@@ -182,7 +182,7 @@ export function TradableGamesSection() {
                       {/* Pricing Section - always show original price for trade context */}
                       <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-1.5 sm:p-2 border border-green-100">
                         <div className="space-y-1">
-                          <div className="text-sm sm:text-base font-black text-gray-900">
+                          <div className="text-sm sm:text-2xl font-black  text-center text-red-600">
                             {formatPrice(game.gamePrice)}
                           </div>
                           {game.isOnSale && game.salePrice && (
